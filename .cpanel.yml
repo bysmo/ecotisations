@@ -1,6 +1,6 @@
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/bemo1278/public_html/ecotisations/
+    - export DEPLOYPATH=/home/bemo1278/public_html/ecotisations.aladints.com/
     - export REPOPATH=/home/bemo1278/repositories/ecotisations
     - $REPOPATH cp -R * $DEPLOYPATH
