@@ -1,0 +1,5 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/bemo1278/public_html/ecotisations/
+    - /bin/cp -R * $DEPLOYPATH
