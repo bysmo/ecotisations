@@ -1,0 +1,376 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\SMTPConfiguration;
+use App\Models\EmailTemplate;
+use App\Models\Paiement;
+use App\Models\Engagement;
+use App\Models\EmailLog;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\File;
+
+class EmailService
+{
+    /**
+     * Configurer Laravel Mail avec une configuration SMTP active
+     */
+    public function configureSMTP()
+    {
+        $smtp = SMTPConfiguration::where('actif', true)->first();
+        
+        if (!$smtp) {
+            throw new \Exception('Aucune configuration SMTP active trouvée.');
+        }
+
+        try {
+            $password = Crypt::decryptString($smtp->password);
+            
+            // Configurer Laravel Mail avec la configuration SMTP
+            config([
+                'mail.default' => 'smtp',
+                'mail.mailers.smtp.transport' => 'smtp',
+                'mail.mailers.smtp.host' => $smtp->host,
+                'mail.mailers.smtp.port' => $smtp->port,
+                'mail.mailers.smtp.encryption' => $smtp->encryption !== 'none' ? $smtp->encryption : null,
+                'mail.mailers.smtp.username' => $smtp->username,
+                'mail.mailers.smtp.password' => $password,
+                'mail.from.address' => $smtp->from_address,
+                'mail.from.name' => $smtp->from_name,
+            ]);
+
+            // Forcer la réinitialisation du mailer
+            app()->forgetInstance('swift.mailer');
+            app()->forgetInstance('mailer');
+            app()->forgetInstance('mail.manager');
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de la configuration SMTP: ' . $e->getMessage());
+            throw new \Exception('Erreur lors de la configuration SMTP: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Envoyer un email de test
+     */
+    public function sendTestEmail($to)
+    {
+        try {
+            $this->configureSMTP();
+            
+            Mail::raw('Ceci est un email de test pour vérifier la configuration SMTP.', function ($message) use ($to) {
+                $message->to($to)
+                        ->subject('Test de configuration SMTP');
+            });
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Erreur lors de l\'envoi de l\'email de test: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Envoyer un email de paiement à un membre
+     */
+    public function sendPaymentEmail($paiement)
+    {
+        try {
+            // Vérifier qu'il y a une configuration SMTP active
+            $smtp = SMTPConfiguration::where('actif', true)->first();
+            if (!$smtp) {
+                Log::warning('Aucune configuration SMTP active. Email non envoyé pour le paiement: ' . $paiement->id);
+                return false;
+            }
+
+            // Récupérer le template actif pour les paiements
+            $template = EmailTemplate::where('type', 'paiement')
+                ->where('actif', true)
+                ->first();
+
+            if (!$template) {
+                Log::warning('Aucun template d\'email actif pour les paiements. Email non envoyé pour le paiement: ' . $paiement->id);
+                return false;
+            }
+
+            // Charger les relations nécessaires
+            $paiement->load(['membre', 'cotisation']);
+
+            if (!$paiement->membre || !$paiement->membre->email) {
+                Log::warning('Le membre n\'a pas d\'email. Email non envoyé pour le paiement: ' . $paiement->id);
+                return false;
+            }
+
+            // Configurer SMTP
+            $this->configureSMTP();
+
+            // Préparer les variables
+            $variables = [
+                'nom' => $paiement->membre->nom ?? '',
+                'prenom' => $paiement->membre->prenom ?? '',
+                'date_paiement' => $paiement->date_paiement ? $paiement->date_paiement->format('d/m/Y') : '',
+                'montant' => number_format($paiement->montant, 0, ',', ' ') . ' XOF',
+                'cotisation' => $paiement->cotisation->nom ?? '',
+                'numero_paiement' => $paiement->numero ?? '',
+                'mode_paiement' => ucfirst(str_replace('_', ' ', $paiement->mode_paiement ?? '')),
+            ];
+
+            // Remplacer les variables dans le template
+            $emailContent = $template->remplacerVariables($variables);
+
+            // Générer le PDF (optionnel, en cas d'erreur on envoie quand même l'email)
+            $pdfPath = null;
+            try {
+                $pdfPath = $this->generatePaymentPDF($paiement);
+            } catch (\Exception $pdfError) {
+                Log::warning('Erreur génération PDF paiement: ' . $pdfError->getMessage() . '. Email envoyé sans PDF.');
+            }
+
+            // Créer le log avant l'envoi
+            $emailLog = EmailLog::create([
+                'type' => EmailLog::TYPE_PAIEMENT,
+                'paiement_id' => $paiement->id,
+                'membre_id' => $paiement->membre->id,
+                'destinataire_email' => $paiement->membre->email,
+                'sujet' => $emailContent['sujet'],
+                'message' => $emailContent['corps'],
+                'statut' => EmailLog::STATUT_EN_ATTENTE,
+            ]);
+
+            // Envoyer l'email avec le PDF attaché (si disponible)
+            Mail::raw($emailContent['corps'], function ($message) use ($paiement, $emailContent, $pdfPath) {
+                $message->to($paiement->membre->email)
+                        ->subject($emailContent['sujet']);
+                
+                // Attacher le PDF si disponible
+                if ($pdfPath && File::exists($pdfPath)) {
+                    $message->attach($pdfPath, [
+                        'as' => 'recu_paiement_' . $paiement->numero . '.pdf',
+                        'mime' => 'application/pdf',
+                    ]);
+                }
+            });
+
+            // Supprimer le fichier PDF temporaire après l'envoi
+            if ($pdfPath && File::exists($pdfPath)) {
+                File::delete($pdfPath);
+            }
+
+            // Marquer le log comme envoyé
+            $emailLog->markAsSent();
+
+            Log::info('Email de paiement envoyé avec succès au membre: ' . $paiement->membre->email);
+            return true;
+        } catch (\Exception $e) {
+            // Marquer le log comme échoué si il existe
+            if (isset($emailLog)) {
+                $emailLog->markAsFailed($e->getMessage());
+            }
+            Log::error('Erreur lors de l\'envoi de l\'email de paiement: ' . $e->getMessage());
+            // Ne pas bloquer le processus si l'email échoue
+            return false;
+        }
+    }
+
+    /**
+     * Générer le PDF pour un paiement
+     */
+    private function generatePaymentPDF(Paiement $paiement)
+    {
+        // Créer le dossier pour les PDFs si nécessaire
+        $pdfDir = storage_path('app/temp_pdfs');
+        if (!File::exists($pdfDir)) {
+            File::makeDirectory($pdfDir, 0755, true);
+        }
+        
+        // Nom du fichier PDF
+        $filename = 'paiement_' . $paiement->id . '_' . now()->format('Y-m-d_His') . '.pdf';
+        $pdfPath = $pdfDir . '/' . $filename;
+        
+        try {
+            // Générer le PDF avec DomPDF
+            if (class_exists('\Barryvdh\DomPDF\Facade\Pdf')) {
+                $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('email-templates.pdf-paiement', compact('paiement'));
+                $pdf->setPaper('A4', 'portrait');
+                $pdf->setOption('enable-html5-parser', true);
+                $pdf->setOption('isRemoteEnabled', true);
+                $pdf->setOption('isFontSubsettingEnabled', true);
+                $pdf->save($pdfPath);
+            } elseif (class_exists('\Dompdf\Dompdf')) {
+                // Utilisation directe de DomPDF si disponible
+                $dompdf = new \Dompdf\Dompdf();
+                $html = view('email-templates.pdf-paiement', compact('paiement'))->render();
+                
+                $dompdf->loadHtml($html);
+                $dompdf->setPaper('A4', 'portrait');
+                $dompdf->render();
+                
+                file_put_contents($pdfPath, $dompdf->output());
+            } else {
+                throw new \Exception('DomPDF n\'est pas installé. Installez avec: composer require barryvdh/laravel-dompdf');
+            }
+        } catch (\Exception $e) {
+            Log::error('Erreur génération PDF paiement: ' . $e->getMessage());
+            throw $e;
+        }
+        
+        return $pdfPath;
+    }
+
+    /**
+     * Envoyer un email d'engagement à un membre
+     */
+    public function sendEngagementEmail(Engagement $engagement)
+    {
+        try {
+            // Vérifier qu'il y a une configuration SMTP active
+            $smtp = SMTPConfiguration::where('actif', true)->first();
+            if (!$smtp) {
+                Log::warning('Aucune configuration SMTP active. Email non envoyé pour l\'engagement: ' . $engagement->id);
+                return false;
+            }
+
+            // Récupérer le template actif pour les engagements
+            $template = EmailTemplate::where('type', 'engagement')
+                ->where('actif', true)
+                ->first();
+
+            if (!$template) {
+                Log::warning('Aucun template d\'email actif pour les engagements. Email non envoyé pour l\'engagement: ' . $engagement->id);
+                return false;
+            }
+
+            // Charger les relations nécessaires
+            $engagement->load(['membre', 'cotisation']);
+
+            if (!$engagement->membre || !$engagement->membre->email) {
+                Log::warning('Le membre n\'a pas d\'email. Email non envoyé pour l\'engagement: ' . $engagement->id);
+                return false;
+            }
+
+            // Configurer SMTP
+            $this->configureSMTP();
+
+            // Préparer les variables
+            $montantPaye = $engagement->montant_paye ?? 0;
+            $resteAPayer = $engagement->montant_engage - $montantPaye;
+
+            $variables = [
+                'nom' => $engagement->membre->nom ?? '',
+                'prenom' => $engagement->membre->prenom ?? '',
+                'numero_engagement' => $engagement->numero ?? '',
+                'cotisation' => $engagement->cotisation->nom ?? '',
+                'montant_engage' => number_format($engagement->montant_engage, 0, ',', ' ') . ' XOF',
+                'montant_paye' => number_format($montantPaye, 0, ',', ' ') . ' XOF',
+                'reste_a_payer' => number_format($resteAPayer, 0, ',', ' ') . ' XOF',
+                'periodicite' => ucfirst($engagement->periodicite ?? ''),
+                'periode_debut' => $engagement->periode_debut ? $engagement->periode_debut->format('d/m/Y') : '',
+                'periode_fin' => $engagement->periode_fin ? $engagement->periode_fin->format('d/m/Y') : '',
+                'statut' => ucfirst(str_replace('_', ' ', $engagement->statut ?? '')),
+            ];
+
+            // Remplacer les variables dans le template
+            $emailContent = $template->remplacerVariables($variables);
+
+            // Générer le PDF (optionnel, en cas d'erreur on envoie quand même l'email)
+            $pdfPath = null;
+            try {
+                $pdfPath = $this->generateEngagementPDF($engagement);
+            } catch (\Exception $pdfError) {
+                Log::warning('Erreur génération PDF engagement: ' . $pdfError->getMessage() . '. Email envoyé sans PDF.');
+            }
+
+            // Créer le log avant l'envoi
+            $emailLog = EmailLog::create([
+                'type' => EmailLog::TYPE_ENGAGEMENT,
+                'engagement_id' => $engagement->id,
+                'membre_id' => $engagement->membre->id,
+                'destinataire_email' => $engagement->membre->email,
+                'sujet' => $emailContent['sujet'],
+                'message' => $emailContent['corps'],
+                'statut' => EmailLog::STATUT_EN_ATTENTE,
+            ]);
+
+            // Envoyer l'email avec le PDF attaché (si disponible)
+            Mail::raw($emailContent['corps'], function ($message) use ($engagement, $emailContent, $pdfPath) {
+                $message->to($engagement->membre->email)
+                        ->subject($emailContent['sujet']);
+                
+                // Attacher le PDF si disponible
+                if ($pdfPath && File::exists($pdfPath)) {
+                    $message->attach($pdfPath, [
+                        'as' => 'details_engagement_' . $engagement->numero . '.pdf',
+                        'mime' => 'application/pdf',
+                    ]);
+                }
+            });
+
+            // Supprimer le fichier PDF temporaire après l'envoi
+            if ($pdfPath && File::exists($pdfPath)) {
+                File::delete($pdfPath);
+            }
+
+            // Marquer le log comme envoyé
+            $emailLog->markAsSent();
+
+            Log::info('Email d\'engagement envoyé avec succès au membre: ' . $engagement->membre->email);
+            return true;
+        } catch (\Exception $e) {
+            // Marquer le log comme échoué si il existe
+            if (isset($emailLog)) {
+                $emailLog->markAsFailed($e->getMessage());
+            }
+            Log::error('Erreur lors de l\'envoi de l\'email d\'engagement: ' . $e->getMessage());
+            // Ne pas bloquer le processus si l'email échoue
+            return false;
+        }
+    }
+
+    /**
+     * Générer le PDF pour un engagement
+     */
+    private function generateEngagementPDF(Engagement $engagement)
+    {
+        // Créer le dossier pour les PDFs si nécessaire
+        $pdfDir = storage_path('app/temp_pdfs');
+        if (!File::exists($pdfDir)) {
+            File::makeDirectory($pdfDir, 0755, true);
+        }
+        
+        // Nom du fichier PDF
+        $filename = 'engagement_' . $engagement->id . '_' . now()->format('Y-m-d_His') . '.pdf';
+        $pdfPath = $pdfDir . '/' . $filename;
+        
+        try {
+            // Générer le PDF avec DomPDF
+            if (class_exists('\Barryvdh\DomPDF\Facade\Pdf')) {
+                $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('email-templates.pdf-engagement', compact('engagement'));
+                $pdf->setPaper('A4', 'portrait');
+                $pdf->setOption('enable-html5-parser', true);
+                $pdf->setOption('isRemoteEnabled', true);
+                $pdf->setOption('isFontSubsettingEnabled', true);
+                $pdf->save($pdfPath);
+            } elseif (class_exists('\Dompdf\Dompdf')) {
+                // Utilisation directe de DomPDF si disponible
+                $dompdf = new \Dompdf\Dompdf();
+                $html = view('email-templates.pdf-engagement', compact('engagement'))->render();
+                
+                $dompdf->loadHtml($html);
+                $dompdf->setPaper('A4', 'portrait');
+                $dompdf->render();
+                
+                file_put_contents($pdfPath, $dompdf->output());
+            } else {
+                throw new \Exception('DomPDF n\'est pas installé. Installez avec: composer require barryvdh/laravel-dompdf');
+            }
+        } catch (\Exception $e) {
+            Log::error('Erreur génération PDF engagement: ' . $e->getMessage());
+            throw $e;
+        }
+        
+        return $pdfPath;
+    }
+}

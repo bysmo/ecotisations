@@ -1,0 +1,59 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Paiement extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'numero',
+        'membre_id',
+        'cotisation_id',
+        'caisse_id',
+        'montant',
+        'date_paiement',
+        'mode_paiement',
+        'notes',
+    ];
+
+    protected $casts = [
+        'montant' => 'decimal:0',
+        'date_paiement' => 'date',
+    ];
+
+    /**
+     * Relation avec le membre
+     */
+    public function membre()
+    {
+        return $this->belongsTo(Membre::class);
+    }
+
+    /**
+     * Relation avec la cotisation (template)
+     */
+    public function cotisation()
+    {
+        return $this->belongsTo(Cotisation::class);
+    }
+
+    /**
+     * Relation avec la caisse
+     */
+    public function caisse()
+    {
+        return $this->belongsTo(Caisse::class);
+    }
+
+    /**
+     * Relation avec les remboursements
+     */
+    public function remboursements()
+    {
+        return $this->hasMany(Remboursement::class);
+    }
+}

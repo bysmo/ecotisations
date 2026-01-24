@@ -1,0 +1,1107 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Membre;
+use App\Models\Annonce;
+use App\Models\Paiement;
+use App\Models\Remboursement;
+use App\Models\User;
+use App\Notifications\RemboursementPendingNotification;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+
+class MembreDashboardController extends Controller
+{
+
+    /**
+     * Afficher le tableau de bord du membre
+     */
+    public function dashboard()
+    {
+        $membre = Auth::guard('membre')->user();
+        
+        // Récupérer les 5 derniers paiements
+        $paiementsRecents = $membre->paiements()
+            ->with(['cotisation', 'caisse'])
+            ->orderBy('date_paiement', 'desc')
+            ->limit(5)
+            ->get();
+        
+        // Récupérer les engagements en cours et en retard
+        $engagementsEnCours = $membre->engagements()
+            ->whereIn('statut', ['en_cours', 'en_retard'])
+            ->orderBy('periode_fin', 'asc')
+            ->get();
+        
+        // Vérifier et mettre à jour le statut de chaque engagement
+        foreach ($engagementsEnCours as $engagement) {
+            $engagement->checkAndUpdateStatut();
+        }
+        
+        // Récupérer les annonces actives
+        $annonces = Annonce::active()
+            ->orderBy('ordre', 'asc')
+            ->orderBy('created_at', 'desc')
+            ->limit(3)
+            ->get();
+        
+        // Statistiques
+        $totalPaiements = $membre->paiements()->count();
+        $montantTotal = $membre->paiements()->sum('montant');
+        $engagementsTotal = $membre->engagements()->whereIn('statut', ['en_cours', 'en_retard'])->count();
+        
+        // Données pour les graphiques - Évolution des paiements (6 derniers mois)
+        $evolutionPaiements = $membre->paiements()
+            ->selectRaw('DATE_FORMAT(date_paiement, "%Y-%m") as mois, SUM(montant) as total')
+            ->where('date_paiement', '>=', now()->subMonths(6))
+            ->groupBy('mois')
+            ->orderBy('mois', 'asc')
+            ->get()
+            ->map(function($item) {
+                return [
+                    'date' => $item->mois . '-01',
+                    'total' => (float)$item->total
+                ];
+            });
+        
+        // Données pour les graphiques - Répartition par mode de paiement
+        $paiementsParMode = $membre->paiements()
+            ->selectRaw('mode_paiement, SUM(montant) as total')
+            ->groupBy('mode_paiement')
+            ->get()
+            ->map(function($item) {
+                return [
+                    'mode_paiement' => $item->mode_paiement,
+                    'total' => (float)$item->total
+                ];
+            });
+        
+        return view('membres.dashboard', compact('membre', 'paiementsRecents', 'engagementsEnCours', 'annonces', 'totalPaiements', 'montantTotal', 'engagementsTotal', 'evolutionPaiements', 'paiementsParMode'));
+    }
+    
+    /**
+     * Afficher la liste des paiements du membre
+     */
+    public function paiements()
+    {
+        $membre = Auth::guard('membre')->user();
+        
+        $paiements = $membre->paiements()
+            ->with(['cotisation', 'caisse'])
+            ->orderBy('date_paiement', 'desc')
+            ->paginate(15);
+        
+        return view('membres.paiements', compact('membre', 'paiements'));
+    }
+    
+    /**
+     * Afficher la liste des cotisations disponibles pour le membre
+     */
+    public function cotisations()
+    {
+        $membre = Auth::guard('membre')->user();
+        
+        // Récupérer les cotisations actives accessibles au membre
+        // Une cotisation est accessible si :
+        // 1. Elle n'a pas de segment (NULL ou vide) → accessible à tous
+        // 2. Elle a un segment qui correspond exactement au segment du membre
+        
+        // Récupérer toutes les cotisations actives
+        $allCotisations = \App\Models\Cotisation::where('actif', true)
+            ->with(['caisse'])
+            ->get();
+        
+        // Filtrer selon le segment du membre
+        $cotisationsFiltered = $allCotisations->filter(function($cotisation) use ($membre) {
+            $cotisationSegment = trim($cotisation->segment ?? '');
+            $membreSegment = trim($membre->segment ?? '');
+            
+            // Si la cotisation n'a pas de segment (NULL ou chaîne vide), elle est accessible à tous
+            if ($cotisationSegment === '') {
+                return true;
+            }
+            
+            // Si la cotisation a un segment, elle n'est accessible que si le membre a exactement le même segment
+            if ($membreSegment !== '') {
+                return $cotisationSegment === $membreSegment;
+            }
+            
+            // Si le membre n'a pas de segment et la cotisation en a un, il ne peut pas y accéder
+            return false;
+        })->sortBy('nom')->values();
+        
+        // Pagination manuelle
+        $perPage = \App\Models\AppSetting::get('pagination_par_page', 15);
+        $currentPage = \Illuminate\Pagination\LengthAwarePaginator::resolveCurrentPage();
+        $currentItems = $cotisationsFiltered->slice(($currentPage - 1) * $perPage, $perPage)->all();
+        $cotisations = new \Illuminate\Pagination\LengthAwarePaginator(
+            $currentItems,
+            $cotisationsFiltered->count(),
+            $perPage,
+            $currentPage,
+            ['path' => \Illuminate\Pagination\LengthAwarePaginator::resolveCurrentPath()]
+        );
+        
+        // Vérifier si PayDunya est activé
+        $paydunyaConfig = \App\Models\PayDunyaConfiguration::getActive();
+        $paydunyaEnabled = $paydunyaConfig && $paydunyaConfig->enabled;
+        
+        return view('membres.cotisations', compact('membre', 'cotisations', 'paydunyaEnabled'));
+    }
+    
+    /**
+     * Afficher les détails d'une cotisation avec les paiements du membre
+     */
+    public function showCotisation(Request $request, $id)
+    {
+        $membre = Auth::guard('membre')->user();
+        
+        // Récupérer la cotisation
+        $cotisation = \App\Models\Cotisation::with(['caisse'])->findOrFail($id);
+        
+        // Vérifier que le membre a accès à cette cotisation (même logique que dans cotisations())
+        $cotisationSegment = trim($cotisation->segment ?? '');
+        $membreSegment = trim($membre->segment ?? '');
+        
+        $hasAccess = false;
+        if ($cotisationSegment === '') {
+            $hasAccess = true; // Accessible à tous
+        } elseif ($membreSegment !== '' && $cotisationSegment === $membreSegment) {
+            $hasAccess = true; // Même segment
+        }
+        
+        if (!$hasAccess || !$cotisation->actif) {
+            abort(403, 'Vous n\'avez pas accès à cette cotisation.');
+        }
+        
+        // Récupérer les moyens de paiement actifs
+        $paymentMethods = \App\Models\PaymentMethod::getActive();
+        
+        // Vérifier si PayDunya est activé (pour compatibilité)
+        $paydunyaConfig = \App\Models\PayDunyaConfiguration::getActive();
+        $paydunyaEnabled = $paydunyaConfig && $paydunyaConfig->enabled;
+        
+        // Si init_payment est demandé, initier le paiement
+        if ($request->has('init_payment') && $request->has('payment_method')) {
+            $paymentMethodCode = $request->input('payment_method');
+            if ($paymentMethodCode === 'paydunya' && $paydunyaEnabled) {
+                return $this->initierPaiementPayDunya($request, $cotisation->id);
+            }
+            // TODO: Ajouter les autres moyens de paiement (PayPal, Stripe)
+        }
+        
+        // Vérifier si c'est un retour après paiement (PayDunya ajoute ?token=...)
+        $paymentStatus = null;
+        $paymentMessage = null;
+        if ($request->has('token') && $paydunyaEnabled) {
+            $invoiceToken = $request->input('token');
+            try {
+                $paydunyaService = new \App\Services\PayDunyaService();
+                $verification = $paydunyaService->verifyInvoice($invoiceToken);
+                
+                if ($verification['success']) {
+                    $status = $verification['status'] ?? 'unknown';
+                    if ($status === 'completed') {
+                        // Vérifier si le paiement n'a pas déjà été enregistré via le callback IPN
+                        $paiementExistant = \App\Models\Paiement::where('numero', 'PAY-' . $invoiceToken)->first();
+                        
+                        // Si le paiement n'existe pas encore, l'enregistrer depuis le return_url
+                        if (!$paiementExistant) {
+                            $verificationData = $verification['data'] ?? [];
+                            $customData = $verificationData['custom_data'] ?? [];
+                            $cotisationId = isset($customData['cotisation_id']) ? (int)$customData['cotisation_id'] : null;
+                            $membreId = isset($customData['membre_id']) ? (int)$customData['membre_id'] : null;
+                            
+                            \Log::info('PayDunya: Tentative d\'enregistrement depuis return_url', [
+                                'cotisation_id' => $cotisationId,
+                                'membre_id' => $membreId,
+                                'custom_data' => $customData,
+                            ]);
+                            
+                            if ($cotisationId && $membreId) {
+                                $cotisationForPayment = \App\Models\Cotisation::findOrFail($cotisationId);
+                                
+                                // Récupérer le montant et s'assurer qu'il est un nombre
+                                $montantPaiement = isset($verificationData['total_amount']) 
+                                    ? (float)$verificationData['total_amount'] 
+                                    : (float)$cotisationForPayment->montant;
+                                
+                                // Créer le paiement
+                                $paiement = \App\Models\Paiement::create([
+                                    'numero' => 'PAY-' . $invoiceToken,
+                                    'membre_id' => $membreId,
+                                    'cotisation_id' => $cotisationId,
+                                    'caisse_id' => $cotisationForPayment->caisse_id,
+                                    'montant' => $montantPaiement,
+                                    'date_paiement' => now(),
+                                    'mode_paiement' => 'mobile_money',
+                                    'notes' => 'Paiement via PayDunya - Token: ' . $invoiceToken . ' (enregistré depuis return_url)',
+                                ]);
+                                
+                                // Mettre à jour le solde de la caisse
+                                $caisse = \App\Models\Caisse::findOrFail($cotisationForPayment->caisse_id);
+                                $soldeAvant = (float)$caisse->solde_initial;
+                                $caisse->solde_initial = $soldeAvant + $montantPaiement;
+                                $caisse->save();
+                                
+                                // Recharger la caisse pour vérifier le solde mis à jour
+                                $caisse->refresh();
+                                
+                                \Log::info('PayDunya: Mise à jour du solde de la caisse (return_url)', [
+                                    'caisse_id' => $caisse->id,
+                                    'caisse_nom' => $caisse->nom,
+                                    'solde_avant' => $soldeAvant,
+                                    'montant_paiement' => $montantPaiement,
+                                    'solde_apres' => $caisse->solde_initial,
+                                    'paiement_id' => $paiement->id,
+                                ]);
+                                
+                                // Journaliser le mouvement
+                                \App\Models\MouvementCaisse::create([
+                                    'caisse_id' => $caisse->id,
+                                    'type' => 'paiement',
+                                    'sens' => 'entree',
+                                    'montant' => $paiement->montant,
+                                    'date_operation' => $paiement->date_paiement,
+                                    'libelle' => 'Paiement PayDunya: ' . $cotisationForPayment->nom,
+                                    'notes' => 'Paiement via PayDunya (return_url)',
+                                    'reference_type' => \App\Models\Paiement::class,
+                                    'reference_id' => $paiement->id,
+                                ]);
+                                
+                                // Envoyer un email avec PDF au membre
+                                try {
+                                    $emailService = new \App\Services\EmailService();
+                                    $emailService->sendPaymentEmail($paiement);
+                                } catch (\Exception $e) {
+                                    \Log::error('PayDunya: Erreur lors de l\'envoi de l\'email de paiement', [
+                                        'error' => $e->getMessage(),
+                                        'paiement_id' => $paiement->id,
+                                    ]);
+                                }
+                                
+                                // Envoyer une notification à tous les admins
+                                $admins = \App\Models\User::all();
+                                foreach ($admins as $admin) {
+                                    $admin->notify(new \App\Notifications\PayDunyaPaymentNotification($paiement));
+                                }
+                                
+                                \Log::info('PayDunya: Paiement enregistré depuis return_url', [
+                                    'paiement_id' => $paiement->id,
+                                    'invoice_token' => $invoiceToken,
+                                ]);
+                            }
+                        }
+                        
+                        $paymentStatus = 'success';
+                        $paymentMessage = 'Paiement effectué avec succès !';
+                    } elseif ($status === 'cancelled') {
+                        $paymentStatus = 'cancelled';
+                        $paymentMessage = 'Paiement annulé.';
+                    } else {
+                        $paymentStatus = 'pending';
+                        $paymentMessage = 'Paiement en attente.';
+                    }
+                } else {
+                    $paymentStatus = 'error';
+                    $paymentMessage = 'Erreur lors de la vérification du paiement.';
+                }
+            } catch (\Exception $e) {
+                \Log::error('PayDunya: Erreur lors de la vérification du retour', [
+                    'error' => $e->getMessage(),
+                    'token' => $invoiceToken,
+                ]);
+                $paymentStatus = 'error';
+                $paymentMessage = 'Erreur lors de la vérification du paiement.';
+            }
+        } elseif ($request->has('payment')) {
+            // Gestion des anciens paramètres (pour compatibilité)
+            $paymentStatus = $request->input('payment');
+            if ($paymentStatus === 'success') {
+                $paymentMessage = 'Paiement effectué avec succès !';
+            } elseif ($paymentStatus === 'cancelled') {
+                $paymentMessage = 'Paiement annulé.';
+            }
+        }
+        
+        // Récupérer les paiements du membre pour cette cotisation (APRÈS avoir potentiellement enregistré un nouveau paiement)
+        $paiements = \App\Models\Paiement::where('membre_id', $membre->id)
+            ->where('cotisation_id', $cotisation->id)
+            ->with(['caisse'])
+            ->orderBy('date_paiement', 'desc')
+            ->get();
+        
+        // Calculer le total payé
+        $totalPaye = $paiements->sum('montant');
+        
+        return view('membres.cotisation-show', compact('membre', 'cotisation', 'paiements', 'totalPaye', 'paydunyaEnabled', 'paymentMethods', 'paymentStatus', 'paymentMessage'));
+    }
+    
+    /**
+     * Initier un paiement PayDunya pour une cotisation
+     */
+    public function initierPaiementPayDunya(Request $request, $cotisationId)
+    {
+        $membre = Auth::guard('membre')->user();
+        
+        // Récupérer la cotisation
+        $cotisation = \App\Models\Cotisation::with(['caisse'])->findOrFail($cotisationId);
+        
+        // Vérifier que le membre a accès à cette cotisation
+        $cotisationSegment = trim($cotisation->segment ?? '');
+        $membreSegment = trim($membre->segment ?? '');
+        
+        $hasAccess = false;
+        if ($cotisationSegment === '') {
+            $hasAccess = true;
+        } elseif ($membreSegment !== '' && $cotisationSegment === $membreSegment) {
+            $hasAccess = true;
+        }
+        
+        if (!$hasAccess || !$cotisation->actif) {
+            return redirect()->route('membre.cotisations')
+                ->with('error', 'Vous n\'avez pas accès à cette cotisation.');
+        }
+        
+        // Vérifier si PayDunya est activé
+        $paydunyaConfig = \App\Models\PayDunyaConfiguration::getActive();
+        if (!$paydunyaConfig || !$paydunyaConfig->enabled) {
+            return redirect()->back()
+                ->with('error', 'PayDunya n\'est pas activé.');
+        }
+        
+        try {
+            $paydunyaService = new \App\Services\PayDunyaService();
+            
+            // URLs de callback (utiliser url() pour générer des URLs absolues correctes)
+            $callbackUrl = url('/membre/paydunya/callback');
+            $returnUrl = url('/membre/cotisations/' . $cotisation->id);
+            $cancelUrl = url('/membre/cotisations/' . $cotisation->id);
+            
+            // Créer la facture PayDunya
+            $result = $paydunyaService->createInvoice([
+                'cotisation_id' => $cotisation->id,
+                'membre_id' => $membre->id,
+                'item_name' => $cotisation->nom,
+                'amount' => $cotisation->montant,
+                'description' => 'Paiement de la cotisation: ' . $cotisation->nom,
+                'callback_url' => $callbackUrl,
+                'return_url' => $returnUrl,
+                'cancel_url' => $cancelUrl,
+            ]);
+            
+            if ($result['success']) {
+                // Rediriger vers la page de paiement PayDunya
+                return redirect($result['invoice_url']);
+            } else {
+                return redirect()->back()
+                    ->with('error', 'Erreur lors de la création du paiement: ' . ($result['message'] ?? 'Erreur inconnue'));
+            }
+        } catch (\Exception $e) {
+            \Log::error('PayDunya: Erreur lors de l\'initiation du paiement', [
+                'error' => $e->getMessage(),
+                'cotisation_id' => $cotisationId,
+                'membre_id' => $membre->id,
+            ]);
+            
+            return redirect()->back()
+                ->with('error', 'Erreur lors de l\'initiation du paiement: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Callback IPN de PayDunya
+     * D'après la documentation PayDunya, les données sont envoyées dans $_POST['data']
+     */
+    public function paydunyaCallback(Request $request)
+    {
+        \Log::info('PayDunya: Callback IPN reçu', [
+            'method' => $request->method(),
+            'content_type' => $request->header('Content-Type'),
+            'all_data' => $request->all(),
+            'raw_input' => $request->getContent(),
+        ]);
+        
+        try {
+            // PayDunya envoie les données dans 'data' selon la documentation
+            // Mais selon la documentation, c'est un POST avec application/x-www-form-urlencoded
+            // Donc les données peuvent être directement dans $request->all() ou dans 'data'
+            $data = $request->input('data');
+            
+            // Si 'data' n'existe pas, essayer de récupérer directement depuis la requête
+            if (!$data && $request->has('status')) {
+                // Les données sont peut-être directement dans la requête
+                $data = $request->all();
+            }
+            
+            if (!$data) {
+                \Log::error('PayDunya: Données manquantes dans le callback', [
+                    'request_all' => $request->all(),
+                    'request_input' => $request->input(),
+                ]);
+                return response()->json(['error' => 'Données manquantes'], 400);
+            }
+            
+            \Log::info('PayDunya: Structure des données reçues', ['data_structure' => $data]);
+            
+            // Vérifier le hash pour s'assurer que la requête provient de PayDunya
+            $paydunyaConfig = \App\Models\PayDunyaConfiguration::getActive();
+            if ($paydunyaConfig && isset($data['hash'])) {
+                $expectedHash = hash('sha512', $paydunyaConfig->master_key);
+                if ($data['hash'] !== $expectedHash) {
+                    \Log::error('PayDunya: Hash invalide dans le callback', [
+                        'received_hash' => $data['hash'],
+                        'expected_hash' => $expectedHash,
+                    ]);
+                    return response()->json(['error' => 'Hash invalide'], 400);
+                }
+                \Log::info('PayDunya: Hash vérifié avec succès');
+            } else {
+                \Log::warning('PayDunya: Hash non présent dans les données', [
+                    'has_hash' => isset($data['hash']),
+                    'has_config' => $paydunyaConfig !== null,
+                ]);
+            }
+            
+            $status = $data['status'] ?? 'unknown';
+            $invoice = $data['invoice'] ?? [];
+            $customData = $data['custom_data'] ?? [];
+            $invoiceToken = $invoice['token'] ?? null;
+            
+            \Log::info('PayDunya: Informations extraites', [
+                'status' => $status,
+                'invoice_token' => $invoiceToken,
+                'custom_data' => $customData,
+            ]);
+            
+            // Si le paiement est complété
+            if ($status === 'completed') {
+                $cotisationId = $customData['cotisation_id'] ?? null;
+                $membreId = $customData['membre_id'] ?? null;
+                $type = $customData['type'] ?? 'cotisation';
+                $engagementId = $customData['engagement_id'] ?? null;
+                
+                if ($cotisationId && $membreId && $invoiceToken) {
+                    // Vérifier si le paiement n'a pas déjà été enregistré
+                    $paiementExistant = \App\Models\Paiement::where('numero', 'PAY-' . $invoiceToken)->first();
+                    
+                    if (!$paiementExistant) {
+                        $cotisation = \App\Models\Cotisation::findOrFail($cotisationId);
+                        $membre = \App\Models\Membre::findOrFail($membreId);
+                        
+                        // Récupérer le montant depuis les données de la facture et charger l'engagement si nécessaire
+                        $engagement = null;
+                        if ($type === 'engagement' && $engagementId) {
+                            $engagement = \App\Models\Engagement::findOrFail($engagementId);
+                            $montant = isset($invoice['total_amount']) ? (float)$invoice['total_amount'] : (float)($engagement->montant_engage - ($engagement->montant_paye ?? 0));
+                        } else {
+                            $montant = isset($invoice['total_amount']) ? (float)$invoice['total_amount'] : (float)$cotisation->montant;
+                        }
+                        
+                        // Créer le paiement
+                        $paiement = \App\Models\Paiement::create([
+                            'numero' => 'PAY-' . $invoiceToken,
+                            'membre_id' => $membreId,
+                            'cotisation_id' => $cotisationId,
+                            'caisse_id' => $cotisation->caisse_id,
+                            'montant' => $montant,
+                            'date_paiement' => now(),
+                            'mode_paiement' => 'mobile_money',
+                            'notes' => 'Paiement via PayDunya - Token: ' . $invoiceToken . ($type === 'engagement' ? ' (Engagement ID: ' . $engagementId . ')' : ''),
+                        ]);
+                        
+                        \Log::info('PayDunya: Paiement créé', [
+                            'paiement_id' => $paiement->id,
+                            'paiement_numero' => $paiement->numero,
+                            'membre_id' => $membreId,
+                            'cotisation_id' => $cotisationId,
+                            'engagement_id' => $engagementId,
+                            'type' => $type,
+                            'montant' => $montant,
+                            'date_paiement' => $paiement->date_paiement,
+                        ]);
+                        
+                        // Mettre à jour le solde de la caisse
+                        $caisse = \App\Models\Caisse::findOrFail($cotisation->caisse_id);
+                        $soldeAvant = (float)$caisse->solde_initial;
+                        $caisse->solde_initial = $soldeAvant + $montant;
+                        $caisse->save();
+                        
+                        // Recharger la caisse pour vérifier le solde mis à jour
+                        $caisse->refresh();
+                        
+                        \Log::info('PayDunya: Mise à jour du solde de la caisse (callback IPN)', [
+                            'caisse_id' => $caisse->id,
+                            'caisse_nom' => $caisse->nom,
+                            'solde_avant' => $soldeAvant,
+                            'montant_paiement' => $montant,
+                            'solde_apres' => $caisse->solde_initial,
+                            'paiement_id' => $paiement->id,
+                        ]);
+                        
+                        // Journaliser le mouvement
+                        \App\Models\MouvementCaisse::create([
+                            'caisse_id' => $caisse->id,
+                            'type' => 'paiement',
+                            'sens' => 'entree',
+                            'montant' => $paiement->montant,
+                            'date_operation' => $paiement->date_paiement,
+                            'libelle' => 'Paiement PayDunya: ' . $cotisation->nom,
+                            'notes' => 'Paiement via PayDunya',
+                            'reference_type' => \App\Models\Paiement::class,
+                            'reference_id' => $paiement->id,
+                        ]);
+                        
+                        // Envoyer un email avec PDF au membre
+                        try {
+                            $emailService = new \App\Services\EmailService();
+                            $emailService->sendPaymentEmail($paiement);
+                        } catch (\Exception $e) {
+                            \Log::error('PayDunya: Erreur lors de l\'envoi de l\'email de paiement (callback IPN)', [
+                                'error' => $e->getMessage(),
+                                'paiement_id' => $paiement->id,
+                            ]);
+                        }
+                        
+                        // Si c'est un paiement d'engagement, vérifier et mettre à jour le statut
+                        if ($type === 'engagement' && $engagement) {
+                            // Recalculer le montant payé en récupérant tous les paiements de l'engagement
+                            // On récupère tous les paiements depuis le début de la période, même s'ils sont faits après la fin
+                            $montantPaye = \App\Models\Paiement::where('membre_id', $membreId)
+                                ->where('cotisation_id', $cotisationId)
+                                ->where(function($query) use ($engagement) {
+                                    if ($engagement->periode_debut) {
+                                        // Récupérer tous les paiements depuis le début de la période
+                                        $query->whereDate('date_paiement', '>=', $engagement->periode_debut);
+                                    } else {
+                                        $query->whereNotNull('date_paiement');
+                                    }
+                                })
+                                ->sum('montant');
+                            
+                            $resteAPayer = $engagement->montant_engage - $montantPaye;
+                            
+                            // Si le reste à payer est 0 ou moins, mettre à jour le statut
+                            if ($resteAPayer <= 0 && in_array($engagement->statut, ['en_cours', 'en_retard'])) {
+                                $ancienStatut = $engagement->statut;
+                                $engagement->statut = 'honore';
+                                $engagement->save();
+                                
+                                \Log::info('PayDunya: Statut de l\'engagement mis à jour', [
+                                    'engagement_id' => $engagement->id,
+                                    'ancien_statut' => $ancienStatut,
+                                    'nouveau_statut' => 'honore',
+                                    'montant_paye' => $montantPaye,
+                                    'montant_engage' => $engagement->montant_engage,
+                                    'reste_a_payer' => $resteAPayer,
+                                    'paiement_id' => $paiement->id,
+                                ]);
+                            } else {
+                                \Log::info('PayDunya: Engagement partiellement payé', [
+                                    'engagement_id' => $engagement->id,
+                                    'montant_paye' => $montantPaye,
+                                    'montant_engage' => $engagement->montant_engage,
+                                    'reste_a_payer' => $resteAPayer,
+                                    'statut' => $engagement->statut,
+                                    'paiement_id' => $paiement->id,
+                                ]);
+                            }
+                        }
+                        
+                        // Envoyer une notification à tous les admins
+                        $admins = \App\Models\User::all();
+                        foreach ($admins as $admin) {
+                            $admin->notify(new \App\Notifications\PayDunyaPaymentNotification($paiement));
+                        }
+                        
+                        \Log::info('PayDunya: Paiement enregistré avec succès', [
+                            'paiement_id' => $paiement->id,
+                            'paiement_numero' => $paiement->numero,
+                            'invoice_token' => $invoiceToken,
+                            'montant' => $montant,
+                            'cotisation_id' => $cotisationId,
+                            'membre_id' => $membreId,
+                            'type' => $type,
+                            'engagement_id' => $engagementId,
+                        ]);
+                    } else {
+                        \Log::info('PayDunya: Paiement déjà enregistré', [
+                            'paiement_id' => $paiementExistant->id,
+                            'invoice_token' => $invoiceToken,
+                        ]);
+                    }
+                } else {
+                    \Log::warning('PayDunya: Données incomplètes pour enregistrer le paiement', [
+                        'cotisation_id' => $cotisationId,
+                        'membre_id' => $membreId,
+                        'invoice_token' => $invoiceToken,
+                    ]);
+                }
+            } else {
+                \Log::info('PayDunya: Statut de paiement non complété', ['status' => $status]);
+            }
+            
+            return response()->json(['success' => true]);
+            
+        } catch (\Exception $e) {
+            \Log::error('PayDunya: Erreur dans le callback', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json(['error' => 'Erreur serveur'], 500);
+        }
+    }
+
+    /**
+     * Afficher la liste des engagements du membre
+     */
+    public function engagements()
+    {
+        $membre = Auth::guard('membre')->user();
+        
+        $engagements = $membre->engagements()
+            ->with(['cotisation'])
+            ->orderBy('periode_fin', 'desc')
+            ->get();
+        
+        // Vérifier et mettre à jour le statut de chaque engagement
+        foreach ($engagements as $engagement) {
+            $engagement->checkAndUpdateStatut();
+        }
+        
+        // Paginer après la mise à jour
+        $perPage = \App\Models\AppSetting::get('pagination_par_page', 15);
+        $currentPage = \Illuminate\Pagination\LengthAwarePaginator::resolveCurrentPage();
+        $currentItems = $engagements->slice(($currentPage - 1) * $perPage, $perPage)->all();
+        $engagements = new \Illuminate\Pagination\LengthAwarePaginator(
+            $currentItems,
+            $engagements->count(),
+            $perPage,
+            $currentPage,
+            ['path' => \Illuminate\Pagination\LengthAwarePaginator::resolveCurrentPath()]
+        );
+        
+        return view('membres.engagements', compact('membre', 'engagements'));
+    }
+    
+    /**
+     * Afficher les détails d'un engagement avec les paiements du membre
+     */
+    public function showEngagement(Request $request, $id)
+    {
+        $membre = Auth::guard('membre')->user();
+        
+        // Récupérer l'engagement
+        $engagement = \App\Models\Engagement::with(['cotisation', 'cotisation.caisse'])->findOrFail($id);
+        
+        // Vérifier que l'engagement appartient au membre
+        if ($engagement->membre_id !== $membre->id) {
+            abort(403, 'Vous n\'avez pas accès à cet engagement.');
+        }
+        
+        // Vérifier et mettre à jour le statut selon la date d'échéance
+        $engagement->checkAndUpdateStatut();
+        
+        // Récupérer les moyens de paiement actifs
+        $paymentMethods = \App\Models\PaymentMethod::getActive();
+        
+        // Vérifier si PayDunya est activé (pour compatibilité)
+        $paydunyaConfig = \App\Models\PayDunyaConfiguration::getActive();
+        $paydunyaEnabled = $paydunyaConfig && $paydunyaConfig->enabled;
+        
+        // Si init_payment est demandé, initier le paiement
+        if ($request->has('init_payment') && $request->has('payment_method')) {
+            $paymentMethodCode = $request->input('payment_method');
+            if ($paymentMethodCode === 'paydunya' && $paydunyaEnabled) {
+                return $this->initierPaiementEngagementPayDunya($request, $engagement->id);
+            }
+            // TODO: Ajouter les autres moyens de paiement (PayPal, Stripe)
+        }
+        
+        // Vérifier si c'est un retour après paiement (PayDunya ajoute ?token=...)
+        $paymentStatus = null;
+        $paymentMessage = null;
+        if ($request->has('token') && $paydunyaEnabled) {
+            $invoiceToken = $request->input('token');
+            try {
+                $paydunyaService = new \App\Services\PayDunyaService();
+                $verification = $paydunyaService->verifyInvoice($invoiceToken);
+                
+                if ($verification['success']) {
+                    $status = $verification['status'] ?? 'unknown';
+                    if ($status === 'completed') {
+                        // Vérifier si le paiement n'a pas déjà été enregistré via le callback IPN
+                        $paiementExistant = \App\Models\Paiement::where('numero', 'PAY-' . $invoiceToken)->first();
+                        
+                        // Si le paiement n'existe pas encore, l'enregistrer depuis le return_url
+                        if (!$paiementExistant) {
+                            $verificationData = $verification['data'] ?? [];
+                            $customData = $verificationData['custom_data'] ?? [];
+                            $cotisationId = isset($customData['cotisation_id']) ? (int)$customData['cotisation_id'] : null;
+                            $membreId = isset($customData['membre_id']) ? (int)$customData['membre_id'] : null;
+                            $engagementId = isset($customData['engagement_id']) ? (int)$customData['engagement_id'] : null;
+                            
+                            \Log::info('PayDunya: Tentative d\'enregistrement depuis return_url (engagement)', [
+                                'cotisation_id' => $cotisationId,
+                                'membre_id' => $membreId,
+                                'engagement_id' => $engagementId,
+                                'custom_data' => $customData,
+                            ]);
+                            
+                            if ($cotisationId && $membreId) {
+                                $cotisationForPayment = \App\Models\Cotisation::findOrFail($cotisationId);
+                                
+                                // Récupérer le montant et s'assurer qu'il est un nombre
+                                $montantPaiement = isset($verificationData['total_amount']) 
+                                    ? (float)$verificationData['total_amount'] 
+                                    : (float)($engagement->montant_engage - ($engagement->montant_paye ?? 0));
+                                
+                                // Créer le paiement
+                                $paiement = \App\Models\Paiement::create([
+                                    'numero' => 'PAY-' . $invoiceToken,
+                                    'membre_id' => $membreId,
+                                    'cotisation_id' => $cotisationId,
+                                    'caisse_id' => $cotisationForPayment->caisse_id,
+                                    'montant' => $montantPaiement,
+                                    'date_paiement' => now(),
+                                    'mode_paiement' => 'mobile_money',
+                                    'notes' => 'Paiement via PayDunya - Token: ' . $invoiceToken . ' (enregistré depuis return_url - Engagement ID: ' . $engagementId . ')',
+                                ]);
+                                
+                                // Mettre à jour le solde de la caisse
+                                $caisse = \App\Models\Caisse::findOrFail($cotisationForPayment->caisse_id);
+                                $soldeAvant = (float)$caisse->solde_initial;
+                                $caisse->solde_initial = $soldeAvant + $montantPaiement;
+                                $caisse->save();
+                                
+                                // Recharger la caisse pour vérifier le solde mis à jour
+                                $caisse->refresh();
+                                
+                                \Log::info('PayDunya: Mise à jour du solde de la caisse (return_url - engagement)', [
+                                    'caisse_id' => $caisse->id,
+                                    'caisse_nom' => $caisse->nom,
+                                    'solde_avant' => $soldeAvant,
+                                    'montant_paiement' => $montantPaiement,
+                                    'solde_apres' => $caisse->solde_initial,
+                                    'paiement_id' => $paiement->id,
+                                ]);
+                                
+                                // Journaliser le mouvement
+                                \App\Models\MouvementCaisse::create([
+                                    'caisse_id' => $caisse->id,
+                                    'type' => 'paiement',
+                                    'sens' => 'entree',
+                                    'montant' => $paiement->montant,
+                                    'date_operation' => $paiement->date_paiement,
+                                    'libelle' => 'Paiement PayDunya: ' . $cotisationForPayment->nom,
+                                    'notes' => 'Paiement via PayDunya (Engagement)',
+                                    'reference_type' => \App\Models\Paiement::class,
+                                    'reference_id' => $paiement->id,
+                                ]);
+                                
+                                // Envoyer un email avec PDF au membre
+                                try {
+                                    $emailService = new \App\Services\EmailService();
+                                    $emailService->sendPaymentEmail($paiement);
+                                } catch (\Exception $e) {
+                                    \Log::error('PayDunya: Erreur lors de l\'envoi de l\'email de paiement (return_url - engagement)', [
+                                        'error' => $e->getMessage(),
+                                        'paiement_id' => $paiement->id,
+                                    ]);
+                                }
+                                
+                                // Envoyer une notification à tous les admins
+                                $admins = \App\Models\User::all();
+                                foreach ($admins as $admin) {
+                                    $admin->notify(new \App\Notifications\PayDunyaPaymentNotification($paiement));
+                                }
+                                
+                                \Log::info('PayDunya: Paiement enregistré depuis return_url (engagement)', [
+                                    'paiement_id' => $paiement->id,
+                                    'invoice_token' => $invoiceToken,
+                                ]);
+                            }
+                        }
+                        
+                        $paymentStatus = 'success';
+                        $paymentMessage = 'Votre paiement a été effectué avec succès.';
+                    } elseif ($status === 'cancelled') {
+                        $paymentStatus = 'cancelled';
+                        $paymentMessage = 'Le paiement a été annulé.';
+                    } else {
+                        $paymentStatus = 'pending';
+                        $paymentMessage = 'Votre paiement est en attente de confirmation.';
+                    }
+                } else {
+                    $paymentStatus = 'error';
+                    $paymentMessage = 'Erreur lors de la vérification du paiement.';
+                }
+            } catch (\Exception $e) {
+                \Log::error('PayDunya: Erreur lors de la vérification du paiement (engagement)', [
+                    'error' => $e->getMessage(),
+                ]);
+                $paymentStatus = 'error';
+                $paymentMessage = 'Erreur lors de la vérification du paiement.';
+            }
+        }
+        
+        // Récupérer les paiements liés à cet engagement (APRÈS avoir potentiellement enregistré un nouveau paiement)
+        // Pour un engagement, on récupère tous les paiements pour cette cotisation depuis la période de début
+        // même s'ils sont faits après la période de fin (paiements en retard)
+        $paiements = \App\Models\Paiement::where('membre_id', $membre->id)
+            ->where('cotisation_id', $engagement->cotisation_id)
+            ->where(function($query) use ($engagement) {
+                if ($engagement->periode_debut) {
+                    // Récupérer tous les paiements depuis le début de la période
+                    $query->whereDate('date_paiement', '>=', $engagement->periode_debut);
+                } else {
+                    // Si pas de période de début, prendre tous les paiements pour cette cotisation
+                    $query->whereNotNull('date_paiement');
+                }
+            })
+            ->with(['caisse'])
+            ->orderBy('date_paiement', 'desc')
+            ->get();
+        
+        // Calculer le montant payé à partir des paiements récupérés
+        $montantPaye = $paiements->sum('montant');
+        $resteAPayer = $engagement->montant_engage - $montantPaye;
+        
+        // Log pour débogage
+        \Log::info('Engagement: Calcul du montant payé', [
+            'engagement_id' => $engagement->id,
+            'montant_engage' => $engagement->montant_engage,
+            'montant_paye' => $montantPaye,
+            'reste_a_payer' => $resteAPayer,
+            'nombre_paiements' => $paiements->count(),
+            'periode_debut' => $engagement->periode_debut,
+            'periode_fin' => $engagement->periode_fin,
+            'statut' => $engagement->statut,
+        ]);
+        
+        // Si le reste à payer est 0 et que l'engagement est en cours ou en retard, mettre à jour le statut
+        if ($resteAPayer <= 0 && in_array($engagement->statut, ['en_cours', 'en_retard'])) {
+            $engagement->statut = 'honore';
+            $engagement->save();
+            // Recharger l'engagement pour avoir le statut mis à jour
+            $engagement->refresh();
+            
+            \Log::info('Engagement: Statut mis à jour à honoré', [
+                'engagement_id' => $engagement->id,
+                'montant_paye' => $montantPaye,
+                'montant_engage' => $engagement->montant_engage,
+            ]);
+        }
+        
+        // Si payment=true dans l'URL, on affiche directement la section paiement
+        $showPayment = $request->has('payment');
+        
+        return view('membres.engagement-show', compact(
+            'membre', 
+            'engagement', 
+            'paiements', 
+            'montantPaye', 
+            'resteAPayer', 
+            'paymentMethods', 
+            'paydunyaEnabled',
+            'paymentStatus',
+            'paymentMessage',
+            'showPayment'
+        ));
+    }
+    
+    /**
+     * Initier un paiement PayDunya pour un engagement
+     */
+    public function initierPaiementEngagementPayDunya(Request $request, $id)
+    {
+        $membre = Auth::guard('membre')->user();
+        
+        // Récupérer l'engagement
+        $engagement = \App\Models\Engagement::with(['cotisation', 'cotisation.caisse'])->findOrFail($id);
+        
+        // Vérifier que l'engagement appartient au membre
+        if ($engagement->membre_id !== $membre->id) {
+            abort(403, 'Vous n\'avez pas accès à cet engagement.');
+        }
+        
+        // Vérifier que l'engagement est en cours ou en retard
+        if (!in_array($engagement->statut, ['en_cours', 'en_retard'])) {
+            return redirect()->back()->with('error', 'Cet engagement n\'est plus en cours.');
+        }
+        
+        // Calculer le montant à payer (reste à payer)
+        $montantPaye = $engagement->montant_paye ?? 0;
+        $montantAPayer = $engagement->montant_engage - $montantPaye;
+        
+        if ($montantAPayer <= 0) {
+            return redirect()->back()->with('error', 'Cet engagement est déjà entièrement payé.');
+        }
+        
+        // Vérifier que PayDunya est activé
+        $paydunyaConfig = \App\Models\PayDunyaConfiguration::getActive();
+        if (!$paydunyaConfig || !$paydunyaConfig->enabled) {
+            return redirect()->back()->with('error', 'Le paiement mobile n\'est pas activé.');
+        }
+        
+        try {
+            $paydunyaService = new \App\Services\PayDunyaService();
+            
+            // URLs de callback (utiliser url() pour générer des URLs absolues correctes)
+            $callbackUrl = url('/membre/paydunya/callback');
+            $returnUrl = url('/membre/engagements/' . $engagement->id);
+            $cancelUrl = url('/membre/engagements/' . $engagement->id);
+            
+            // Créer la facture PayDunya
+            $result = $paydunyaService->createInvoice([
+                'engagement_id' => $engagement->id,
+                'cotisation_id' => $engagement->cotisation_id,
+                'membre_id' => $membre->id,
+                'item_name' => 'Paiement engagement - ' . $engagement->cotisation->nom,
+                'amount' => $montantAPayer,
+                'description' => 'Paiement de l\'engagement: ' . $engagement->cotisation->nom,
+                'callback_url' => $callbackUrl,
+                'return_url' => $returnUrl,
+                'cancel_url' => $cancelUrl,
+                'type' => 'engagement',
+            ]);
+            
+            if ($result['success']) {
+                // Rediriger vers la page de paiement PayDunya
+                return redirect($result['invoice_url']);
+            } else {
+                return redirect()->back()
+                    ->with('error', 'Erreur lors de la création du paiement: ' . ($result['message'] ?? 'Erreur inconnue'));
+            }
+        } catch (\Exception $e) {
+            \Log::error('PayDunya: Erreur lors de l\'initiation du paiement (engagement)', [
+                'error' => $e->getMessage(),
+                'engagement_id' => $engagement->id,
+            ]);
+            return redirect()->back()->with('error', 'Erreur lors de la création du paiement: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Afficher le profil du membre
+     */
+    public function profil()
+    {
+        $membre = Auth::guard('membre')->user();
+        
+        return view('membres.profil', compact('membre'));
+    }
+    
+    /**
+     * Mettre à jour le profil du membre
+     */
+    public function updateProfil(Request $request)
+    {
+        $membre = Auth::guard('membre')->user();
+        
+        $validated = $request->validate([
+            'email' => 'required|email|unique:membres,email,' . $membre->id,
+            'telephone' => 'nullable|string|max:20',
+            'adresse' => 'nullable|string',
+            'password' => 'nullable|string|min:6|confirmed',
+        ]);
+        
+        // Si le mot de passe est fourni, le hasher
+        if (!empty($validated['password'])) {
+            $validated['password'] = \Illuminate\Support\Facades\Hash::make($validated['password']);
+        } else {
+            unset($validated['password']);
+        }
+        
+        $membre->update($validated);
+        
+        return redirect()->route('membre.profil')
+            ->with('success', 'Vos informations ont été mises à jour avec succès.');
+    }
+
+    /**
+     * Afficher la liste des remboursements du membre
+     */
+    public function remboursements()
+    {
+        $membre = Auth::guard('membre')->user();
+        
+        $remboursements = $membre->remboursements()
+            ->with(['paiement.cotisation', 'caisse', 'traitePar'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(15);
+        
+        return view('membres.remboursements', compact('membre', 'remboursements'));
+    }
+
+    /**
+     * Créer une demande de remboursement
+     */
+    public function creerRemboursement(Request $request)
+    {
+        $membre = Auth::guard('membre')->user();
+
+        $validated = $request->validate([
+            'paiement_id' => 'required|exists:paiements,id',
+            'montant' => 'required|numeric|min:1',
+            'raison' => 'required|string|max:1000',
+        ]);
+
+        // Vérifier que le paiement appartient au membre
+        $paiement = Paiement::findOrFail($validated['paiement_id']);
+        if ($paiement->membre_id !== $membre->id) {
+            abort(403, 'Vous n\'avez pas accès à ce paiement.');
+        }
+
+        // Vérifier que le montant ne dépasse pas le montant du paiement
+        if ($validated['montant'] > $paiement->montant) {
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['montant' => 'Le montant demandé ne peut pas dépasser le montant du paiement.']);
+        }
+
+        // Vérifier qu'il n'y a pas déjà un remboursement en attente ou approuvé pour ce paiement
+        $remboursementExistant = Remboursement::where('paiement_id', $paiement->id)
+            ->whereIn('statut', ['en_attente', 'approuve'])
+            ->first();
+        
+        if ($remboursementExistant) {
+            return redirect()->back()
+                ->with('error', 'Une demande de remboursement est déjà en cours pour ce paiement.');
+        }
+
+        // Générer un numéro de remboursement unique
+        do {
+            $numero = 'REM-' . strtoupper(Str::random(8));
+        } while (Remboursement::where('numero', $numero)->exists());
+
+        // Créer le remboursement
+        $remboursement = Remboursement::create([
+            'numero' => $numero,
+            'paiement_id' => $paiement->id,
+            'membre_id' => $membre->id,
+            'montant' => $validated['montant'],
+            'raison' => $validated['raison'],
+            'statut' => 'en_attente',
+        ]);
+
+        // Charger les relations nécessaires pour la notification
+        $remboursement->load(['paiement', 'membre']);
+
+        // Envoyer une notification à tous les utilisateurs avec le rôle admin
+        $admins = User::whereHas('roles', function($query) {
+            $query->where('slug', 'admin')->where('actif', true);
+        })->get();
+
+        foreach ($admins as $admin) {
+            $admin->notify(new RemboursementPendingNotification($remboursement));
+        }
+
+        return redirect()->route('membre.remboursements')
+            ->with('success', 'Votre demande de remboursement a été enregistrée avec succès. Elle sera traitée par l\'administration.');
+    }
+}
