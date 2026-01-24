@@ -18,6 +18,7 @@ class CaisseController extends Controller
     public function index(Request $request)
     {
         $query = Caisse::query();
+        //Test test
         
         // Recherche par nom ou numéro
         if ($request->filled('search')) {
