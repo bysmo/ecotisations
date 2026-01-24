@@ -2,4 +2,5 @@
 deployment:
   tasks:
     - export DEPLOYPATH=/home/bemo1278/public_html/ecotisations/
-    - /bin/cp -R * $DEPLOYPATH
+    - export REPOPATH=/home/bemo1278/repositories/ecotisations
+    - $REPOPATH cp -R * $DEPLOYPATH
