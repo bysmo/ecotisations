@@ -1,6 +1,30 @@
 ---
+# Fichier .cpanel.yml pour le déploiement Git sur cPanel (o2switch)
+# Ce fichier doit être placé à la racine de votre dépôt Git.
+
 deployment:
+  # La section tasks contient les commandes shell à exécuter
+  # après un push réussi sur la branche configurée pour le déploiement.
   tasks:
-    - export DEPLOYPATH=/home/bemo1278/public_html/ecotisations.aladints.com/
+    # 1. Créer le répertoire de déploiement s'il n'existe pas.
+    #    $DEPLOYPATH est une variable d'environnement définie par cPanel
     - export REPOPATH=/home/bemo1278/repositories/ecotisations
+    - export DEPLOYPATH=/home/bemo1278/public_html/ecotisations.aladints.com/
+    #    qui pointe vers le répertoire de destination (/home/bemo1278/public_html/ecotisations).
+    - /bin/mkdir -p $DEPLOYPATH
+    
+    # 2. Copier tous les fichiers et dossiers (sauf .git) du dépôt
+    #    vers le répertoire de déploiement.
+    #    L'exécution de ces commandes se fait depuis la racine du dépôt.
     - $REPOPATH cp -R * $DEPLOYPATH
+    
+    # --- COMMANDES OPTIONNELLES DE BUILD/POST-DÉPLOIEMENT ---
+    # Si votre application nécessite des dépendances (ex: Composer, NPM),
+    # vous devez les installer ici.
+    # Exemple pour une application PHP/Composer:
+    # - /usr/local/bin/composer install --no-dev --prefer-dist -d $DEPLOYPATH
+    
+    # Si votre application nécessite des commandes de post-déploiement (ex: migrations),
+    # vous pouvez les ajouter ici.
+    # Exemple pour Laravel:
+    # - /usr/local/bin/php $DEPLOYPATH/artisan migrate --forc
