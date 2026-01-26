@@ -8,7 +8,6 @@ deployment:
   tasks:
     # 1. Créer le répertoire de déploiement s'il n'existe pas.
     #    $DEPLOYPATH est une variable d'environnement définie par cPanel
-    - export REPOPATH=/home/bemo1278/repositories/ecotisations
     - export DEPLOYPATH=/home/bemo1278/public_html/ecotisations.aladints.com
     #    qui pointe vers le répertoire de destination (/home/bemo1278/public_html/ecotisations).
     # - /bin/mkdir -p $DEPLOYPATH
@@ -16,7 +15,7 @@ deployment:
     # 2. Copier tous les fichiers et dossiers (sauf .git) du dépôt
     #    vers le répertoire de déploiement.
     #    L'exécution de ces commandes se fait depuis la racine du dépôt.
-    - $REPOPATH cp -R * $DEPLOYPATH
+    - /bin/cp -R * $DEPLOYPATH
     
     # --- COMMANDES OPTIONNELLES DE BUILD/POST-DÉPLOIEMENT ---
     # Si votre application nécessite des dépendances (ex: Composer, NPM),

@@ -1,60 +1,89 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Ecotisations - Système de Gestion des Cotisations
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Ecotisations est une application web moderne basée sur Laravel, conçue pour simplifier la gestion des membres, des cotisations, des engagements et des flux financiers au sein d'une organisation ou d'une association.
 
-## About Laravel
+## 🚀 Fonctionnalités Clés
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### 👥 Gestion des Membres
+- Inscription publique et gestion administrative des membres.
+- Tableaux de bord personnalisés pour les membres et les administrateurs.
+- Segmentation des membres pour une meilleure organisation.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### 💰 Gestion des Cotisations et Engagements
+- Création et suivi des campagnes de cotisations.
+- Gestion complète des engagements financiers.
+- Génération de reçus au format PDF.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### 💳 Paiements Multi-Moyens
+- Intégration native avec **PayDunya**, **PayPal** et **Stripe**.
+- Gestion des remboursements et suivi des transactions.
 
-## Learning Laravel
+### 🏦 Gestion de Caisse
+- Suivi précis des mouvements de caisse (Entrées, Sorties, Transferts).
+- Journal de caisse et balance en temps réel.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+### 📊 Rapports et Audit
+- Rapports détaillés par membre, par cotisation et par caisse.
+- Journal d'audit complet pour la traçabilité des actions.
+- Traitement automatique de fin de mois.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### ✉️ Communication
+- Campagnes d'emails groupés.
+- Éditeur de modèles d'emails personnalisables.
+- Logs complets des emails envoyés.
 
-## Laravel Sponsors
+### 🛠 Administration et Sécurité
+- Assistant d'installation pas à pas.
+- Système de rôles et permissions granulaire.
+- Gestion des sauvegardes (Backups) et restauration.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## 🛠 Stack Technique
 
-### Premium Partners
+- **Framework:** Laravel 12.x
+- **Langage:** PHP 8.2+
+- **Paiements:** PayDunya, PayPal, Stripe
+- **PDF:** Laravel DOMPDF & Snappy
+- **Déploiement:** Configuré pour cPanel (Git Version Control)
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+## 📦 Installation
 
-## Contributing
+### Prérequis
+- PHP >= 8.2
+- Composer
+- MySQL/MariaDB
+- Extension PHP (BCMath, Ctype, Fileinfo, JSON, Mbstring, OpenSSL, PDO, Tokenizer, XML)
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### Étapes d'installation locale
 
-## Code of Conduct
+1. **Cloner le repository :**
+   ```bash
+   git clone ssh://bemo1278@bemo1278.odns.fr/home/bemo1278/repositories/ecotisations
+   cd ecotisations
+   ```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+2. **Installer les dépendances :**
+   ```bash
+   composer install
+   npm install && npm run build
+   ```
 
-## Security Vulnerabilities
+3. **Configuration de l'environnement :**
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+4. **Installation via l'assistant :**
+   Lancer l'application et accéder à `/install` via votre navigateur pour configurer la base de données et finaliser l'installation.
 
-## License
+## 🌐 Déploiement (cPanel)
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
-# ecotisations
+L'application est configurée pour un déploiement automatique sur cPanel via le fichier `.cpanel.yml`.
+
+1. Poussez vos modifications sur le repository distant.
+2. Dans cPanel, utilisez l'outil **Git™ Version Control**.
+3. Cliquez sur **Pull or Deploy** pour mettre à jour le répertoire `/home/bemo1278/public_html/ecotisations.aladints.com`.
+
+## 📜 Licence
+
+Ce projet est sous licence MIT.
