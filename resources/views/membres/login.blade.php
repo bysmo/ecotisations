@@ -29,205 +29,116 @@
         <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
     @endif
     
-    <title>{{ $appNomComplet }} - Connexion Membre</title>
+    <title>FlexFin - Connexion Membre</title>
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <!-- Google Fonts - Ubuntu Light -->
+    <!-- Google Fonts - Ubuntu -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
-    
-    <style>
-        * {
-            font-family: 'Ubuntu', sans-serif;
-            font-weight: 300;
-        }
-        
-        body {
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-            background-image: url('{{ asset('images/background.jpg') }}');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            background-attachment: fixed;
-            position: relative;
-        }
-        
-        
-        .login-container {
-            position: relative;
-            z-index: 1;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
-        }
-        
-        .login-card {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-            width: 100%;
-            max-width: 420px;
-            padding: 1.5rem;
-        }
-        
-        .login-header {
-            text-align: center;
-            margin-bottom: 1.25rem;
-        }
-        
-        .login-header h2 {
-            color: var(--primary-dark-blue, #1e3a5f);
-            font-weight: 300;
-            font-family: 'Ubuntu', sans-serif;
-            font-size: 1.25rem;
-            margin-bottom: 0.25rem;
-        }
-        
-        .login-header p {
-            color: #666;
-            font-size: 0.75rem;
-            font-weight: 300;
-            font-family: 'Ubuntu', sans-serif;
-        }
-        
-        .form-label {
-            font-weight: 300;
-            font-family: 'Ubuntu', sans-serif;
-            font-size: 0.8rem;
-            color: #333;
-            margin-bottom: 0.35rem;
-        }
-        
-        .form-control {
-            font-weight: 300;
-            font-family: 'Ubuntu', sans-serif;
-            font-size: 0.8rem;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            padding: 0.4rem 0.6rem;
-        }
-        
-        .form-control:focus {
-            border-color: var(--primary-dark-blue, #1e3a5f);
-            box-shadow: 0 0 0 0.2rem rgba(30, 58, 95, 0.25);
-        }
-        
-        .btn-primary {
-            background-color: var(--primary-dark-blue, #1e3a5f);
-            border-color: var(--primary-dark-blue, #1e3a5f);
-            font-weight: 300;
-            font-family: 'Ubuntu', sans-serif;
-            font-size: 0.8rem;
-            padding: 0.4rem;
-        }
-        
-        .btn-primary:hover {
-            background-color: var(--primary-blue, #2c5282);
-            border-color: var(--primary-blue, #2c5282);
-        }
-        
-        .alert {
-            font-weight: 300;
-            font-family: 'Ubuntu', sans-serif;
-            font-size: 0.75rem;
-            border-radius: 5px;
-            padding: 0.5rem 0.75rem;
-        }
-        
-        .form-check-label {
-            font-weight: 300;
-            font-family: 'Ubuntu', sans-serif;
-            font-size: 0.75rem;
-        }
-        
-        .mb-3 {
-            margin-bottom: 0.75rem !important;
-        }
-        
-        .invalid-feedback {
-            font-weight: 300;
-            font-family: 'Ubuntu', sans-serif;
-            font-size: 0.7rem;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ asset('css/auth.css') }}?v={{ time() }}">
 </head>
 <body>
-    <div class="login-container">
-        <div class="login-card">
-            <div class="login-header">
-                <h2><i class="bi bi-person-circle"></i> Connexion Membre</h2>
-                <p>Accédez à vos cotisations</p>
+    <div class="auth-container">
+        <!-- Sidebar Branding -->
+        <div class="auth-sidebar">
+            <div class="auth-logo-box">
+                <i class="bi bi-person-heart"></i>
             </div>
+            <h1 class="product-name">FlexFin</h1>
+            <p class="product-tagline">vos finances, en toute flexibilité!</p>
             
-            @if($errors->any())
-                <div class="alert alert-danger">
-                    <ul class="mb-0" style="font-size: 0.8rem;">
-                        @foreach($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
+            <p class="mt-4 mb-4">Espace Membre : Gérez vos cotisations et engagements en toute simplicité.</p>
             
-            <form method="POST" action="{{ route('membre.login') }}">
-                @csrf
-                
-                <div class="mb-3">
-                    <label for="email" class="form-label">Email</label>
-                    <input type="email" 
-                           class="form-control @error('email') is-invalid @enderror" 
-                           id="email" 
-                           name="email" 
-                           value="{{ old('email') }}" 
-                           required 
-                           autofocus>
-                    @error('email')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
+            <div class="auth-stats">
+                <div class="stat-item">
+                    <span class="stat-value">10K+</span>
+                    <span class="stat-label">Membres</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">24/7</span>
+                    <span class="stat-label">Accessibilité</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Login Form -->
+        <div class="auth-content">
+            <div class="auth-card">
+                <div class="mb-4">
+                    <h2 class="auth-title">Espace Membre</h2>
+                    <p class="auth-subtitle">Accédez à votre compte pour gérer vos cotisations</p>
                 </div>
                 
-                <div class="mb-3">
-                    <label for="password" class="form-label">Mot de passe</label>
-                    <input type="password" 
-                           class="form-control @error('password') is-invalid @enderror" 
-                           id="password" 
-                           name="password" 
-                           required>
-                    @error('password')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
-                </div>
-                
-                <div class="mb-3 form-check">
-                    <input type="checkbox" class="form-check-input" id="remember" name="remember">
-                    <label class="form-check-label" for="remember">
-                        Se souvenir de moi
-                    </label>
-                </div>
-                
-                <button type="submit" class="btn btn-primary w-100">
-                    <i class="bi bi-box-arrow-in-right"></i> Se connecter
-                </button>
-            </form>
-            
-            <div class="text-center mt-3">
-                <p class="mb-2" style="font-size: 0.9rem; color: #666;">Vous n'avez pas encore de compte ?</p>
-                <a href="{{ route('membre.register') }}" class="btn btn-outline-primary btn-sm me-2">
-                    <i class="bi bi-person-plus"></i> Créer un compte
-                </a>
-                
-                <div class="mt-3">
-                    <a href="{{ route('admin.login') }}" class="text-decoration-none" style="font-size: 0.75rem; color: #666; font-weight: 300;">
-                        <i class="bi bi-shield-check"></i> Accès Administrateur
-                    </a>
+                <form method="POST" action="{{ route('membre.login') }}">
+                    @csrf
+                    
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Entrez votre adresse e-mail</label>
+                        <input type="email" 
+                               class="form-control @error('email') is-invalid @enderror" 
+                               id="email" 
+                               name="email" 
+                               placeholder="votre@email.com"
+                               value="{{ old('email') }}" 
+                               required 
+                               autofocus>
+                        @error('email')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <label for="password" class="form-label">Mot de passe</label>
+                            <a href="{{ route('membre.password.request') }}" class="text-decoration-none" style="font-size: 0.8rem; color: var(--aladin-blue);">Mot de passe oublié ?</a>
+                        </div>
+                        <div class="input-group">
+                            <input type="password" 
+                                   class="form-control @error('password') is-invalid @enderror" 
+                                   id="password" 
+                                   name="password" 
+                                   required>
+                            <span class="input-group-text bg-white border-start-0">
+                                <i class="bi bi-eye text-muted"></i>
+                            </span>
+                        </div>
+                        @error('password')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    
+                    <div class="mb-4 form-check">
+                        <input type="checkbox" class="form-check-input" id="remember" name="remember">
+                        <label class="form-check-label" for="remember">
+                            Se souvenir de moi
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100 mb-4">
+                        Connexion
+                    </button>
+                    
+                    <div class="text-center p-3 border-top">
+                        <p class="mb-2" style="font-size: 0.9rem;">Êtes-vous nouveau ici ?</p>
+                        <a href="{{ route('membre.register') }}" class="btn btn-outline-primary w-100 fw-bold" style="border-width: 2px;">
+                            Créer un compte
+                        </a>
+                    </div>
+                    
+                    <div class="text-center mt-3">
+                        <a href="{{ route('admin.login') }}" class="text-decoration-none" style="font-size: 0.8rem; color: var(--text-muted);">
+                            <i class="bi bi-shield-lock"></i> Accès Administrateur
+                        </a>
+                    </div>
+                </form>
+
+                <div class="auth-footer">
+                    <p class="mb-1">© 2026 FlexFin+</p>
+                    <p>Powered by Aladin Technologies Solutions (ALTES)</p>
                 </div>
             </div>
         </div>

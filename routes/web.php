@@ -19,6 +19,7 @@ Route::prefix('install')->name('install.')->withoutMiddleware([\App\Http\Middlew
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/login', [\App\Http\Controllers\Auth\AdminAuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [\App\Http\Controllers\Auth\AdminAuthController::class, 'login']);
+    Route::get('/forgot-password', [\App\Http\Controllers\Auth\AdminAuthController::class, 'showForgotPasswordForm'])->name('password.request');
     Route::post('/logout', [\App\Http\Controllers\Auth\AdminAuthController::class, 'logout'])->name('logout');
 });
 
@@ -200,11 +201,16 @@ Route::get('/caisses/{caisse}/mouvements', [CaisseController::class, 'mouvements
 Route::prefix('membre')->name('membre.')->group(function () {
     Route::get('/login', [\App\Http\Controllers\Auth\MembreAuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [\App\Http\Controllers\Auth\MembreAuthController::class, 'login']);
+    Route::get('/verify-mfa', [\App\Http\Controllers\Auth\MembreAuthController::class, 'showMfa'])->name('verify.mfa');
+    Route::post('/verify-mfa', [\App\Http\Controllers\Auth\MembreAuthController::class, 'verifyMfa'])->name('verify.mfa.post');
+    Route::get('/forgot-password', [\App\Http\Controllers\Auth\MembreAuthController::class, 'showForgotPasswordForm'])->name('password.request');
     Route::post('/logout', [\App\Http\Controllers\Auth\MembreAuthController::class, 'logout'])->name('logout');
     
     // Routes d'inscription publique (sans authentification)
     Route::get('/register', [\App\Http\Controllers\Auth\MembreAuthController::class, 'showRegisterForm'])->name('register');
     Route::post('/register', [\App\Http\Controllers\Auth\MembreAuthController::class, 'register']);
+    Route::get('/verify-otp', [\App\Http\Controllers\Auth\MembreAuthController::class, 'showVerifyOtp'])->name('verify.otp');
+    Route::post('/verify-otp', [\App\Http\Controllers\Auth\MembreAuthController::class, 'verifyOtp'])->name('verify.otp.post');
     
     // Route callback PayDunya (sans authentification, appelée par PayDunya)
     Route::post('/membre/paydunya/callback', [\App\Http\Controllers\MembreDashboardController::class, 'paydunyaCallback'])->name('paydunya.callback');

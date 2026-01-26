@@ -14,25 +14,47 @@ class Membre extends Authenticatable
         'numero',
         'nom',
         'prenom',
+        'date_naissance',
+        'lieu_naissance',
+        'sexe',
+        'nom_mere',
         'email',
         'telephone',
         'adresse',
+        'latitude',
+        'longitude',
         'date_adhesion',
         'statut',
         'segment',
         'password',
+        'email_verified_at',
+        'sms_verified_at',
+        'verification_code',
+        'piece_identite_recto',
+        'piece_identite_verso',
+        'selfie',
+        'mfa_enabled',
+        'mfa_method',
+        'biometric_token',
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
+        'verification_code',
     ];
 
     protected function casts(): array
     {
         return [
             'date_adhesion' => 'date',
+            'date_naissance' => 'date',
             'password' => 'hashed',
+            'email_verified_at' => 'datetime',
+            'sms_verified_at' => 'datetime',
+            'latitude' => 'decimal:8',
+            'longitude' => 'decimal:8',
+            'mfa_enabled' => 'boolean',
         ];
     }
 

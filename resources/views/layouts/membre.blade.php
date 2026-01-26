@@ -349,10 +349,10 @@
                 <span>Mes Remboursements</span>
             </a>
             
-            <a href="{{ route('membre.nano-credits') }}" class="nav-link {{ request()->routeIs('membre.nano-credits*') ? 'active' : '' }}">
+            {{-- <a href="{{ route('membre.nano-credits') }}" class="nav-link {{ request()->routeIs('membre.nano-credits*') ? 'active' : '' }}">
                 <i class="bi bi-credit-card-2-front"></i>
                 <span>Nano Crédits</span>
-            </a>
+            </a> --}}
             
             <a href="{{ route('membre.profil') }}" class="nav-link {{ request()->routeIs('membre.profil') ? 'active' : '' }}">
                 <i class="bi bi-person-circle"></i>
