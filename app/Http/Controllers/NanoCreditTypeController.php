@@ -41,7 +41,7 @@ class NanoCreditTypeController extends Controller
             'description' => 'nullable|string',
             'montant_min' => 'required|numeric|min:0',
             'montant_max' => 'nullable|numeric|min:0',
-            'duree_mois' => 'required|integer|min:1|max:120',
+            'duree_jours' => 'required|integer|min:1|max:365',
             'taux_interet' => 'required|numeric|min:0|max:100',
             'frequence_remboursement' => 'required|in:hebdomadaire,mensuel,trimestriel',
             'actif' => 'boolean',
@@ -49,7 +49,7 @@ class NanoCreditTypeController extends Controller
         ], [
             'nom.required' => 'Le nom du type est obligatoire.',
             'montant_min.required' => 'Le montant minimum est obligatoire.',
-            'duree_mois.required' => 'La durée (mois) est obligatoire.',
+            'duree_jours.required' => 'La durée (jours) est obligatoire.',
             'taux_interet.required' => 'Le taux d\'intérêt est obligatoire.',
             'frequence_remboursement.required' => 'La fréquence de remboursement est obligatoire.',
         ]);
@@ -79,7 +79,7 @@ class NanoCreditTypeController extends Controller
             'description' => 'nullable|string',
             'montant_min' => 'required|numeric|min:0',
             'montant_max' => 'nullable|numeric|min:0',
-            'duree_mois' => 'required|integer|min:1|max:120',
+            'duree_jours' => 'required|integer|min:1|max:365',
             'taux_interet' => 'required|numeric|min:0|max:100',
             'frequence_remboursement' => 'required|in:hebdomadaire,mensuel,trimestriel',
             'actif' => 'boolean',

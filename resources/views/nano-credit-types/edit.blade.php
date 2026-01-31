@@ -41,9 +41,9 @@
 
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label for="duree_mois" class="form-label">Durée (mois) <span class="text-danger">*</span></label>
-                    <input type="number" min="1" max="120" class="form-control @error('duree_mois') is-invalid @enderror" id="duree_mois" name="duree_mois" value="{{ old('duree_mois', $type->duree_mois) }}" required>
-                    @error('duree_mois')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    <label for="duree_jours" class="form-label">Durée (jours) <span class="text-danger">*</span></label>
+                    <input type="number" min="1" max="365" class="form-control @error('duree_jours') is-invalid @enderror" id="duree_jours" name="duree_jours" value="{{ old('duree_jours', $type->duree_jours) }}" required>
+                    @error('duree_jours')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
                 <div class="col-md-6 mb-3">
                     <label for="taux_interet" class="form-label">Taux d'intérêt annuel (%) <span class="text-danger">*</span></label>

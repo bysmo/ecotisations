@@ -112,7 +112,7 @@ class NanoCreditController extends Controller
 
         $dateOctroi = now()->toDateString();
         $type = $nanoCredit->nanoCreditType;
-        $dateFinRemb = $type ? Carbon::parse($dateOctroi)->addMonths((int) $type->duree_mois)->toDateString() : null;
+        $dateFinRemb = $type ? Carbon::parse($dateOctroi)->addDays((int) $type->duree_jours)->toDateString() : null;
 
         $nanoCredit->update([
             'statut' => 'debourse',
@@ -151,8 +151,9 @@ class NanoCreditController extends Controller
 
         $addPeriod = match ($type->frequence_remboursement) {
             'hebdomadaire' => fn ($date, $i) => $date->copy()->addWeeks($i),
+            'mensuel' => fn ($date, $i) => $date->copy()->addMonths($i),
             'trimestriel' => fn ($date, $i) => $date->copy()->addMonths(3 * $i),
-            default => fn ($date, $i) => $date->copy()->addMonths($i),
+            default => fn ($date, $i) => $date->copy()->addDays($type->duree_jours), // Par défaut, fin du crédit
         };
 
         for ($i = 1; $i <= $nbEcheances; $i++) {

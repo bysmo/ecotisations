@@ -48,8 +48,8 @@
                                 @endif
                                 <ul class="list-unstyled small mb-3" style="font-size: 0.75rem;">
                                     <li><i class="bi bi-cash-coin me-1"></i> {{ number_format($type->montant_min, 0, ',', ' ') }} – {{ $type->montant_max ? number_format($type->montant_max, 0, ',', ' ') . ' XOF' : 'illimité' }}</li>
-                                    <li><i class="bi bi-percent me-1"></i> Taux : {{ number_format($type->taux_interet ?? 0, 1, ',', ' ') }} % / an</li>
-                                    <li><i class="bi bi-calendar-range me-1"></i> Durée : {{ $type->duree_mois }} mois</li>
+                                    <li><i class="bi bi-percent me-1"></i> Intérêt : {{ number_format($type->taux_interet ?? 0, 1, ',', ' ') }} %</li>
+                                    <li><i class="bi bi-calendar-range me-1"></i> Durée : {{ $type->duree_jours }} jours</li>
                                     <li><i class="bi bi-arrow-repeat me-1"></i> Remboursement : {{ $type->frequence_remboursement_label }}</li>
                                 </ul>
                                 <a href="{{ route('membre.nano-credits.demander', $type) }}" class="btn btn-primary btn-sm w-100">

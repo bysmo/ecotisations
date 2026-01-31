@@ -75,7 +75,7 @@
                             <th>Nom</th>
                             <th class="text-end">Montant min</th>
                             <th class="text-end">Montant max</th>
-                            <th class="text-center">Durée (mois)</th>
+                            <th class="text-center">Durée (jours)</th>
                             <th class="text-center">Taux %</th>
                             <th>Fréquence remb.</th>
                             <th class="text-center">Demandes</th>
@@ -89,7 +89,7 @@
                                 <td>{{ $type->nom }}</td>
                                 <td class="text-end">{{ number_format($type->montant_min, 0, ',', ' ') }} XOF</td>
                                 <td class="text-end">{{ $type->montant_max ? number_format($type->montant_max, 0, ',', ' ') . ' XOF' : '—' }}</td>
-                                <td class="text-center">{{ $type->duree_mois }}</td>
+                                <td class="text-center">{{ $type->duree_jours }}</td>
                                 <td class="text-center">{{ number_format($type->taux_interet, 1, ',', ' ') }} %</td>
                                 <td>{{ $type->frequence_remboursement_label }}</td>
                                 <td class="text-center">{{ $type->demandes_count ?? 0 }}</td>
