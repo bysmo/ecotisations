@@ -14,7 +14,7 @@ class NanoCreditType extends Model
         'description',
         'montant_min',
         'montant_max',
-        'duree_mois',
+        'duree_jours',
         'taux_interet',
         'frequence_remboursement',
         'actif',
@@ -48,12 +48,12 @@ class NanoCreditType extends Model
      */
     public function getNombreEcheancesAttribute(): int
     {
-        $duree = (int) ($this->duree_mois ?? 12);
+        $duree = (int) ($this->duree_jours ?? 7);
         return match ($this->frequence_remboursement ?? 'mensuel') {
-            'hebdomadaire' => (int) min(52 * 2, ceil(52 * $duree / 12)),
-            'mensuel' => $duree,
-            'trimestriel' => (int) max(1, ceil($duree / 3)),
-            default => $duree,
+            'hebdomadaire' => (int) max(1, ceil($duree / 7)),
+            'mensuel' => (int) max(1, ceil($duree / 30)),
+            'trimestriel' => (int) max(1, ceil($duree / 90)),
+            default => 1,
         };
     }
 
@@ -65,9 +65,10 @@ class NanoCreditType extends Model
      */
     public function calculAmortissement(float $montant): array
     {
-        $dureeMois = (int) ($this->duree_mois ?? 12);
+        $dureeJours = (int) ($this->duree_jours ?? 7);
         $taux = (float) ($this->taux_interet ?? 0);
-        $interetTotal = round($montant * ($taux / 100) * ($dureeMois / 12), 0);
+        // Intérêt simple prorata temporis (nb_jours / 365)
+        $interetTotal = round($montant * ($taux / 100) * ($dureeJours / 365), 0);
         $montantTotalDu = $montant + $interetTotal;
         $nbEcheances = $this->nombre_echeances;
         $montantEcheance = $nbEcheances > 0 ? (int) round($montantTotalDu / $nbEcheances, 0) : 0;
