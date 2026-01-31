@@ -72,4 +72,12 @@ class Caisse extends Model
     {
         return $this->hasMany(\App\Models\MouvementCaisse::class);
     }
+
+    /**
+     * Plans d'épargne associés à cette caisse
+     */
+    public function epargnePlans()
+    {
+        return $this->hasMany(\App\Models\EpargnePlan::class);
+    }
 }

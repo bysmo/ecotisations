@@ -478,12 +478,61 @@ class MembreDashboardController extends Controller
             
             // Si le paiement est complété
             if ($status === 'completed') {
-                $cotisationId = $customData['cotisation_id'] ?? null;
-                $membreId = $customData['membre_id'] ?? null;
-                $type = $customData['type'] ?? 'cotisation';
-                $engagementId = $customData['engagement_id'] ?? null;
-                
-                if ($cotisationId && $membreId && $invoiceToken) {
+                $cotisationId = isset($customData['cotisation_id']) ? (int) $customData['cotisation_id'] : null;
+                $membreId = isset($customData['membre_id']) ? (int) $customData['membre_id'] : null;
+                $type = isset($customData['type']) ? $customData['type'] : 'cotisation';
+                $engagementId = isset($customData['engagement_id']) ? (int) $customData['engagement_id'] : null;
+                $souscriptionId = isset($customData['souscription_id']) ? (int) $customData['souscription_id'] : null;
+                $echeanceId = isset($customData['echeance_id']) ? (int) $customData['echeance_id'] : null;
+
+                // Paiement épargne
+                if ($type === 'epargne' && $membreId && $souscriptionId && $echeanceId && $invoiceToken) {
+                    $versementExistant = \App\Models\EpargneVersement::where('reference', 'PAY-' . $invoiceToken)->first();
+                    if (!$versementExistant) {
+                        $souscription = \App\Models\EpargneSouscription::with('plan')->findOrFail($souscriptionId);
+                        $echeance = \App\Models\EpargneEcheance::findOrFail($echeanceId);
+                        if ($echeance->souscription_id != $souscription->id) {
+                            \Log::warning('PayDunya épargne: echeance ne correspond pas à la souscription');
+                        } else {
+                            $montant = isset($invoice['total_amount']) ? (float) $invoice['total_amount'] : (float) $echeance->montant;
+                            $caisseId = $souscription->plan->caisse_id;
+
+                            $versement = \App\Models\EpargneVersement::create([
+                                'souscription_id' => $souscription->id,
+                                'echeance_id' => $echeance->id,
+                                'membre_id' => $membreId,
+                                'montant' => $montant,
+                                'date_versement' => now(),
+                                'mode_paiement' => 'paydunya',
+                                'reference' => 'PAY-' . $invoiceToken,
+                                'caisse_id' => $caisseId,
+                            ]);
+
+                            $souscription->increment('solde_courant', $montant);
+                            $echeance->update(['statut' => 'payee', 'paye_le' => now()]);
+
+                            if ($caisseId) {
+                                \App\Models\MouvementCaisse::create([
+                                    'caisse_id' => $caisseId,
+                                    'type' => 'epargne',
+                                    'sens' => 'entree',
+                                    'montant' => $montant,
+                                    'date_operation' => now(),
+                                    'libelle' => 'Épargne: ' . $souscription->plan->nom,
+                                    'notes' => 'Versement PayDunya - Échéance ' . $echeance->date_echeance->format('d/m/Y'),
+                                    'reference_type' => \App\Models\EpargneVersement::class,
+                                    'reference_id' => $versement->id,
+                                ]);
+                            }
+                            \Log::info('PayDunya: Versement épargne enregistré', [
+                                'versement_id' => $versement->id,
+                                'souscription_id' => $souscription->id,
+                                'echeance_id' => $echeance->id,
+                                'montant' => $montant,
+                            ]);
+                        }
+                    }
+                } elseif ($cotisationId && $membreId && $invoiceToken) {
                     // Vérifier si le paiement n'a pas déjà été enregistré
                     $paiementExistant = \App\Models\Paiement::where('numero', 'PAY-' . $invoiceToken)->first();
                     
@@ -1103,5 +1152,20 @@ class MembreDashboardController extends Controller
 
         return redirect()->route('membre.remboursements')
             ->with('success', 'Votre demande de remboursement a été enregistrée avec succès. Elle sera traitée par l\'administration.');
+    }
+
+    /**
+     * Page Nano Crédits (réservée aux membres dont le KYC est validé)
+     */
+    public function nanoCredits()
+    {
+        $membre = Auth::guard('membre')->user();
+
+        if (!$membre->hasKycValide()) {
+            return redirect()->route('membre.kyc.index')
+                ->with('info', 'Vous devez soumettre votre dossier KYC et qu\'il soit validé par l\'administration avant de pouvoir faire une demande de nano crédit.');
+        }
+
+        return view('membres.nano-credits', compact('membre'));
     }
 }

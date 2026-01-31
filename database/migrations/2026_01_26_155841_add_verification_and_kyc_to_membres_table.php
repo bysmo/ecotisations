@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('membres', function (Blueprint $table) {
             // Verification
-            $table->timestamp('email_verified_at')->nullable()->after('email');
+            //$table->timestamp('email_verified_at')->nullable()->after('email');
             $table->timestamp('sms_verified_at')->nullable()->after('telephone');
             $table->string('verification_code', 10)->nullable()->after('statut');
             
@@ -38,7 +38,7 @@ return new class extends Migration
     {
         Schema::table('membres', function (Blueprint $table) {
             $table->dropColumn([
-                'email_verified_at',
+                //'email_verified_at',
                 'sms_verified_at',
                 'verification_code',
                 'piece_identite_recto',

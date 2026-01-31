@@ -36,7 +36,7 @@ class EmailTemplateController extends Controller
             'nom' => 'required|string|max:255|unique:email_templates,nom',
             'sujet' => 'required|string|max:255',
             'corps' => 'required|string',
-            'type' => 'required|in:paiement,engagement,autre',
+            'type' => 'required|in:paiement,engagement,activation,autre',
             'actif' => 'boolean',
         ]);
 
@@ -73,7 +73,7 @@ class EmailTemplateController extends Controller
             'nom' => 'required|string|max:255|unique:email_templates,nom,' . $emailTemplate->id,
             'sujet' => 'required|string|max:255',
             'corps' => 'required|string',
-            'type' => 'required|in:paiement,engagement,autre',
+            'type' => 'required|in:paiement,engagement,activation,autre',
             'actif' => 'boolean',
         ]);
 

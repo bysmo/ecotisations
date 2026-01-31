@@ -19,7 +19,6 @@ Route::prefix('install')->name('install.')->withoutMiddleware([\App\Http\Middlew
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/login', [\App\Http\Controllers\Auth\AdminAuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [\App\Http\Controllers\Auth\AdminAuthController::class, 'login']);
-    Route::get('/forgot-password', [\App\Http\Controllers\Auth\AdminAuthController::class, 'showForgotPasswordForm'])->name('password.request');
     Route::post('/logout', [\App\Http\Controllers\Auth\AdminAuthController::class, 'logout'])->name('logout');
 });
 
@@ -30,6 +29,9 @@ Route::get('/', function () {
     }
     return redirect()->route('admin.login');
 });
+
+// Callback PayDunya Déboursement (nano crédit) - sans authentification
+Route::post('/paydunya/disburse-callback', [\App\Http\Controllers\PayDunyaDisburseCallbackController::class, '__invoke'])->name('paydunya.disburse.callback');
 
 // Toutes les routes admin nécessitent une authentification
 Route::middleware(['auth:web'])->group(function () {
@@ -64,6 +66,12 @@ Route::get('/caisses/{caisse}/mouvements', [CaisseController::class, 'mouvements
     // Routes pour les membres (administration)
     Route::resource('membres', \App\Http\Controllers\MembreController::class);
     
+    // Routes KYC (admin)
+    Route::get('/kyc', [\App\Http\Controllers\KycController::class, 'index'])->name('kyc.index');
+    Route::get('/kyc/{kyc}', [\App\Http\Controllers\KycController::class, 'show'])->name('kyc.show');
+    Route::post('/kyc/{kyc}/validate', [\App\Http\Controllers\KycController::class, 'validateKyc'])->name('kyc.validate');
+    Route::post('/kyc/{kyc}/reject', [\App\Http\Controllers\KycController::class, 'reject'])->name('kyc.reject');
+
     // Routes pour les segments
     Route::get('/segments', [\App\Http\Controllers\SegmentController::class, 'index'])->name('segments.index');
     Route::get('/segments/create', [\App\Http\Controllers\SegmentController::class, 'create'])->name('segments.create');
@@ -107,6 +115,9 @@ Route::get('/caisses/{caisse}/mouvements', [CaisseController::class, 'mouvements
     Route::get('/engagement-tags/{tag}', [\App\Http\Controllers\EngagementTagController::class, 'show'])->name('engagement-tags.show');
     Route::get('/engagements/{engagement}/pdf', [\App\Http\Controllers\EngagementController::class, 'pdf'])->name('engagements.pdf');
 
+    // Routes pour les plans d'épargne
+    Route::resource('epargne-plans', \App\Http\Controllers\EpargnePlanController::class)->except(['show']);
+
     // Routes pour les annonces
     Route::resource('annonces', \App\Http\Controllers\AnnonceController::class);
 
@@ -120,6 +131,14 @@ Route::get('/caisses/{caisse}/mouvements', [CaisseController::class, 'mouvements
     Route::post('/smtp/{smtp}/test', [\App\Http\Controllers\SMTPController::class, 'test'])->name('smtp.test');
     Route::resource('email-templates', \App\Http\Controllers\EmailTemplateController::class);
     
+    // Types de nano crédit (définis par l'admin, comme les plans d'épargne)
+    Route::resource('nano-credit-types', \App\Http\Controllers\NanoCreditTypeController::class)->except(['show']);
+    // Demandes de nano crédit (liste + détail + octroyer)
+    Route::get('/nano-credits', [\App\Http\Controllers\NanoCreditController::class, 'index'])->name('nano-credits.index');
+    Route::get('/nano-credits/{nanoCredit}', [\App\Http\Controllers\NanoCreditController::class, 'show'])->name('nano-credits.show');
+    Route::post('/nano-credits/{nanoCredit}/octroyer', [\App\Http\Controllers\NanoCreditController::class, 'octroyer'])->name('nano-credits.octroyer');
+    Route::post('/nano-credits/{nanoCredit}/versement', [\App\Http\Controllers\NanoCreditController::class, 'storeVersement'])->name('nano-credits.versement.store');
+
     // Routes pour PayDunya
     Route::get('/paydunya', [\App\Http\Controllers\PayDunyaController::class, 'index'])->name('paydunya.index');
     Route::put('/paydunya', [\App\Http\Controllers\PayDunyaController::class, 'update'])->name('paydunya.update');
@@ -201,17 +220,16 @@ Route::get('/caisses/{caisse}/mouvements', [CaisseController::class, 'mouvements
 Route::prefix('membre')->name('membre.')->group(function () {
     Route::get('/login', [\App\Http\Controllers\Auth\MembreAuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [\App\Http\Controllers\Auth\MembreAuthController::class, 'login']);
-    Route::get('/verify-mfa', [\App\Http\Controllers\Auth\MembreAuthController::class, 'showMfa'])->name('verify.mfa');
-    Route::post('/verify-mfa', [\App\Http\Controllers\Auth\MembreAuthController::class, 'verifyMfa'])->name('verify.mfa.post');
-    Route::get('/forgot-password', [\App\Http\Controllers\Auth\MembreAuthController::class, 'showForgotPasswordForm'])->name('password.request');
     Route::post('/logout', [\App\Http\Controllers\Auth\MembreAuthController::class, 'logout'])->name('logout');
     
     // Routes d'inscription publique (sans authentification)
     Route::get('/register', [\App\Http\Controllers\Auth\MembreAuthController::class, 'showRegisterForm'])->name('register');
     Route::post('/register', [\App\Http\Controllers\Auth\MembreAuthController::class, 'register']);
-    Route::get('/verify-otp', [\App\Http\Controllers\Auth\MembreAuthController::class, 'showVerifyOtp'])->name('verify.otp');
-    Route::post('/verify-otp', [\App\Http\Controllers\Auth\MembreAuthController::class, 'verifyOtp'])->name('verify.otp.post');
-    
+
+    // Vérification d'email (lien envoyé par mail)
+    Route::get('/email/verify/{id}/{hash}', [\App\Http\Controllers\Auth\MembreAuthController::class, 'verifyEmail'])->name('verification.verify')->middleware('signed');
+    Route::post('/email/verification-resend', [\App\Http\Controllers\Auth\MembreAuthController::class, 'resendVerification'])->name('verification.resend');
+
     // Route callback PayDunya (sans authentification, appelée par PayDunya)
     Route::post('/membre/paydunya/callback', [\App\Http\Controllers\MembreDashboardController::class, 'paydunyaCallback'])->name('paydunya.callback');
     
@@ -228,7 +246,25 @@ Route::prefix('membre')->name('membre.')->group(function () {
         Route::post('/engagements/{id}/paydunya', [\App\Http\Controllers\MembreDashboardController::class, 'initierPaiementEngagementPayDunya'])->name('engagements.paydunya');
         Route::get('/remboursements', [\App\Http\Controllers\MembreDashboardController::class, 'remboursements'])->name('remboursements');
         Route::post('/remboursements/creer', [\App\Http\Controllers\MembreDashboardController::class, 'creerRemboursement'])->name('remboursements.creer');
+        Route::get('/kyc', [\App\Http\Controllers\MembreKycController::class, 'index'])->name('kyc.index');
+        Route::post('/kyc', [\App\Http\Controllers\MembreKycController::class, 'store'])->name('kyc.store');
+        Route::get('/nano-credits', [\App\Http\Controllers\MembreNanoCreditController::class, 'index'])->name('nano-credits');
+        Route::get('/nano-credits/mes', [\App\Http\Controllers\MembreNanoCreditController::class, 'mes'])->name('nano-credits.mes');
+        Route::get('/nano-credits/demander/{nano_credit_type}', [\App\Http\Controllers\MembreNanoCreditController::class, 'demander'])->name('nano-credits.demander');
+        Route::post('/nano-credits/demander/{nano_credit_type}', [\App\Http\Controllers\MembreNanoCreditController::class, 'storeDemande'])->name('nano-credits.demander.store');
+        Route::get('/nano-credits/{nanoCredit}', [\App\Http\Controllers\MembreNanoCreditController::class, 'show'])->name('nano-credits.show');
+        Route::get('/epargne', [\App\Http\Controllers\MembreEpargneController::class, 'index'])->name('epargne.index');
+        Route::get('/epargne/mes-epargnes', [\App\Http\Controllers\MembreEpargneController::class, 'mesEpargnes'])->name('epargne.mes-epargnes');
+        Route::get('/epargne/souscrire/{plan}', [\App\Http\Controllers\MembreEpargneController::class, 'souscrire'])->name('epargne.souscrire');
+        Route::post('/epargne/souscrire/{plan}', [\App\Http\Controllers\MembreEpargneController::class, 'storeSouscription'])->name('epargne.souscrire.store');
+        Route::get('/epargne/souscription/{souscription}', [\App\Http\Controllers\MembreEpargneController::class, 'showSouscription'])->name('epargne.souscription.show');
+        Route::post('/epargne/echeance/{echeance}/paydunya', [\App\Http\Controllers\MembreEpargneController::class, 'initierPaiementEpargnePayDunya'])->name('epargne.echeance.paydunya');
         Route::get('/profil', [\App\Http\Controllers\MembreDashboardController::class, 'profil'])->name('profil');
         Route::put('/profil', [\App\Http\Controllers\MembreDashboardController::class, 'updateProfil'])->name('profil.update');
+        // Notifications (cloche top bar)
+        Route::get('/notifications/unread', [\App\Http\Controllers\MembreNotificationController::class, 'unread'])->name('notifications.unread');
+        Route::post('/notifications/{id}/read', [\App\Http\Controllers\MembreNotificationController::class, 'markAsRead'])->name('notifications.read');
+        Route::post('/notifications/read-all', [\App\Http\Controllers\MembreNotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
+        Route::get('/notifications', [\App\Http\Controllers\MembreNotificationController::class, 'index'])->name('notifications.index');
     });
 });

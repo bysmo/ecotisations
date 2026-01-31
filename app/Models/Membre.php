@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-class Membre extends Authenticatable
+class Membre extends Authenticatable implements MustVerifyEmail
 {
     use HasFactory, Notifiable;
 
@@ -14,48 +15,35 @@ class Membre extends Authenticatable
         'numero',
         'nom',
         'prenom',
-        'date_naissance',
-        'lieu_naissance',
-        'sexe',
-        'nom_mere',
         'email',
         'telephone',
         'adresse',
-        'latitude',
-        'longitude',
         'date_adhesion',
         'statut',
         'segment',
         'password',
-        'email_verified_at',
-        'sms_verified_at',
-        'verification_code',
-        'piece_identite_recto',
-        'piece_identite_verso',
-        'selfie',
-        'mfa_enabled',
-        'mfa_method',
-        'biometric_token',
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
-        'verification_code',
     ];
 
     protected function casts(): array
     {
         return [
-            'date_adhesion' => 'date',
-            'date_naissance' => 'date',
-            'password' => 'hashed',
             'email_verified_at' => 'datetime',
-            'sms_verified_at' => 'datetime',
-            'latitude' => 'decimal:8',
-            'longitude' => 'decimal:8',
-            'mfa_enabled' => 'boolean',
+            'date_adhesion' => 'date',
+            'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Envoyer la notification de vérification d'email (utilise la config SMTP admin)
+     */
+    public function sendEmailVerificationNotification(): void
+    {
+        app(\App\Services\EmailService::class)->sendVerificationEmail($this);
     }
 
     /**
@@ -119,5 +107,37 @@ class Membre extends Authenticatable
     public function remboursements()
     {
         return $this->hasMany(\App\Models\Remboursement::class);
+    }
+
+    /**
+     * Relation KYC (une vérification par membre)
+     */
+    public function kycVerification()
+    {
+        return $this->hasOne(\App\Models\KycVerification::class);
+    }
+
+    /**
+     * Vérifier si le membre a un KYC validé
+     */
+    public function hasKycValide(): bool
+    {
+        return $this->kycVerification && $this->kycVerification->isValide();
+    }
+
+    /**
+     * Souscriptions épargne du membre
+     */
+    public function epargneSouscriptions()
+    {
+        return $this->hasMany(EpargneSouscription::class);
+    }
+
+    /**
+     * Nano crédits (déboursements) du membre
+     */
+    public function nanoCredits()
+    {
+        return $this->hasMany(NanoCredit::class);
     }
 }

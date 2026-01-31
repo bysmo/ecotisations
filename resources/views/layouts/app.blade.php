@@ -887,18 +887,18 @@
             <!-- Menu Membres avec sous-menus -->
             @if(auth()->user()->hasRole('admin') || auth()->user()->hasPermission('membres.view'))
             <div>
-                <a class="nav-link has-submenu {{ request()->routeIs('membres.*') || request()->routeIs('segments.*') ? 'active' : '' }}" 
+                <a class="nav-link has-submenu {{ request()->routeIs('membres.*') || request()->routeIs('segments.*') || request()->routeIs('kyc.*') ? 'active' : '' }}" 
                    data-bs-toggle="collapse" 
                    href="#membresSubmenu" 
                    role="button" 
-                   aria-expanded="{{ request()->routeIs('membres.*') || request()->routeIs('segments.*') ? 'true' : 'false' }}" 
+                   aria-expanded="{{ request()->routeIs('membres.*') || request()->routeIs('segments.*') || request()->routeIs('kyc.*') ? 'true' : 'false' }}" 
                    aria-controls="membresSubmenu">
                     <div style="display: flex; align-items: center; gap: 0.75rem;">
                         <i class="bi bi-people"></i>
                         <span>Membres</span>
                     </div>
                 </a>
-                <div class="collapse {{ request()->routeIs('membres.*') || request()->routeIs('segments.*') ? 'show' : '' }}" id="membresSubmenu">
+                <div class="collapse {{ request()->routeIs('membres.*') || request()->routeIs('segments.*') || request()->routeIs('kyc.*') ? 'show' : '' }}" id="membresSubmenu">
                     <ul class="sidebar-submenu">
                         <li>
                             <a href="{{ route('membres.index') }}" class="nav-link {{ request()->routeIs('membres.index') ? 'active' : '' }}">
@@ -910,6 +910,12 @@
                             <a href="{{ route('segments.index') }}" class="nav-link {{ request()->routeIs('segments.*') ? 'active' : '' }}">
                                 <i class="bi bi-tags"></i>
                                 <span>Gestion des segments</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('kyc.index') }}" class="nav-link {{ request()->routeIs('kyc.*') ? 'active' : '' }}">
+                                <i class="bi bi-shield-check"></i>
+                                <span>KYC</span>
                             </a>
                         </li>
                     </ul>
@@ -1009,6 +1015,62 @@
                 </div>
             </div>
             @endif
+
+            <!-- Menu Épargne avec sous-menus -->
+            <div>
+                <a class="nav-link has-submenu {{ request()->routeIs('epargne-plans.*') ? 'active' : '' }}"
+                   data-bs-toggle="collapse"
+                   href="#epargneSubmenu"
+                   role="button"
+                   aria-expanded="{{ request()->routeIs('epargne-plans.*') ? 'true' : 'false' }}"
+                   aria-controls="epargneSubmenu">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <i class="bi bi-piggy-bank"></i>
+                        <span>Épargne</span>
+                    </div>
+                </a>
+                <div class="collapse {{ request()->routeIs('epargne-plans.*') ? 'show' : '' }}" id="epargneSubmenu">
+                    <ul class="sidebar-submenu">
+                        <li>
+                            <a href="{{ route('epargne-plans.index') }}" class="nav-link {{ request()->routeIs('epargne-plans.*') ? 'active' : '' }}">
+                                <i class="bi bi-list-ul"></i>
+                                <span>Plans d'épargne</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Menu Nano crédit avec sous-menus -->
+            <div>
+                <a class="nav-link has-submenu {{ request()->routeIs('nano-credit-types.*') || request()->routeIs('nano-credits.*') ? 'active' : '' }}"
+                   data-bs-toggle="collapse"
+                   href="#nanoCreditSubmenu"
+                   role="button"
+                   aria-expanded="{{ request()->routeIs('nano-credit-types.*') || request()->routeIs('nano-credits.*') ? 'true' : 'false' }}"
+                   aria-controls="nanoCreditSubmenu">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <i class="bi bi-phone"></i>
+                        <span>Nano crédit</span>
+                    </div>
+                </a>
+                <div class="collapse {{ request()->routeIs('nano-credit-types.*') || request()->routeIs('nano-credits.*') ? 'show' : '' }}" id="nanoCreditSubmenu">
+                    <ul class="sidebar-submenu">
+                        <li>
+                            <a href="{{ route('nano-credit-types.index') }}" class="nav-link {{ request()->routeIs('nano-credit-types.*') ? 'active' : '' }}">
+                                <i class="bi bi-list-ul"></i>
+                                <span>Types</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('nano-credits.index') }}" class="nav-link {{ request()->routeIs('nano-credits.*') ? 'active' : '' }}">
+                                <i class="bi bi-inbox"></i>
+                                <span>Demandes</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
             
             <!-- Menu Annonces -->
             @if(auth()->user()->hasRole('admin') || auth()->user()->hasPermission('annonces.view'))

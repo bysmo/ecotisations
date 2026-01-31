@@ -21,9 +21,20 @@ deployment:
     # Si votre application nécessite des dépendances (ex: Composer, NPM),
     # vous devez les installer ici.
     # Exemple pour une application PHP/Composer:
-    # - /usr/local/bin/composer install --no-dev --prefer-dist -d $DEPLOYPATH
+    - /usr/local/bin/composer install --no-dev --prefer-dist -d $DEPLOYPATH
     
     # Si votre application nécessite des commandes de post-déploiement (ex: migrations),
     # vous pouvez les ajouter ici.
     # Exemple pour Laravel:
-    # - /usr/local/bin/php $DEPLOYPATH/artisan migrate --forc
+    - /usr/local/bin/php $DEPLOYPATH/artisan migrate --force
+    - /usr/local/bin/php $DEPLOYPATH/artisan storage:link
+    #mettre a jour les routes
+    - /usr/local/bin/php $DEPLOYPATH/artisan optimize
+    #supprimer les caches
+    - /usr/local/bin/php $DEPLOYPATH/artisan config:clear
+    - /usr/local/bin/php $DEPLOYPATH/artisan view:clear
+    - /usr/local/bin/php $DEPLOYPATH/artisan route:clear
+    - /usr/local/bin/php $DEPLOYPATH/artisan cache:clear
+    
+
+    

@@ -97,6 +97,8 @@
                                             Paiement
                                         @elseif($template->type === 'engagement')
                                             Engagement
+                                        @elseif($template->type === 'authentification')
+                                            Authentification
                                         @else
                                             Autre
                                         @endif

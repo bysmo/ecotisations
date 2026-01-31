@@ -146,6 +146,131 @@
             display: flex;
             align-items: center;
             gap: 0.75rem;
+            position: relative;
+        }
+        
+        .notifications-btn {
+            position: relative;
+            background: none;
+            border: none;
+            color: var(--primary-dark-blue);
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 0.4rem 0.6rem;
+            border-radius: 4px;
+            transition: background-color 0.2s ease;
+        }
+        .notifications-btn:hover {
+            background-color: rgba(30, 58, 95, 0.1);
+        }
+        .notifications-badge {
+            position: absolute;
+            top: 0.2rem;
+            right: 0.3rem;
+            background-color: #dc3545;
+            color: white;
+            border-radius: 50%;
+            min-width: 1.1rem;
+            height: 1.1rem;
+            font-size: 0.65rem;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 0 0.25rem;
+            font-weight: 500;
+        }
+        .notifications-badge:not(:empty) {
+            display: flex;
+        }
+        .notifications-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 0.5rem;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            min-width: 320px;
+            max-width: 400px;
+            max-height: 500px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+        .notifications-dropdown.show {
+            display: block;
+        }
+        .notifications-header {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--primary-dark-blue);
+            color: white;
+        }
+        .notifications-header h6 {
+            margin: 0;
+            font-size: 0.85rem;
+            font-weight: 300;
+            font-family: 'Ubuntu', sans-serif;
+        }
+        .notifications-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .notification-item {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            font-family: 'Ubuntu', sans-serif;
+        }
+        .notification-item:hover {
+            background-color: #f8f9fa;
+        }
+        .notification-item.unread {
+            background-color: #e7f3ff;
+        }
+        .notification-item.unread:hover {
+            background-color: #d0e7ff;
+        }
+        .notification-title {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--primary-dark-blue);
+            margin-bottom: 0.25rem;
+        }
+        .notification-message {
+            font-size: 0.75rem;
+            color: #6c757d;
+            margin-bottom: 0.25rem;
+        }
+        .notification-time {
+            font-size: 0.7rem;
+            color: #adb5bd;
+        }
+        .notifications-empty {
+            padding: 2rem 1rem;
+            text-align: center;
+            color: #6c757d;
+            font-size: 0.8rem;
+            font-family: 'Ubuntu', sans-serif;
+        }
+        .notifications-footer {
+            padding: 0.5rem 1rem;
+            border-top: 1px solid #dee2e6;
+            text-align: center;
+        }
+        .notifications-footer a {
+            font-size: 0.75rem;
+            color: var(--primary-dark-blue);
+            text-decoration: none;
+            font-family: 'Ubuntu', sans-serif;
+        }
+        .notifications-footer a:hover {
+            text-decoration: underline;
         }
         
         .logout-btn {
@@ -349,10 +474,20 @@
                 <span>Mes Remboursements</span>
             </a>
             
-            {{-- <a href="{{ route('membre.nano-credits') }}" class="nav-link {{ request()->routeIs('membre.nano-credits*') ? 'active' : '' }}">
+            <a href="{{ route('membre.kyc.index') }}" class="nav-link {{ request()->routeIs('membre.kyc*') ? 'active' : '' }}">
+                <i class="bi bi-shield-check"></i>
+                <span>Mon KYC</span>
+            </a>
+            
+            <a href="{{ route('membre.nano-credits') }}" class="nav-link {{ request()->routeIs('membre.nano-credits*') ? 'active' : '' }}">
                 <i class="bi bi-credit-card-2-front"></i>
                 <span>Nano Crédits</span>
-            </a> --}}
+            </a>
+            
+            <a href="{{ route('membre.epargne.index') }}" class="nav-link {{ request()->routeIs('membre.epargne*') ? 'active' : '' }}">
+                <i class="bi bi-piggy-bank"></i>
+                <span>Épargne</span>
+            </a>
             
             <a href="{{ route('membre.profil') }}" class="nav-link {{ request()->routeIs('membre.profil') ? 'active' : '' }}">
                 <i class="bi bi-person-circle"></i>
@@ -371,6 +506,24 @@
             </span>
         </div>
         <div class="top-bar-right">
+            <button class="notifications-btn" type="button" title="Notifications" id="notificationsBtn">
+                <i class="bi bi-bell"></i>
+                <span class="notifications-badge" id="notificationsBadge"></span>
+            </button>
+            <div class="notifications-dropdown" id="notificationsDropdown">
+                <div class="notifications-header">
+                    <h6><i class="bi bi-bell"></i> Notifications</h6>
+                    <button type="button" class="btn btn-sm text-white" id="markAllReadBtn" style="font-size: 0.7rem; padding: 0.2rem 0.5rem; background: transparent; border: 1px solid rgba(255,255,255,0.3);">
+                        Tout marquer comme lu
+                    </button>
+                </div>
+                <div class="notifications-list" id="notificationsList">
+                    <div class="notifications-empty">Chargement...</div>
+                </div>
+                <div class="notifications-footer">
+                    <a href="{{ route('membre.notifications.index') }}">Voir toutes les notifications</a>
+                </div>
+            </div>
             <form action="{{ route('membre.logout') }}" method="POST" class="d-inline">
                 @csrf
                 <button type="submit" class="logout-btn" title="Déconnexion">
@@ -383,32 +536,6 @@
     
     <!-- Main Content -->
     <div class="main-content">
-        @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="bi bi-check-circle"></i> {{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        @endif
-        
-        @if(session('error'))
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="bi bi-exclamation-circle"></i> {{ session('error') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        @endif
-        
-        @if($errors->any())
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="bi bi-exclamation-circle"></i> 
-                <ul class="mb-0" style="font-size: 0.8rem;">
-                    @foreach($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        @endif
-        
         @yield('content')
     </div>
     
@@ -469,6 +596,104 @@
         @if(session('info'))
             showToast('{{ session('info') }}', 'info');
         @endif
+
+        // Gestion des notifications (cloche)
+        (function() {
+            const notificationsBtn = document.getElementById('notificationsBtn');
+            const notificationsDropdown = document.getElementById('notificationsDropdown');
+            const notificationsBadge = document.getElementById('notificationsBadge');
+            const notificationsList = document.getElementById('notificationsList');
+            const markAllReadBtn = document.getElementById('markAllReadBtn');
+            if (!notificationsBtn || !notificationsDropdown) return;
+
+            let notifications = [];
+            let unreadCount = 0;
+
+            function loadNotifications() {
+                fetch('{{ route('membre.notifications.unread') }}', {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        notifications = data.notifications || [];
+                        unreadCount = data.unread_count || 0;
+                        updateBadge();
+                        renderNotifications();
+                    })
+                    .catch(function() {
+                        notificationsList.innerHTML = '<div class="notifications-empty">Aucune notification</div>';
+                    });
+            }
+
+            function updateBadge() {
+                if (unreadCount > 0) {
+                    notificationsBadge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+                    notificationsBadge.style.display = 'flex';
+                } else {
+                    notificationsBadge.textContent = '';
+                    notificationsBadge.style.display = 'none';
+                }
+            }
+
+            function renderNotifications() {
+                if (notifications.length === 0) {
+                    notificationsList.innerHTML = '<div class="notifications-empty">Aucune notification</div>';
+                    return;
+                }
+                let html = '';
+                notifications.forEach(function(notification) {
+                    const isUnread = !notification.read_at;
+                    const itemClass = isUnread ? 'notification-item unread' : 'notification-item';
+                    const title = (notification.title || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    const message = (notification.message || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    html += '<div class="' + itemClass + '" data-id="' + notification.id + '">';
+                    html += '<div class="notification-title">' + title + '</div>';
+                    html += '<div class="notification-message">' + message + '</div>';
+                    html += '<div class="notification-time">' + (notification.created_at || '') + '</div></div>';
+                });
+                notificationsList.innerHTML = html;
+                notificationsList.querySelectorAll('.notification-item').forEach(function(el) {
+                    el.addEventListener('click', function() {
+                        const id = el.getAttribute('data-id');
+                        fetch('{{ url('membre/notifications') }}/' + id + '/read', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Accept': 'application/json'
+                            }
+                        }).then(function() { loadNotifications(); });
+                    });
+                });
+            }
+
+            if (markAllReadBtn) {
+                markAllReadBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    fetch('{{ route('membre.notifications.read-all') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json'
+                        }
+                    }).then(function() { loadNotifications(); });
+                });
+            }
+
+            notificationsBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                notificationsDropdown.classList.toggle('show');
+            });
+            document.addEventListener('click', function(e) {
+                if (!notificationsBtn.contains(e.target) && !notificationsDropdown.contains(e.target)) {
+                    notificationsDropdown.classList.remove('show');
+                }
+            });
+
+            loadNotifications();
+            setInterval(loadNotifications, 30000);
+        })();
     </script>
     
     @stack('scripts')

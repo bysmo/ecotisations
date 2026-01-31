@@ -43,6 +43,7 @@
                                     required>
                                 <option value="paiement" {{ old('type', 'paiement') === 'paiement' ? 'selected' : '' }}>Paiement</option>
                                 <option value="engagement" {{ old('type') === 'engagement' ? 'selected' : '' }}>Engagement</option>
+                                <option value="authentification" {{ old('type') === 'authentification' ? 'selected' : '' }}>Authentification</option>
                                 <option value="autre" {{ old('type') === 'autre' ? 'selected' : '' }}>Autre</option>
                             </select>
                             @error('type')
@@ -65,7 +66,7 @@
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                         <small class="form-text text-muted" style="font-size: 0.7rem;">
-                            Variables disponibles: @{{nom}}, @{{prenom}}, @{{date_paiement}}, @{{montant}}, @{{cotisation}}, etc.
+                            Variables disponibles: @{{nom}}, @{{prenom}}, @{{date_paiement}}, @{{montant}}, @{{cotisation}}, @{{code_authentification}}, @{{lien_authentification}}, @{{mail_utilisateur}}, @{{date_fin_validite}} etc.
                         </small>
                     </div>
                     

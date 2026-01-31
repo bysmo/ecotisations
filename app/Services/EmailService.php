@@ -7,10 +7,13 @@ use App\Models\EmailTemplate;
 use App\Models\Paiement;
 use App\Models\Engagement;
 use App\Models\EmailLog;
+use App\Models\Membre;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\URL;
+use Carbon\Carbon;
 
 class EmailService
 {
@@ -42,6 +45,7 @@ class EmailService
             ]);
 
             // Forcer la réinitialisation du mailer
+            // Forcer la réinitialisation du mailer pour prendre en compte la nouvelle config
             app()->forgetInstance('swift.mailer');
             app()->forgetInstance('mailer');
             app()->forgetInstance('mail.manager');
@@ -50,6 +54,49 @@ class EmailService
         } catch (\Exception $e) {
             Log::error('Erreur lors de la configuration SMTP: ' . $e->getMessage());
             throw new \Exception('Erreur lors de la configuration SMTP: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Envoyer l'email de vérification de compte membre (utilise la config SMTP admin)
+     */
+    public function sendVerificationEmail(Membre $membre): bool
+    {
+        try {
+            $smtp = SMTPConfiguration::where('actif', true)->first();
+            if (!$smtp) {
+                Log::warning('Aucune configuration SMTP active. Email de vérification non envoyé pour le membre: ' . $membre->id);
+                return false;
+            }
+
+            $this->configureSMTP();
+
+            $appNom = \App\Models\AppSetting::get('app_nom', 'Gestion des Cotisations');
+            $url = URL::temporarySignedRoute(
+                'membre.verification.verify',
+                Carbon::now()->addMinutes(60),
+                [
+                    'id' => $membre->getKey(),
+                    'hash' => sha1($membre->getEmailForVerification()),
+                ]
+            );
+
+            $sujet = "Vérifiez votre adresse email - {$appNom}";
+            $corps = "Bonjour {$membre->prenom},\n\n"
+                . "Merci de vous être inscrit sur {$appNom}. Veuillez cliquer sur le lien ci-dessous pour vérifier votre adresse email.\n\n"
+                . $url . "\n\n"
+                . "Ce lien expirera dans 60 minutes. Si vous n'êtes pas à l'origine de cette inscription, vous pouvez ignorer cet email.";
+
+            Mail::raw($corps, function ($message) use ($membre, $sujet) {
+                $message->to($membre->email)
+                    ->subject($sujet);
+            });
+
+            Log::info('Email de vérification envoyé au membre: ' . $membre->email);
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Erreur envoi email de vérification: ' . $e->getMessage());
+            throw $e;
         }
     }
 
