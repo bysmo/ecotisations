@@ -2,6 +2,11 @@
 
 Ce document définit les règles de travail pour assurer une collaboration fluide et éviter les régressions (erreurs de migrations, conflits Git).
 
+> [!IMPORTANT]
+> **Dépôt Git Officiel** : `https://github.com/bysmo/ecotisations.git`
+> 
+> Bienvenue dans l'équipe, **Adje** ! Suivez rigoureusement ces étapes pour maintenir l'intégrité du projet.
+
 ## 1. Gestion des Branches
 
 - **Branche `main`** : Contient uniquement le code stable et testé. **Ne jamais travailler directement sur cette branche.**
@@ -11,6 +16,11 @@ Ce document définit les règles de travail pour assurer une collaboration fluid
     - Format : `fix/nom-du-bug`
 
 ## 2. Workflow de Développement (Git)
+
+### Initialisation du projet
+1. Cloner le dépôt : `git clone https://github.com/bysmo/ecotisations.git`
+2. Installer les dépendances : `composer install` et `npm install`
+3. Configurer l'environnement : `cp .env.example .env` et `php artisan key:generate`
 
 ### Débuter une tâche
 1. S'assurer d'être sur la branche principale : `git checkout main`

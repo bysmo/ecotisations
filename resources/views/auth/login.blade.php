@@ -91,7 +91,7 @@
                     <div class="mb-3">
                         <div class="d-flex justify-content-between">
                             <label for="password" class="form-label">Mot de passe</label>
-                            <a href="{{ route('admin.password.request') }}" class="text-decoration-none" style="font-size: 0.8rem; color: var(--aladin-blue);">Mot de passe oublié ?</a>
+                            {{-- <a href="{{ route('admin.password.request') }}" class="text-decoration-none" style="font-size: 0.8rem; color: var(--aladin-blue);">Mot de passe oublié ?</a> --}}
                         </div>
                         <div class="input-group">
                             <input type="password" 

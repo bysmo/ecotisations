@@ -42,6 +42,7 @@ class MembreAuthController extends Controller
             ]);
         }
 
+        /*
         // Vérifier si l'email a été vérifié
         if (!$membre->hasVerifiedEmail()) {
             $request->session()->flash('unverified_email', $membre->email);
@@ -49,6 +50,7 @@ class MembreAuthController extends Controller
                 'email' => ['Vous devez vérifier votre adresse email avant de vous connecter. Un lien vous a été envoyé par email.'],
             ]);
         }
+        */
 
         // Vérifier si le membre est actif
         if ($membre->statut !== 'actif') {
@@ -114,9 +116,11 @@ class MembreAuthController extends Controller
         // Hasher le mot de passe
         $validated['password'] = Hash::make($validated['password']);
 
-        // Créer le membre (email_verified_at reste null)
+        // Créer le membre et marquer comme vérifié automatiquement
+        $validated['email_verified_at'] = now();
         $membre = Membre::create($validated);
 
+        /*
         try {
             $membre->sendEmailVerificationNotification();
         } catch (\Exception $e) {
@@ -127,6 +131,10 @@ class MembreAuthController extends Controller
 
         return redirect()->route('membre.login')
             ->with('success', 'Un lien de vérification a été envoyé à votre adresse email. Cliquez sur ce lien pour activer votre compte, puis connectez-vous.');
+        */
+
+        Auth::guard('membre')->login($membre);
+        return redirect()->route('membre.dashboard')->with('success', 'Bienvenue sur FlexFin ! Votre compte a été créé avec succès.');
     }
 
     /**

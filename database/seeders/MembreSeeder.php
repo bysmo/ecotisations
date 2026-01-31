@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Membre;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 
@@ -48,27 +49,49 @@ class MembreSeeder extends Seeder
                 $numero = 'MEM-' . strtoupper(Str::random(6));
             } while (in_array($numero, array_column($membresData, 'numero')));
             
+            $dateNaissance = Carbon::now()->subYears(rand(18, 60))->subDays(rand(1, 365));
+            $sexe = ['M', 'F'][array_rand(['M', 'F'])];
+            
             $membresData[] = [
                 'numero' => $numero,
                 'nom' => $nom,
                 'prenom' => $prenom,
+                'date_naissance' => $dateNaissance,
+                'lieu_naissance' => $villes[array_rand($villes)],
+                'sexe' => $sexe,
+                'nom_mere' => $noms[array_rand($noms)] . ' ' . $prenoms[array_rand($prenoms)],
                 'email' => $email,
+                'email_verified_at' => Carbon::now(),
                 'telephone' => $telephone,
                 'adresse' => $adresse,
+                'latitude' => rand(14400000, 14800000) / 1000000, // Sénégal approx
+                'longitude' => -rand(17400000, 17500000) / 1000000,
                 'date_adhesion' => $dateAdhesion,
                 'statut' => $statut,
+                'verification_code' => rand(1000, 9999),
+                'sms_verified_at' => (rand(1, 10) <= 7) ? Carbon::now() : null,
                 'segment' => $segment,
-                'password' => $passwordHash, // Utiliser le hash pré-calculé
+                'password' => $passwordHash,
+                'mfa_enabled' => (rand(1, 10) <= 3), // 30% MFA
+                'mfa_method' => 'sms',
                 'created_at' => $dateAdhesion,
                 'updated_at' => $dateAdhesion,
             ];
         }
         
-        // Insertion en batch (beaucoup plus rapide)
-        foreach (array_chunk($membresData, 10) as $chunk) {
-            Membre::insert($chunk);
-            $created += count($chunk);
-            $this->command->info("Créé {$created}/{$nbMembres} membres...");
+        // Création des membres via Eloquent avec gestion d'erreur
+        foreach ($membresData as $data) {
+            try {
+                Membre::create($data);
+                $created++;
+                if ($created % 10 == 0) {
+                    $this->command->info("Créé {$created}/{$nbMembres} membres...");
+                }
+            } catch (\Exception $e) {
+                $this->command->error("Erreur sur le membre : " . $data['numero']);
+                $this->command->error($e->getMessage());
+                throw $e;
+            }
         }
         
         $this->command->info("{$created} membre(s) créé(s) avec succès.");

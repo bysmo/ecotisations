@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-class Membre extends Authenticatable implements MustVerifyEmail
+class Membre extends Authenticatable
 {
     use HasFactory, Notifiable;
 
@@ -15,9 +15,17 @@ class Membre extends Authenticatable implements MustVerifyEmail
         'numero',
         'nom',
         'prenom',
+        'date_naissance',
+        'lieu_naissance',
+        'sexe',
+        'nom_mere',
         'email',
+        'email_verified_at',
         'telephone',
+        'sms_verified_at',
         'adresse',
+        'latitude',
+        'longitude',
         'date_adhesion',
         'statut',
         'segment',
@@ -34,6 +42,7 @@ class Membre extends Authenticatable implements MustVerifyEmail
         return [
             'email_verified_at' => 'datetime',
             'date_adhesion' => 'date',
+            'date_naissance' => 'date',
             'password' => 'hashed',
         ];
     }

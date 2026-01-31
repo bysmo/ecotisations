@@ -20,7 +20,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->decimal('montant_min', 15, 0)->default(0);
             $table->decimal('montant_max', 15, 0)->nullable();
-            $table->enum('frequence', ['hebdomadaire', 'mensuel', 'trimestriel']);
+            $table->enum('frequence', ['quotidien', 'hebdomadaire', 'mensuel', 'trimestriel']);
             $table->foreignId('caisse_id')->nullable()->constrained('caisses')->nullOnDelete();
             $table->boolean('actif')->default(true);
             $table->unsignedInteger('ordre')->default(0);

@@ -1056,6 +1056,10 @@ class MembreDashboardController extends Controller
             'email' => 'required|email|unique:membres,email,' . $membre->id,
             'telephone' => 'nullable|string|max:20',
             'adresse' => 'nullable|string',
+            'date_naissance' => 'nullable|date',
+            'lieu_naissance' => 'nullable|string|max:100',
+            'sexe' => 'nullable|in:M,F',
+            'nom_mere' => 'nullable|string|max:150',
             'password' => 'nullable|string|min:6|confirmed',
         ]);
         

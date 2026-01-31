@@ -27,291 +27,300 @@
         <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
     @endif
     
-    <title>{{ $appNomComplet }} - Inscription Membre</title>
+    <title>FlexFin - Créer votre compte</title>
     
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Google Fonts - Ubuntu -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('css/auth.css') }}?v={{ time() }}">
     
     <style>
-        :root {
-            --primary-dark-blue: #1e3a5f;
-            --primary-blue: #2c5282;
+        .step-container { display: none; }
+        .step-container.active { display: block; animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .stepper {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            position: relative;
         }
-        * {
-            font-family: 'Ubuntu', sans-serif;
-            font-weight: 300;
+        .stepper::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #eee;
+            z-index: 1;
         }
-        body {
-            background-color: #f5f7fa;
-            font-family: 'Ubuntu', sans-serif;
-            font-weight: 300;
-            min-height: 100vh;
-            padding: 1.5rem 0;
-        }
-        .page-header {
-            margin-bottom: 1rem;
-        }
-        .page-header h1 {
-            color: var(--primary-dark-blue);
-            font-weight: 300;
-            font-family: 'Ubuntu', sans-serif;
-            font-size: 1.25rem;
-        }
-        .page-header h1 i {
-            font-size: 0.9rem;
-        }
-        .card {
-            border: none;
-            border-radius: 4px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            font-family: 'Ubuntu', sans-serif;
-            font-weight: 300;
-        }
-        .card-header {
-            background-color: var(--primary-dark-blue);
-            color: white;
-            border-radius: 4px 4px 0 0 !important;
-            padding: 0.4rem 0.6rem;
-            font-weight: 400;
-            font-size: 0.75rem;
-            font-family: 'Ubuntu', sans-serif;
-            line-height: 1.3;
-        }
-        .card-header i {
-            font-size: 0.75rem;
-        }
-        .card-body {
-            padding: 0.75rem;
-            font-family: 'Ubuntu', sans-serif;
-            font-weight: 300;
-            font-size: 0.8rem;
-        }
-        .form-label {
-            font-weight: 300;
-            font-family: 'Ubuntu', sans-serif;
-            font-size: 0.8rem;
-            color: #333;
-            margin-bottom: 0.35rem;
-        }
-        .form-control, .form-select {
-            font-weight: 300;
-            font-family: 'Ubuntu', sans-serif;
-            font-size: 0.8rem;
+        .step-item {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #fff;
             border: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            z-index: 2;
+            color: #999;
+            transition: all 0.3s ease;
+        }
+        .step-item.active {
+            background: var(--aladin-blue, #1e3a5f);
+            border-color: var(--aladin-blue, #1e3a5f);
+            color: white;
+            box-shadow: 0 0 0 5px rgba(30, 58, 95, 0.1);
+        }
+        .step-item.completed {
+            background: #ffc107;
+            border-color: #ffc107;
+            color: white;
+        }
+        
+        .camera-box {
+            width: 100%;
+            max-width: 400px;
+            aspect-ratio: 4/3;
+            background: #f8f9fa;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 1rem auto;
+            position: relative;
+            overflow: hidden;
+        }
+        #webcam { width: 100%; height: 100%; object-fit: cover; }
+        .kyc-upload-preview {
+            width: 100%;
+            height: 120px;
+            background: #f8f9fa;
+            border: 1px dashed #ccc;
             border-radius: 5px;
-            padding: 0.4rem 0.6rem;
-        }
-        .form-control:focus, .form-select:focus {
-            border-color: var(--primary-dark-blue);
-            box-shadow: 0 0 0 0.2rem rgba(30, 58, 95, 0.25);
-        }
-        .btn-primary {
-            background-color: var(--primary-dark-blue);
-            border-color: var(--primary-dark-blue);
-            font-weight: 300;
-            font-family: 'Ubuntu', sans-serif;
-            font-size: 0.8rem;
-        }
-        .btn-primary:hover {
-            background-color: var(--primary-blue);
-            border-color: var(--primary-blue);
-        }
-        .btn-secondary {
-            font-weight: 300;
-            font-family: 'Ubuntu', sans-serif;
-            font-size: 0.8rem;
-        }
-        .invalid-feedback {
-            font-weight: 300;
-            font-family: 'Ubuntu', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
             font-size: 0.7rem;
-        }
-        .form-text {
-            font-size: 0.7rem;
-            color: #6c757d;
-        }
-        .register-footer-links {
-            font-family: 'Ubuntu', sans-serif;
-            font-weight: 300;
-            font-size: 0.8rem;
+            color: #666;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="page-header">
-            <h1><i class="bi bi-plus-circle"></i> Créer un Nouveau Membre</h1>
+    <div class="auth-container">
+        <!-- Sidebar Branding -->
+        <div class="auth-sidebar">
+            <div class="auth-logo-box">
+                <i class="bi bi-person-plus"></i>
+            </div>
+            <h1 class="product-name">FlexFin</h1>
+            <p class="product-tagline">vos finances, en toute flexibilité!</p>
+            
+            <div class="mt-5">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="rounded-circle bg-warning p-2 me-3"><i class="bi bi-check2 text-white"></i></div>
+                    <span>Gérez vos cotisations en ligne</span>
+                </div>
+                <div class="d-flex align-items-center mb-3">
+                    <div class="rounded-circle bg-warning p-2 me-3"><i class="bi bi-shield-lock text-white"></i></div>
+                    <span>Transactions sécurisées</span>
+                </div>
+                <div class="d-flex align-items-center mb-3">
+                    <div class="rounded-circle bg-warning p-2 me-3"><i class="bi bi-bell text-white"></i></div>
+                    <span>Alertes et notifications</span>
+                </div>
+            </div>
         </div>
 
-        @if (session('error'))
-            <div class="alert alert-danger alert-dismissible fade show">
-                {{ session('error') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        @endif
-        @if (session('success'))
-            <div class="alert alert-success alert-dismissible fade show">
-                {{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        @endif
-
-        <div class="row">
-            <div class="col-md-8">
-                <div class="card">
-                    <div class="card-header">
-                        <i class="bi bi-info-circle"></i> Informations du Membre
-                    </div>
-                    <div class="card-body">
-                        <form method="POST" action="{{ route('membre.register') }}">
-                            @csrf
-                            
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="nom" class="form-label">Nom <span class="text-danger">*</span></label>
-                                    <input type="text" 
-                                           class="form-control @error('nom') is-invalid @enderror" 
-                                           id="nom" name="nom" value="{{ old('nom') }}" required>
-                                    @error('nom')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="prenom" class="form-label">Prénom <span class="text-danger">*</span></label>
-                                    <input type="text" 
-                                           class="form-control @error('prenom') is-invalid @enderror" 
-                                           id="prenom" name="prenom" value="{{ old('prenom') }}" required>
-                                    @error('prenom')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                                </div>
-                            </div>
-                            
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
-                                    <input type="email" 
-                                           class="form-control @error('email') is-invalid @enderror" 
-                                           id="email" name="email" value="{{ old('email') }}" required>
-                                    @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="telephone" class="form-label">Téléphone</label>
-                                    <input type="text" 
-                                           class="form-control @error('telephone') is-invalid @enderror" 
-                                           id="telephone" name="telephone" value="{{ old('telephone') }}">
-                                    @error('telephone')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                                </div>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label for="adresse" class="form-label">Adresse</label>
-                                <textarea class="form-control @error('adresse') is-invalid @enderror" 
-                                          id="adresse" name="adresse" rows="2">{{ old('adresse') }}</textarea>
-                                @error('adresse')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label for="segment" class="form-label">Segment</label>
-                                <select class="form-select @error('segment') is-invalid @enderror" id="segment" name="segment">
-                                    <option value="">-- Aucun segment --</option>
-                                    @foreach($segments as $seg)
-                                        <option value="{{ $seg }}" {{ old('segment') === $seg ? 'selected' : '' }}>{{ $seg }}</option>
-                                    @endforeach
-                                    <option value="__nouveau__" {{ old('segment') === '__nouveau__' ? 'selected' : '' }}>+ Ajouter un nouveau segment</option>
-                                </select>
-                                <div id="nouveauSegmentContainer" style="display: none; margin-top: 0.5rem;">
-                                    <input type="text" class="form-control form-control-sm" id="nouveauSegment" 
-                                           name="nouveau_segment" value="{{ old('nouveau_segment') }}" placeholder="Nom du nouveau segment">
-                                    <small class="form-text text-muted">Saisissez le nom du nouveau segment</small>
-                                </div>
-                                @error('segment')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                                @error('nouveau_segment')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                            </div>
-                            
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="password" class="form-label">Mot de passe <span class="text-danger">*</span></label>
-                                    <input type="password" 
-                                           class="form-control @error('password') is-invalid @enderror" 
-                                           id="password" name="password" required>
-                                    @error('password')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                                    <small class="form-text text-muted">Minimum 6 caractères</small>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="password_confirmation" class="form-label">Confirmer le mot de passe <span class="text-danger">*</span></label>
-                                    <input type="password" class="form-control" id="password_confirmation" name="password_confirmation" required>
-                                </div>
-                            </div>
-                            
-                            <div class="d-flex justify-content-between">
-                                <a href="{{ route('membre.login') }}" class="btn btn-secondary">
-                                    <i class="bi bi-arrow-left"></i> Retour
-                                </a>
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="bi bi-check-circle"></i> Créer mon compte
-                                </button>
-                            </div>
-                        </form>
-                    </div>
+        <!-- Register Form -->
+        <div class="auth-content">
+            <div class="auth-card" style="max-width: 550px;">
+                <div class="mb-4">
+                    <h2 class="auth-title">Créer votre compte</h2>
+                    <p class="auth-subtitle">Rejoignez FlexFin pour gérer vos finances</p>
                 </div>
                 
-                <div class="text-center mt-3 register-footer-links">
-                    <p class="mb-0">Vous avez déjà un compte ? <a href="{{ route('membre.login') }}"><i class="bi bi-box-arrow-in-right"></i> Se connecter</a></p>
+                <!-- Steps UI -->
+                <div class="stepper">
+                    <div class="step-item active" id="dot-1">1</div>
+                    <div class="step-item" id="dot-2">2</div>
+                    <div class="step-item" id="dot-3">3</div>
+                    <div class="step-item" id="dot-4">4</div>
                 </div>
-            </div>
-            
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header">
-                        <i class="bi bi-info-circle"></i> À propos des Membres
+
+                <form id="registerForm" method="POST" action="{{ route('membre.register') }}" enctype="multipart/form-data">
+                    @csrf
+                    
+                    <!-- STEP 1: Identification -->
+                    <div class="step-container active" id="step-1">
+                        <h5 class="mb-3 d-flex align-items-center" style="font-size: 1rem;">
+                            <i class="bi bi-person-badge me-2 text-primary"></i> Identification
+                        </h5>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Nom <span class="text-danger">*</span></label>
+                                <input type="text" name="nom" class="form-control" placeholder="Entrez votre nom" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Prénom <span class="text-danger">*</span></label>
+                                <input type="text" name="prenom" class="form-control" placeholder="Entrez votre prénom" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Date de Naissance <span class="text-danger">*</span></label>
+                                <input type="date" name="date_naissance" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Sexe <span class="text-danger">*</span></label>
+                                <select name="sexe" class="form-select" required>
+                                    <option value="M">Masculin</option>
+                                    <option value="F">Féminin</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Lieu de Naissance</label>
+                                <input type="text" name="lieu_naissance" class="form-control" placeholder="Ville ou Localité">
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end mt-4">
+                            <button type="button" class="btn btn-primary px-4" onclick="nextStep(2)">Suivant <i class="bi bi-arrow-right ms-2"></i></button>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <h6 class="mb-3" style="font-weight: 300; font-family: 'Ubuntu', sans-serif; color: var(--primary-dark-blue);">
-                            <i class="bi bi-person"></i> Qu'est-ce qu'un membre ?
-                        </h6>
-                        <p style="font-size: 0.75rem; line-height: 1.5; font-weight: 300; font-family: 'Ubuntu', sans-serif; color: #666;">
-                            Un membre est une personne inscrite dans l'organisation qui peut effectuer des paiements de cotisations. Chaque membre reçoit un numéro unique et peut se connecter après validation de son adresse email.
-                        </p>
-                        <h6 class="mt-4 mb-3" style="font-weight: 300; font-family: 'Ubuntu', sans-serif; color: var(--primary-dark-blue);">
-                            <i class="bi bi-shield-check"></i> Informations requises
-                        </h6>
-                        <ul style="font-size: 0.75rem; line-height: 1.8; font-weight: 300; font-family: 'Ubuntu', sans-serif; color: #666; padding-left: 1.2rem;">
-                            <li><strong>Nom et prénom :</strong> Identité complète</li>
-                            <li><strong>Email :</strong> Pour les notifications et connexion (sera vérifié par mail)</li>
-                            <li><strong>Mot de passe :</strong> Minimum 6 caractères</li>
-                        </ul>
-                        <h6 class="mt-4 mb-3" style="font-weight: 300; font-family: 'Ubuntu', sans-serif; color: var(--primary-dark-blue);">
-                            <i class="bi bi-envelope-check"></i> Validation par email
-                        </h6>
-                        <p style="font-size: 0.75rem; line-height: 1.5; font-weight: 300; font-family: 'Ubuntu', sans-serif; color: #666;">
-                            Après l'inscription, un lien de vérification vous sera envoyé par email. Cliquez sur ce lien pour activer votre compte et pouvoir vous connecter.
-                        </p>
+
+                    <!-- STEP 2: Contact & Localisation -->
+                    <div class="step-container" id="step-2">
+                        <h5 class="mb-3 d-flex align-items-center" style="font-size: 1rem;">
+                            <i class="bi bi-geo-alt me-2 text-primary"></i> Contact & Localisation
+                        </h5>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Email <span class="text-danger">*</span></label>
+                                <input type="email" name="email" class="form-control" placeholder="votre@email.com" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Téléphone</label>
+                                <input type="text" name="telephone" class="form-control" placeholder="+226 ...">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Adresse Détaillée <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <textarea name="adresse" class="form-control" rows="2" placeholder="Votre adresse physique précise" required></textarea>
+                                    <span class="input-group-text bg-white"><i class="bi bi-geo text-muted"></i></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-4">
+                            <button type="button" class="btn btn-outline-secondary px-4" onclick="prevStep(1)">Précédent</button>
+                            <button type="button" class="btn btn-primary px-4" onclick="nextStep(3)">Suivant <i class="bi bi-arrow-right ms-2"></i></button>
+                        </div>
                     </div>
+
+                    <!-- STEP 3: Vérification d'identité -->
+                    <div class="step-container" id="step-3">
+                        <h5 class="mb-3 d-flex align-items-center" style="font-size: 1rem;">
+                            <i class="bi bi-shield-check me-2 text-primary"></i> Vérification d'identité
+                        </h5>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Pièce d'identité (Recto) <span class="text-danger">*</span></label>
+                                <div class="kyc-upload-preview" onclick="document.getElementById('id_recto').click()">
+                                    <i class="bi bi-cloud-arrow-up fs-3 mb-1"></i>
+                                    <span>Choisir le fichier</span>
+                                    <input type="file" id="id_recto" name="piece_identite_recto" class="d-none">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Pièce d'identité (Verso) <span class="text-danger">*</span></label>
+                                <div class="kyc-upload-preview" onclick="document.getElementById('id_verso').click()">
+                                    <i class="bi bi-cloud-arrow-up fs-3 mb-1"></i>
+                                    <span>Choisir le fichier</span>
+                                    <input type="file" id="id_verso" name="piece_identite_verso" class="d-none">
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Capture d'un Selfie Live <span class="text-danger">*</span></label>
+                                <div class="camera-box">
+                                    <i class="bi bi-camera text-muted fs-1"></i>
+                                    <!-- Si JS actif, on mettra ici la webcam -->
+                                </div>
+                                <div class="text-center">
+                                    <button type="button" class="btn btn-light btn-sm"><i class="bi bi-arrow-repeat me-1"></i> Reprendre</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-4">
+                            <button type="button" class="btn btn-outline-secondary px-4" onclick="prevStep(2)">Précédent</button>
+                            <button type="button" class="btn btn-primary px-4" onclick="nextStep(4)">Suivant <i class="bi bi-arrow-right ms-2"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- STEP 4: Paramètres du Compte -->
+                    <div class="step-container" id="step-4">
+                        <h5 class="mb-3 d-flex align-items-center" style="font-size: 1rem;">
+                            <i class="bi bi-gear me-2 text-primary"></i> Paramètres du Compte
+                        </h5>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label">Segment</label>
+                                <select name="segment" class="form-select">
+                                    @foreach($segments as $seg)
+                                        <option value="{{ $seg }}">{{ $seg }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Mot de passe <span class="text-danger">*</span></label>
+                                <input type="password" name="password" class="form-control" placeholder="••••••" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Confirmez <span class="text-danger">*</span></label>
+                                <input type="password" name="password_confirmation" class="form-control" placeholder="••••••" required>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-4">
+                            <button type="button" class="btn btn-outline-secondary px-4" onclick="prevStep(3)">Précédent</button>
+                            <button type="submit" class="btn btn-primary px-4"><i class="bi bi-check-circle me-2"></i> Créer mon compte</button>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <p class="mb-1" style="font-size: 0.9rem;">Déjà inscrit ? <a href="{{ route('membre.login') }}" class="text-decoration-none fw-bold" style="color: var(--aladin-blue);">Connectez-vous ici</a></p>
+                    </div>
+                </form>
+
+                <div class="auth-footer">
+                    <p class="mb-1">© 2026 FlexFin+</p>
+                    <p>Powered by Aladin Technologies Solutions (ALTES)</p>
                 </div>
             </div>
         </div>
     </div>
     
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const segmentSelect = document.getElementById('segment');
-        const nouveauSegmentContainer = document.getElementById('nouveauSegmentContainer');
-        const nouveauSegmentInput = document.getElementById('nouveauSegment');
-        segmentSelect.addEventListener('change', function() {
-            if (this.value === '__nouveau__') {
-                nouveauSegmentContainer.style.display = 'block';
-                if (nouveauSegmentInput) nouveauSegmentInput.required = true;
-            } else {
-                nouveauSegmentContainer.style.display = 'none';
-                if (nouveauSegmentInput) { nouveauSegmentInput.required = false; nouveauSegmentInput.value = ''; }
-            }
-        });
-        if (segmentSelect.value === '__nouveau__') {
-            nouveauSegmentContainer.style.display = 'block';
-            if (nouveauSegmentInput) nouveauSegmentInput.required = true;
+        function nextStep(step) {
+            document.querySelectorAll('.step-container').forEach(c => c.classList.remove('active'));
+            document.getElementById('step-' + step).classList.add('active');
+            
+            document.querySelectorAll('.step-item').forEach((dot, index) => {
+                if (index + 1 < step) dot.classList.add('completed');
+                else if (index + 1 === step) dot.classList.add('active');
+                else { dot.classList.remove('active'); dot.classList.remove('completed'); }
+            });
         }
-    });
+        
+        function prevStep(step) {
+            nextStep(step);
+        }
     </script>
 </body>
 </html>

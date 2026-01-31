@@ -84,6 +84,7 @@ class DatabaseSeeder extends Seeder
             SegmentMembreSeeder::class, // Assigner les segments aux membres (après MembreSeeder)
             CotisationSeeder::class,
             UpdateSegmentsSeeder::class, // Mettre à jour les segments des membres et cotisations (exactement 3 cotisations VIP, pas de cotisations sans segment)
+            EpargnePlanSeeder::class, // Nouveau seeder pour les plans d'épargne
             EngagementSeeder::class,
             PaiementSeeder::class,
             RemboursementSeeder::class,

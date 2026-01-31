@@ -17,24 +17,27 @@ deployment:
     #    L'exécution de ces commandes se fait depuis la racine du dépôt.
     - /bin/cp -R * $DEPLOYPATH
     
-    # --- COMMANDES OPTIONNELLES DE BUILD/POST-DÉPLOIEMENT ---
-    # Si votre application nécessite des dépendances (ex: Composer, NPM),
-    # vous devez les installer ici.
-    # Exemple pour une application PHP/Composer:
-    - /usr/local/bin/composer install --no-dev --prefer-dist -d $DEPLOYPATH
+    # --- COMMANDES DE POST-DÉPLOIEMENT ---
     
-    # Si votre application nécessite des commandes de post-déploiement (ex: migrations),
-    # vous pouvez les ajouter ici.
-    # Exemple pour Laravel:
-    - /usr/local/bin/php $DEPLOYPATH/artisan migrate --force
-    - /usr/local/bin/php $DEPLOYPATH/artisan storage:link
-    #mettre a jour les routes
-    - /usr/local/bin/php $DEPLOYPATH/artisan optimize
-    #supprimer les caches
-    - /usr/local/bin/php $DEPLOYPATH/artisan config:clear
-    - /usr/local/bin/php $DEPLOYPATH/artisan view:clear
-    - /usr/local/bin/php $DEPLOYPATH/artisan route:clear
-    - /usr/local/bin/php $DEPLOYPATH/artisan cache:clear
+    # 3. Mise en maintenance (pour éviter des erreurs pendant la migration)
+    - /usr/local/bin/php $DEPLOYPATH/artisan down || true
+    
+    # 4. Installation des dépendances Composer
+    - /usr/local/bin/composer install --no-dev --optimize-autoloader --prefer-dist -d $DEPLOYPATH
+    
+    # 5. Exécution des migrations (obligatoire pour les nouveaux modules)
+    - /usr/local/bin/php $DEPLOYPATH/artisan migrate --force --seed
+    
+    # 6. Création du lien symbolique de stockage
+    - /usr/local/bin/php $DEPLOYPATH/artisan storage:link || true
+    
+    # 7. Optimisation des performances (Config, Routes et Views)
+    - /usr/local/bin/php $DEPLOYPATH/artisan config:cache
+    - /usr/local/bin/php $DEPLOYPATH/artisan route:cache
+    - /usr/local/bin/php $DEPLOYPATH/artisan view:cache
+    
+    # 8. Sortie du mode maintenance
+    - /usr/local/bin/php $DEPLOYPATH/artisan up
     
 
     
