@@ -42,7 +42,7 @@
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label for="duree_jours" class="form-label">Durée (jours) <span class="text-danger">*</span></label>
-                    <input type="number" min="1" max="365" class="form-control @error('duree_jours') is-invalid @enderror" id="duree_jours" name="duree_jours" value="{{ old('duree_jours', $type->duree_jours) }}" required>
+                    <input type="number" min="1" max="30" class="form-control @error('duree_jours') is-invalid @enderror" id="duree_jours" name="duree_jours" value="{{ old('duree_jours', $type->duree_jours) }}" required>
                     @error('duree_jours')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
                 <div class="col-md-6 mb-3">
@@ -56,6 +56,7 @@
                 <div class="col-md-6 mb-3">
                     <label for="frequence_remboursement" class="form-label">Fréquence de remboursement <span class="text-danger">*</span></label>
                     <select class="form-select @error('frequence_remboursement') is-invalid @enderror" id="frequence_remboursement" name="frequence_remboursement" required>
+                        <option value="journalier" {{ old('frequence_remboursement', $type->frequence_remboursement) === 'journalier' ? 'selected' : '' }}>Journalier</option>
                         <option value="hebdomadaire" {{ old('frequence_remboursement', $type->frequence_remboursement) === 'hebdomadaire' ? 'selected' : '' }}>Hebdomadaire</option>
                         <option value="mensuel" {{ old('frequence_remboursement', $type->frequence_remboursement) === 'mensuel' ? 'selected' : '' }}>Mensuel</option>
                         <option value="trimestriel" {{ old('frequence_remboursement', $type->frequence_remboursement) === 'trimestriel' ? 'selected' : '' }}>Trimestriel</option>

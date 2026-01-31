@@ -150,6 +150,7 @@ class NanoCreditController extends Controller
         $dateDebut = Carbon::parse($nanoCredit->date_octroi);
 
         $addPeriod = match ($type->frequence_remboursement) {
+            'journalier' => fn ($date, $i) => $date->copy()->addDays($i),
             'hebdomadaire' => fn ($date, $i) => $date->copy()->addWeeks($i),
             'mensuel' => fn ($date, $i) => $date->copy()->addMonths($i),
             'trimestriel' => fn ($date, $i) => $date->copy()->addMonths(3 * $i),

@@ -12,7 +12,7 @@ class NanoCreditTypeSeeder extends Seeder
      */
     public function run(): void
     {
-        // Supprimer les anciens types pour repartir sur la nouvelle logique de jours
+        // Supprimer les anciens types pour repartir sur la nouvelle logique de jours et fréquences
         \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=0;');
         NanoCreditType::truncate();
         \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=1;');
@@ -20,33 +20,33 @@ class NanoCreditTypeSeeder extends Seeder
         $types = [
             [
                 'nom' => 'Dépannage Urgent',
-                'description' => 'Besoin de trésorerie immédiat pour imprévus.',
+                'description' => 'Besoin de trésorerie immédiat pour imprévus (remboursement journalier).',
                 'montant_min' => 10000,
                 'montant_max' => 20000,
                 'duree_jours' => 3,
                 'taux_interet' => 2.00,
-                'frequence_remboursement' => 'hebdomadaire',
+                'frequence_remboursement' => 'journalier',
                 'actif' => true,
                 'ordre' => 1,
             ],
             [
-                'nom' => 'Mini-Crédit Commerce',
-                'description' => 'Petit stock journalier pour vendeurs ambulants et étals.',
+                'nom' => 'Mini-Crédit Hebdo',
+                'description' => 'Petit stock journalier remboursable en fin de semaine.',
                 'montant_min' => 5000,
                 'montant_max' => 50000,
-                'duree_jours' => 5,
+                'duree_jours' => 7,
                 'taux_interet' => 3.00,
                 'frequence_remboursement' => 'hebdomadaire',
                 'actif' => true,
                 'ordre' => 2,
             ],
             [
-                'nom' => 'Avance sur Recettes',
-                'description' => 'Financement court terme basé sur les ventes hebdo.',
-                'montant_min' => 20000,
-                'montant_max' => 100000,
-                'duree_jours' => 7,
-                'taux_interet' => 4.00,
+                'nom' => 'Micro-Business 30J',
+                'description' => 'Développement d\'activité sur un cycle de 30 jours (remboursement hebdo).',
+                'montant_min' => 50000,
+                'montant_max' => 200000,
+                'duree_jours' => 30,
+                'taux_interet' => 5.00,
                 'frequence_remboursement' => 'hebdomadaire',
                 'actif' => true,
                 'ordre' => 3,
@@ -57,6 +57,6 @@ class NanoCreditTypeSeeder extends Seeder
             NanoCreditType::create($type);
         }
 
-        $this->command->info('Types de nano-crédits courte durée créés avec succès.');
+        $this->command->info('Types de nano-crédits (mode journalier/30j) créés avec succès.');
     }
 }

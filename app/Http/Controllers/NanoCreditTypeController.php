@@ -41,9 +41,9 @@ class NanoCreditTypeController extends Controller
             'description' => 'nullable|string',
             'montant_min' => 'required|numeric|min:0',
             'montant_max' => 'nullable|numeric|min:0',
-            'duree_jours' => 'required|integer|min:1|max:365',
+            'duree_jours' => 'required|integer|min:1|max:30',
             'taux_interet' => 'required|numeric|min:0|max:100',
-            'frequence_remboursement' => 'required|in:hebdomadaire,mensuel,trimestriel',
+            'frequence_remboursement' => 'required|in:journalier,hebdomadaire,mensuel,trimestriel',
             'actif' => 'boolean',
             'ordre' => 'nullable|integer|min:0',
         ], [
@@ -79,9 +79,9 @@ class NanoCreditTypeController extends Controller
             'description' => 'nullable|string',
             'montant_min' => 'required|numeric|min:0',
             'montant_max' => 'nullable|numeric|min:0',
-            'duree_jours' => 'required|integer|min:1|max:365',
+            'duree_jours' => 'required|integer|min:1|max:30',
             'taux_interet' => 'required|numeric|min:0|max:100',
-            'frequence_remboursement' => 'required|in:hebdomadaire,mensuel,trimestriel',
+            'frequence_remboursement' => 'required|in:journalier,hebdomadaire,mensuel,trimestriel',
             'actif' => 'boolean',
             'ordre' => 'nullable|integer|min:0',
         ]);

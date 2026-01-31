@@ -36,6 +36,7 @@ class NanoCreditType extends Model
     public function getFrequenceRemboursementLabelAttribute(): string
     {
         return match ($this->frequence_remboursement ?? 'mensuel') {
+            'journalier' => 'Journalier',
             'hebdomadaire' => 'Hebdomadaire',
             'mensuel' => 'Mensuel',
             'trimestriel' => 'Trimestriel',
@@ -50,6 +51,7 @@ class NanoCreditType extends Model
     {
         $duree = (int) ($this->duree_jours ?? 7);
         return match ($this->frequence_remboursement ?? 'mensuel') {
+            'journalier' => $duree,
             'hebdomadaire' => (int) max(1, ceil($duree / 7)),
             'mensuel' => (int) max(1, ceil($duree / 30)),
             'trimestriel' => (int) max(1, ceil($duree / 90)),
