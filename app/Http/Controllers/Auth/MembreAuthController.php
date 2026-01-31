@@ -26,19 +26,20 @@ class MembreAuthController extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'email' => 'required|email',
+            'telephone' => 'required',
             'password' => 'required',
         ]);
 
-        $credentials = $request->only('email', 'password');
+        $telephone = $request->input('telephone');
+        $password = $request->input('password');
         $remember = $request->filled('remember');
 
-        // Vérifier si le membre existe et est actif
-        $membre = \App\Models\Membre::where('email', $credentials['email'])->first();
+        // Recherche flexible du membre par son téléphone
+        $membre = \App\Models\Membre::findByTelephone($telephone);
 
         if (!$membre) {
             throw ValidationException::withMessages([
-                'email' => ['Les identifiants fournis sont incorrects.'],
+                'telephone' => ['Les identifiants fournis sont incorrects.'],
             ]);
         }
 
@@ -55,18 +56,19 @@ class MembreAuthController extends Controller
         // Vérifier si le membre est actif
         if ($membre->statut !== 'actif') {
             throw ValidationException::withMessages([
-                'email' => ['Votre compte est inactif. Veuillez contacter l\'administrateur.'],
+                'telephone' => ['Votre compte est inactif. Veuillez contacter l\'administrateur.'],
             ]);
         }
 
-        if (Auth::guard('membre')->attempt($credentials, $remember)) {
+        // Tenter la connexion avec le téléphone exact stocké en base
+        if (Auth::guard('membre')->attempt(['telephone' => $membre->telephone, 'password' => $password], $remember)) {
             $request->session()->regenerate();
             
             return redirect()->route('membre.dashboard');
         }
 
         throw ValidationException::withMessages([
-            'email' => ['Les identifiants fournis sont incorrects.'],
+            'telephone' => ['Les identifiants fournis sont incorrects.'],
         ]);
     }
 
@@ -89,8 +91,8 @@ class MembreAuthController extends Controller
         $validated = $request->validate([
             'nom' => 'required|string|max:255',
             'prenom' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:membres,email',
-            'telephone' => 'nullable|string|max:20',
+            'email' => 'nullable|email|max:255|unique:membres,email',
+            'telephone' => 'required|string|max:20|unique:membres,telephone',
             'adresse' => 'nullable|string',
             'segment' => 'nullable|string|max:255',
             'nouveau_segment' => 'nullable|string|max:255|required_if:segment,__nouveau__',
@@ -105,6 +107,9 @@ class MembreAuthController extends Controller
         }
         
         unset($validated['nouveau_segment']);
+
+        // Normaliser le téléphone avant l'inscription
+        $validated['telephone'] = Membre::normalizePhoneNumber($validated['telephone']);
 
         // Générer un numéro de membre unique
         $validated['numero'] = $this->generateNumeroMembre();

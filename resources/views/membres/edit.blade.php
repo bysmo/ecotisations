@@ -51,28 +51,29 @@
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label for="email" class="form-label">
-                        Email <span class="text-danger">*</span>
+                        Email (optionnel)
                     </label>
                     <input type="email" 
                            class="form-control @error('email') is-invalid @enderror" 
                            id="email" 
                            name="email" 
-                           value="{{ old('email', $membre->email) }}" 
-                           required>
+                           value="{{ old('email', $membre->email) }}">
                     @error('email')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
                 
                 <div class="col-md-6 mb-3">
-                    <label for="telephone" class="form-label">Téléphone</label>
-                    <input type="text" 
-                           class="form-control @error('telephone') is-invalid @enderror" 
+                    <label for="telephone" class="form-label">Téléphone <span class="text-danger">*</span></label>
+                    <input type="tel" 
                            id="telephone" 
-                           name="telephone" 
-                           value="{{ old('telephone', $membre->telephone) }}">
+                           name="telephone_input" 
+                           class="form-control @error('telephone') is-invalid @enderror" 
+                           data-initial="{{ old('telephone', $membre->telephone) }}"
+                           required>
+                    <input type="hidden" name="telephone" id="full_telephone">
                     @error('telephone')
-                        <div class="invalid-feedback">{{ $message }}</div>
+                        <div class="invalid-feedback d-block">{{ $message }}</div>
                     @enderror
                 </div>
             </div>
@@ -199,4 +200,50 @@
         </form>
     </div>
 </div>
+@push('styles')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@24.5.1/build/css/intlTelInput.css">
+<style>
+    .iti { width: 100%; }
+    .iti__flag-container { border-radius: 4px 0 0 4px; }
+    .iti--separate-dial-code input { padding-left: 95px !important; }
+    .iti--allow-dropdown input { padding-left: 95px !important; }
+</style>
+@endpush
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/intl-tel-input@24.5.1/build/js/intlTelInput.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const phoneInput = document.querySelector("#telephone");
+        const fullPhoneInput = document.querySelector("#full_telephone");
+        
+        const iti = window.intlTelInput(phoneInput, {
+            initialCountry: "bf",
+            preferredCountries: ["bf", "sn", "ci", "ml", "tg", "bj"],
+            utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@24.5.1/build/js/utils.js",
+            separateDialCode: true,
+        });
+
+        // Gérer la valeur initiale pour éviter les duplications
+        const initialNumber = phoneInput.getAttribute('data-initial');
+        if (initialNumber) {
+            iti.setNumber(initialNumber);
+        }
+
+        // Charger le numéro actuel s'il existe
+        const currentNumber = "{{ $membre->telephone }}";
+        if (currentNumber) {
+            iti.setNumber(currentNumber);
+        }
+
+        // Mettre à jour le champ caché avant la soumission
+        const form = document.querySelector('form[action$="/update"]');
+        if (form) {
+            form.addEventListener("submit", function() {
+                fullPhoneInput.value = iti.getNumber();
+            });
+        }
+    });
+</script>
+@endpush
 @endsection

@@ -499,10 +499,15 @@
     <!-- Top Bar -->
     <div class="top-bar">
         <div class="top-bar-left">
-            <span style="font-size: 0.85rem; color: var(--primary-dark-blue); font-weight: 300;">
-                <i class="bi bi-person-circle"></i> 
-                {{ $membre->nom_complet ?? 'Membre' }}
-                <small class="text-muted ms-2">({{ $membre->numero ?? '' }})</small>
+            <span class="d-flex flex-column" style="color: var(--primary-dark-blue); font-weight: 300;">
+                <span style="font-size: 0.85rem;">
+                    <i class="bi bi-person-circle"></i> 
+                    {{ $membre->nom_complet ?? 'Membre' }}
+                    <small class="text-muted ms-2">({{ $membre->numero ?? '' }})</small>
+                </span>
+                <span style="font-size: 0.7rem; color: #666; margin-left: 1.2rem;">
+                    <i class="bi bi-telephone"></i> {{ $membre->telephone }}
+                </span>
             </span>
         </div>
         <div class="top-bar-right">

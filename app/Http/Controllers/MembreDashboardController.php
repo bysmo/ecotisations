@@ -1051,10 +1051,17 @@ class MembreDashboardController extends Controller
     public function updateProfil(Request $request)
     {
         $membre = Auth::guard('membre')->user();
+
+        // Normaliser le téléphone avant validation et recherche d'unicité
+        if ($request->has('telephone')) {
+            $request->merge([
+                'telephone' => \App\Models\Membre::normalizePhoneNumber($request->telephone)
+            ]);
+        }
         
         $validated = $request->validate([
-            'email' => 'required|email|unique:membres,email,' . $membre->id,
-            'telephone' => 'nullable|string|max:20',
+            'email' => 'nullable|email|unique:membres,email,' . $membre->id,
+            'telephone' => 'required|string|max:20|unique:membres,telephone,' . $membre->id,
             'adresse' => 'nullable|string',
             'date_naissance' => 'nullable|date',
             'lieu_naissance' => 'nullable|string|max:100',

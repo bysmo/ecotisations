@@ -142,23 +142,21 @@
 
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label for="email" class="form-label text-muted small fw-medium">Adresse Email <span class="text-danger">*</span></label>
+                            <label for="email" class="form-label text-muted small fw-medium">Adresse Email (optionnel)</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-white border-end-0"><i class="bi bi-envelope text-muted"></i></span>
                                 <input type="email" name="email" id="email" 
                                        class="form-control border-start-0 @error('email') is-invalid @enderror" 
-                                       value="{{ old('email', $membre->email) }}" required>
+                                       value="{{ old('email', $membre->email) }}">
                             </div>
                             @error('email')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-6">
-                            <label for="telephone" class="form-label text-muted small fw-medium">Téléphone</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-white border-end-0"><i class="bi bi-telephone text-muted"></i></span>
-                                <input type="text" name="telephone" id="telephone" 
-                                       class="form-control border-start-0 @error('telephone') is-invalid @enderror" 
-                                       value="{{ old('telephone', $membre->telephone) }}">
-                            </div>
+                            <label for="telephone" class="form-label text-muted small fw-medium">Téléphone <span class="text-danger">*</span></label>
+                            <input type="tel" id="telephone" name="telephone_input" 
+                                   class="form-control @error('telephone') is-invalid @enderror" 
+                                   data-initial="{{ old('telephone', $membre->telephone) }}" required>
+                            <input type="hidden" name="telephone" id="full_telephone">
                             @error('telephone')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-12">
@@ -214,8 +212,47 @@
 </div>
 @endsection
 
+@push('scripts')
+<!-- intl-tel-input JS -->
+<script src="https://cdn.jsdelivr.net/npm/intl-tel-input@24.5.1/build/js/intlTelInput.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const phoneInput = document.querySelector("#telephone");
+        const fullPhoneInput = document.querySelector("#full_telephone");
+        
+        const iti = window.intlTelInput(phoneInput, {
+            initialCountry: "bf",
+            preferredCountries: ["bf", "sn", "ci", "ml", "tg", "bj"],
+            utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@24.5.1/build/js/utils.js",
+            separateDialCode: true,
+        });
+
+        // Charger le numéro actuel
+        const initialNumber = phoneInput.getAttribute('data-initial');
+        if (initialNumber) {
+            iti.setNumber(initialNumber);
+        }
+
+        // Mettre à jour le champ caché avant la soumission
+        const form = document.querySelector('form[action$="profil/update"]');
+        if (form) {
+            form.addEventListener("submit", function() {
+                fullPhoneInput.value = iti.getNumber();
+            });
+        }
+    });
+</script>
+@endpush
+
 @push('styles')
+<!-- intl-tel-input CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@24.5.1/build/css/intlTelInput.css">
 <style>
+    .iti { width: 100%; }
+    .iti__flag-container { border-radius: 6px 0 0 6px; }
+    .iti--separate-dial-code input { padding-left: 95px !important; }
+    .iti--allow-dropdown input { padding-left: 95px !important; }
+
     .breadcrumb-item + .breadcrumb-item::before {
         content: "\F138";
         font-family: "bootstrap-icons";

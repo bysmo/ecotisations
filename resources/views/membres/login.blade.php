@@ -40,6 +40,14 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/auth.css') }}?v={{ time() }}">
+    <!-- intl-tel-input CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@24.5.1/build/css/intlTelInput.css">
+    <style>
+        .iti { width: 100%; }
+        .iti__flag-container { border-radius: 8px 0 0 8px; }
+        .iti--separate-dial-code input { padding-left: 95px !important; }
+        .iti--allow-dropdown input { padding-left: 95px !important; }
+    </style>
 </head>
 <body>
     <div class="auth-container">
@@ -77,15 +85,16 @@
                     @csrf
                     
                     <div class="mb-3">
-                        <label for="email" class="form-label">Adresse e-mail</label>
-                        <input type="email" 
+                        <label for="telephone" class="form-label">Numéro de téléphone</label>
+                        <input type="tel" 
                                class="form-control" 
-                               id="email" 
-                               name="email" 
-                               placeholder="votre@email.com"
-                               value="{{ old('email') }}" 
+                               id="telephone" 
+                               name="telephone_input" 
+                               placeholder="XXXXXXXX"
+                               data-initial="{{ old('telephone') }}" 
                                required 
                                autofocus>
+                        <input type="hidden" name="telephone" id="full_telephone">
                     </div>
                     
                     <div class="mb-3">
@@ -143,7 +152,32 @@
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     
+    <!-- intl-tel-input JS -->
+    <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@24.5.1/build/js/intlTelInput.min.js"></script>
+    
     <script>
+        // Initialisation de intl-tel-input
+        const phoneInput = document.querySelector("#telephone");
+        const fullPhoneInput = document.querySelector("#full_telephone");
+        
+        const iti = window.intlTelInput(phoneInput, {
+            initialCountry: "bf", // Burkina Faso par défaut
+            preferredCountries: ["bf", "sn", "ci", "ml", "tg", "bj"],
+            utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@24.5.1/build/js/utils.js",
+            separateDialCode: true,
+        });
+
+        // Gérer la valeur initiale pour éviter les duplications
+        const initialNumber = phoneInput.getAttribute('data-initial');
+        if (initialNumber) {
+            iti.setNumber(initialNumber);
+        }
+
+        // Mettre à jour le champ caché avant la soumission du formulaire
+        document.querySelector("form").addEventListener("submit", function() {
+            fullPhoneInput.value = iti.getNumber();
+        });
+
         function showToast(message, type = 'success') {
             const toastContainer = document.getElementById('toastContainer');
             const toastId = 'toast-' + Date.now();

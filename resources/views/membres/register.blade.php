@@ -38,6 +38,14 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/auth.css') }}?v={{ time() }}">
+    <!-- intl-tel-input CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@24.5.1/build/css/intlTelInput.css">
+    <style>
+        .iti { width: 100%; }
+        .iti__flag-container { border-radius: 8px 0 0 8px; }
+        .iti--separate-dial-code input { padding-left: 95px !important; }
+        .iti--allow-dropdown input { padding-left: 95px !important; }
+    </style>
     
     <style>
         .step-container { display: none; }
@@ -204,12 +212,13 @@
                         </h5>
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label class="form-label">Email <span class="text-danger">*</span></label>
-                                <input type="email" name="email" class="form-control" placeholder="votre@email.com" required>
+                                <label class="form-label">Email</label>
+                                <input type="email" name="email" class="form-control" placeholder="votre@email.com (optionnel)">
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Téléphone</label>
-                                <input type="text" name="telephone" class="form-control" placeholder="+226 ...">
+                                <label class="form-label">Téléphone <span class="text-danger">*</span></label>
+                                <input type="tel" id="telephone" name="telephone_input" class="form-control" placeholder="XXXXXXXX" data-initial="{{ old('telephone') }}" required>
+                                <input type="hidden" name="telephone" id="full_telephone">
                             </div>
                             <div class="col-12">
                                 <label class="form-label">Adresse Détaillée <span class="text-danger">*</span></label>
@@ -306,7 +315,33 @@
         </div>
     </div>
     
+    <!-- intl-tel-input JS -->
+    <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@24.5.1/build/js/intlTelInput.min.js"></script>
+
     <script>
+        // Initialisation de intl-tel-input
+        const phoneInput = document.querySelector("#telephone");
+        const fullPhoneInput = document.querySelector("#full_telephone");
+        
+        const iti = window.intlTelInput(phoneInput, {
+            initialCountry: "bf",
+            preferredCountries: ["bf", "sn", "ci", "ml", "tg", "bj"],
+            utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@24.5.1/build/js/utils.js",
+            separateDialCode: true,
+        });
+
+        // Gérer la valeur initiale pour éviter les duplications
+        const initialNumber = phoneInput.getAttribute('data-initial');
+        if (initialNumber) {
+            iti.setNumber(initialNumber);
+        }
+
+        // Mettre à jour le champ caché avant la soumission
+        const form = document.querySelector("#registerForm");
+        form.addEventListener("submit", function() {
+            fullPhoneInput.value = iti.getNumber();
+        });
+
         function nextStep(step) {
             document.querySelectorAll('.step-container').forEach(c => c.classList.remove('active'));
             document.getElementById('step-' + step).classList.add('active');

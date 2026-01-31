@@ -68,11 +68,18 @@ class MembreController extends Controller
      */
     public function store(Request $request)
     {
+        // Normaliser le téléphone avant validation et recherche d'unicité
+        if ($request->has('telephone')) {
+            $request->merge([
+                'telephone' => \App\Models\Membre::normalizePhoneNumber($request->telephone)
+            ]);
+        }
+
         $validated = $request->validate([
             'nom' => 'required|string|max:255',
             'prenom' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:membres,email',
-            'telephone' => 'nullable|string|max:20',
+            'email' => 'nullable|email|max:255|unique:membres,email',
+            'telephone' => 'required|string|max:20|unique:membres,telephone',
             'adresse' => 'nullable|string',
             'date_adhesion' => 'required|date',
             'statut' => 'required|in:actif,inactif,suspendu',
@@ -132,16 +139,28 @@ class MembreController extends Controller
      */
     public function update(Request $request, Membre $membre)
     {
+        // Normaliser le téléphone avant validation et recherche d'unicité
+        if ($request->has('telephone')) {
+            $request->merge([
+                'telephone' => \App\Models\Membre::normalizePhoneNumber($request->telephone)
+            ]);
+        }
+
         $validated = $request->validate([
             'nom' => 'required|string|max:255',
             'prenom' => 'required|string|max:255',
             'email' => [
-                'required',
+                'nullable',
                 'email',
                 'max:255',
                 Rule::unique('membres')->ignore($membre->id),
             ],
-            'telephone' => 'nullable|string|max:20',
+            'telephone' => [
+                'required',
+                'string',
+                'max:20',
+                Rule::unique('membres')->ignore($membre->id),
+            ],
             'adresse' => 'nullable|string',
             'date_adhesion' => 'required|date',
             'statut' => 'required|in:actif,inactif,suspendu',
