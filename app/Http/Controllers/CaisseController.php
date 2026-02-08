@@ -18,7 +18,6 @@ class CaisseController extends Controller
     public function index(Request $request)
     {
         $query = Caisse::query();
-        //Test test
         
         // Recherche par nom ou numéro
         if ($request->filled('search')) {
@@ -479,8 +478,8 @@ class CaisseController extends Controller
             $totalSorties->whereDate('date_operation', '<=', $request->date_fin);
         }
         
-        $totalEntrees = $totalEntrees->sum('montant');
-        $totalSorties = $totalSorties->sum('montant');
+        $totalEntrees = $totalEntrees->get()->sum('montant');
+        $totalSorties = $totalSorties->get()->sum('montant');
         $net = $totalEntrees - $totalSorties;
 
         $types = (clone $baseQuery)

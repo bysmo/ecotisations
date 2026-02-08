@@ -29,14 +29,14 @@
                     <dt class="col-sm-4" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">Solde initial</dt>
                     <dd class="col-sm-8" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">
                         <span class="badge bg-secondary">
-                            {{ number_format($caisse->solde_initial, 0, ',', ' ') }} XOF
+                            {{ number_format((float) ($caisse->solde_initial ?? 0), 0, ',', ' ') }} XOF
                         </span>
                     </dd>
                     
                     <dt class="col-sm-4" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">Solde actuel</dt>
                     <dd class="col-sm-8" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">
                         <span class="badge bg-success fs-6">
-                            {{ number_format($caisse->solde_actuel, 0, ',', ' ') }} XOF
+                            {{ number_format((float) ($caisse->solde_actuel ?? 0), 0, ',', ' ') }} XOF
                         </span>
                     </dd>
                     

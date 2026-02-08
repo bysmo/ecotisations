@@ -3,10 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Caisse;
-use App\Models\Membre;
 use App\Models\Cotisation;
-use App\Models\Paiement;
 use App\Models\Engagement;
+use App\Models\Membre;
+use App\Models\MouvementCaisse;
+use App\Models\Paiement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -25,16 +26,16 @@ class RapportController extends Controller
         $caisses = Caisse::where('statut', 'active')->get();
         
         $statistiques = $caisses->map(function($caisse) use ($dateDebut, $dateFin) {
-            $entrees = DB::table('mouvements_caisse')
-                ->where('caisse_id', $caisse->id)
+            $entrees = MouvementCaisse::where('caisse_id', $caisse->id)
                 ->where('sens', 'entree')
                 ->whereBetween('date_operation', [$dateDebut, $dateFin])
+                ->get()
                 ->sum('montant');
             
-            $sorties = DB::table('mouvements_caisse')
-                ->where('caisse_id', $caisse->id)
+            $sorties = MouvementCaisse::where('caisse_id', $caisse->id)
                 ->where('sens', 'sortie')
                 ->whereBetween('date_operation', [$dateDebut, $dateFin])
+                ->get()
                 ->sum('montant');
             
             $nombrePaiements = Paiement::where('caisse_id', $caisse->id)

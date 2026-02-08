@@ -23,8 +23,8 @@ class EpargneSouscription extends Model
     ];
 
     protected $casts = [
-        'montant' => 'decimal:0',
-        'solde_courant' => 'decimal:0',
+        'montant' => \App\Casts\EncryptedDecimal::class,
+        'solde_courant' => \App\Casts\EncryptedDecimal::class,
         'date_debut' => 'date',
         'date_fin' => 'date',
     ];

@@ -51,29 +51,28 @@
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label for="email" class="form-label">
-                        Email (optionnel)
+                        Email <span class="text-danger">*</span>
                     </label>
                     <input type="email" 
                            class="form-control @error('email') is-invalid @enderror" 
                            id="email" 
                            name="email" 
-                           value="{{ old('email', $membre->email) }}">
+                           value="{{ old('email', $membre->email) }}" 
+                           required>
                     @error('email')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
                 
                 <div class="col-md-6 mb-3">
-                    <label for="telephone" class="form-label">Téléphone <span class="text-danger">*</span></label>
-                    <input type="tel" 
-                           id="telephone" 
-                           name="telephone_input" 
+                    <label for="telephone" class="form-label">Téléphone</label>
+                    <input type="text" 
                            class="form-control @error('telephone') is-invalid @enderror" 
-                           data-initial="{{ old('telephone', $membre->telephone) }}"
-                           required>
-                    <input type="hidden" name="telephone" id="full_telephone">
+                           id="telephone" 
+                           name="telephone" 
+                           value="{{ old('telephone', $membre->telephone) }}">
                     @error('telephone')
-                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                        <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
             </div>
@@ -124,60 +123,6 @@
             </div>
             
             <div class="mb-3">
-                <label for="segment" class="form-label">Segment</label>
-                <select class="form-select @error('segment') is-invalid @enderror" 
-                        id="segment" 
-                        name="segment">
-                    <option value="">-- Aucun segment --</option>
-                    @foreach($segments as $seg)
-                        <option value="{{ $seg }}" {{ old('segment', $membre->segment) === $seg ? 'selected' : '' }}>{{ $seg }}</option>
-                    @endforeach
-                    <option value="__nouveau__" {{ old('segment') === '__nouveau__' ? 'selected' : '' }}>+ Ajouter un nouveau segment</option>
-                </select>
-                <div id="nouveauSegmentContainer" style="display: none; margin-top: 0.5rem;">
-                    <input type="text" 
-                           class="form-control form-control-sm" 
-                           id="nouveauSegment" 
-                           name="nouveau_segment" 
-                           value="{{ old('nouveau_segment') }}"
-                           placeholder="Nom du nouveau segment">
-                    <small class="form-text text-muted" style="font-size: 0.65rem;">Saisissez le nom du nouveau segment</small>
-                </div>
-                @error('segment')
-                    <div class="invalid-feedback">{{ $message }}</div>
-                @enderror
-                @error('nouveau_segment')
-                    <div class="invalid-feedback">{{ $message }}</div>
-                @enderror
-                <small class="form-text text-muted" style="font-size: 0.7rem;">Permet de segmenter les clients selon vos critères</small>
-            </div>
-            
-            <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    const segmentSelect = document.getElementById('segment');
-                    const nouveauSegmentContainer = document.getElementById('nouveauSegmentContainer');
-                    const nouveauSegmentInput = document.getElementById('nouveauSegment');
-                    
-                    segmentSelect.addEventListener('change', function() {
-                        if (this.value === '__nouveau__') {
-                            nouveauSegmentContainer.style.display = 'block';
-                            nouveauSegmentInput.required = true;
-                        } else {
-                            nouveauSegmentContainer.style.display = 'none';
-                            nouveauSegmentInput.required = false;
-                            nouveauSegmentInput.value = '';
-                        }
-                    });
-                    
-                    // Vérifier si l'option "__nouveau__" est déjà sélectionnée au chargement
-                    if (segmentSelect.value === '__nouveau__') {
-                        nouveauSegmentContainer.style.display = 'block';
-                        nouveauSegmentInput.required = true;
-                    }
-                });
-            </script>
-            
-            <div class="mb-3">
                 <label for="password" class="form-label">Nouveau mot de passe</label>
                 <input type="password" 
                        class="form-control @error('password') is-invalid @enderror" 
@@ -200,50 +145,4 @@
         </form>
     </div>
 </div>
-@push('styles')
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@24.5.1/build/css/intlTelInput.css">
-<style>
-    .iti { width: 100%; }
-    .iti__flag-container { border-radius: 4px 0 0 4px; }
-    .iti--separate-dial-code input { padding-left: 95px !important; }
-    .iti--allow-dropdown input { padding-left: 95px !important; }
-</style>
-@endpush
-
-@push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/intl-tel-input@24.5.1/build/js/intlTelInput.min.js"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const phoneInput = document.querySelector("#telephone");
-        const fullPhoneInput = document.querySelector("#full_telephone");
-        
-        const iti = window.intlTelInput(phoneInput, {
-            initialCountry: "bf",
-            preferredCountries: ["bf", "sn", "ci", "ml", "tg", "bj"],
-            utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@24.5.1/build/js/utils.js",
-            separateDialCode: true,
-        });
-
-        // Gérer la valeur initiale pour éviter les duplications
-        const initialNumber = phoneInput.getAttribute('data-initial');
-        if (initialNumber) {
-            iti.setNumber(initialNumber);
-        }
-
-        // Charger le numéro actuel s'il existe
-        const currentNumber = "{{ $membre->telephone }}";
-        if (currentNumber) {
-            iti.setNumber(currentNumber);
-        }
-
-        // Mettre à jour le champ caché avant la soumission
-        const form = document.querySelector('form[action$="/update"]');
-        if (form) {
-            form.addEventListener("submit", function() {
-                fullPhoneInput.value = iti.getNumber();
-            });
-        }
-    });
-</script>
-@endpush
 @endsection

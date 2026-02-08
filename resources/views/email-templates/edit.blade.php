@@ -44,7 +44,8 @@
                                     required>
                                 <option value="paiement" {{ old('type', $emailTemplate->type) === 'paiement' ? 'selected' : '' }}>Paiement</option>
                                 <option value="engagement" {{ old('type', $emailTemplate->type) === 'engagement' ? 'selected' : '' }}>Engagement</option>
-                                <option value="authentification" {{ old('type', $emailTemplate->type) === 'authentification' ? 'selected' : '' }}>Authentification</option>
+                                <option value="membre_inscrit" {{ old('type', $emailTemplate->type) === 'membre_inscrit' ? 'selected' : '' }}>Enregistrement du membre</option>
+                                <option value="nano_credit_octroye" {{ old('type', $emailTemplate->type) === 'nano_credit_octroye' ? 'selected' : '' }}>Nano crédit octroyé</option>
                                 <option value="autre" {{ old('type', $emailTemplate->type) === 'autre' ? 'selected' : '' }}>Autre</option>
                             </select>
                             @error('type')

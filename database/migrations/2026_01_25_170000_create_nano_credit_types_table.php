@@ -8,8 +8,6 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::disableForeignKeyConstraints();
-
         Schema::create('nano_credit_types', function (Blueprint $table) {
             $table->id();
             $table->string('nom');
@@ -23,14 +21,10 @@ return new class extends Migration
             $table->unsignedInteger('ordre')->default(0);
             $table->timestamps();
         });
-
-        Schema::enableForeignKeyConstraints();
     }
 
     public function down(): void
     {
-        Schema::disableForeignKeyConstraints();
         Schema::dropIfExists('nano_credit_types');
-        Schema::enableForeignKeyConstraints();
     }
 };

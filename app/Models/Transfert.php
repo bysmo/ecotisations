@@ -17,7 +17,7 @@ class Transfert extends Model
     ];
 
     protected $casts = [
-        'montant' => 'decimal:0',
+        'montant' => \App\Casts\EncryptedDecimal::class,
     ];
 
     /**

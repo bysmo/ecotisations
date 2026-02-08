@@ -156,6 +156,12 @@ Route::get('/caisses/{caisse}/mouvements', [CaisseController::class, 'mouvements
     Route::post('/payment-methods/initialize', [\App\Http\Controllers\PaymentMethodController::class, 'initialize'])->name('payment-methods.initialize');
     Route::patch('/payment-methods/{paymentMethod}/toggle', [\App\Http\Controllers\PaymentMethodController::class, 'toggle'])->name('payment-methods.toggle');
 
+    // Routes pour les passerelles SMS (Paramètres > SMS)
+    Route::get('/sms-gateways', [\App\Http\Controllers\SmsGatewayController::class, 'index'])->name('sms-gateways.index');
+    Route::get('/sms-gateways/{smsGateway}/edit', [\App\Http\Controllers\SmsGatewayController::class, 'edit'])->name('sms-gateways.edit');
+    Route::put('/sms-gateways/{smsGateway}', [\App\Http\Controllers\SmsGatewayController::class, 'update'])->name('sms-gateways.update');
+    Route::patch('/sms-gateways/{smsGateway}/toggle', [\App\Http\Controllers\SmsGatewayController::class, 'toggle'])->name('sms-gateways.toggle');
+
     // Routes pour les rôles et permissions
     Route::resource('roles', \App\Http\Controllers\RoleController::class);
     Route::get('/roles/assign/users', [\App\Http\Controllers\RoleController::class, 'assignUsers'])->name('roles.assign-users');
@@ -199,6 +205,14 @@ Route::get('/caisses/{caisse}/mouvements', [CaisseController::class, 'mouvements
     Route::post('/remboursements/{remboursement}/approve', [\App\Http\Controllers\RemboursementController::class, 'approve'])->name('remboursements.approve');
     Route::post('/remboursements/{remboursement}/reject', [\App\Http\Controllers\RemboursementController::class, 'reject'])->name('remboursements.reject');
     
+    // Demandes d'adhésion (cotisations créées par l'admin app uniquement)
+    Route::get('/cotisation-adhesions', [\App\Http\Controllers\CotisationAdhesionController::class, 'index'])->name('cotisation-adhesions.index');
+    Route::post('/cotisation-adhesions/{adhesion}/accepter', [\App\Http\Controllers\CotisationAdhesionController::class, 'accepter'])->name('cotisation-adhesions.accepter');
+    Route::post('/cotisation-adhesions/{adhesion}/refuser', [\App\Http\Controllers\CotisationAdhesionController::class, 'refuser'])->name('cotisation-adhesions.refuser');
+
+    // Demandes de versement des fonds (cotisations créées par les membres)
+    Route::get('/cotisation-versement-demandes', [\App\Http\Controllers\CotisationVersementDemandeController::class, 'index'])->name('cotisation-versement-demandes.index');
+    
     // Routes pour les campagnes d'emails
     Route::resource('campagnes', \App\Http\Controllers\CampagneController::class);
     Route::post('/campagnes/preview', [\App\Http\Controllers\CampagneController::class, 'preview'])->name('campagnes.preview');
@@ -226,7 +240,12 @@ Route::prefix('membre')->name('membre.')->group(function () {
     Route::get('/register', [\App\Http\Controllers\Auth\MembreAuthController::class, 'showRegisterForm'])->name('register');
     Route::post('/register', [\App\Http\Controllers\Auth\MembreAuthController::class, 'register']);
 
-    // Vérification d'email (lien envoyé par mail)
+    // Vérification par code OTP (après inscription)
+    Route::get('/register/verify-otp', [\App\Http\Controllers\Auth\MembreAuthController::class, 'showVerifyOtpForm'])->name('verify-otp');
+    Route::post('/register/verify-otp', [\App\Http\Controllers\Auth\MembreAuthController::class, 'verifyOtp']);
+    Route::post('/register/resend-otp', [\App\Http\Controllers\Auth\MembreAuthController::class, 'resendOtp'])->name('resend-otp');
+
+    // Vérification d'email (lien envoyé par mail, legacy)
     Route::get('/email/verify/{id}/{hash}', [\App\Http\Controllers\Auth\MembreAuthController::class, 'verifyEmail'])->name('verification.verify')->middleware('signed');
     Route::post('/email/verification-resend', [\App\Http\Controllers\Auth\MembreAuthController::class, 'resendVerification'])->name('verification.resend');
 
@@ -237,7 +256,20 @@ Route::prefix('membre')->name('membre.')->group(function () {
     Route::middleware(['auth:membre'])->group(function () {
         Route::get('/dashboard', [\App\Http\Controllers\MembreDashboardController::class, 'dashboard'])->name('dashboard');
         Route::get('/cotisations', [\App\Http\Controllers\MembreDashboardController::class, 'cotisations'])->name('cotisations');
+        Route::get('/cotisations/publiques', [\App\Http\Controllers\MembreDashboardController::class, 'cotisationsPubliques'])->name('cotisations.publiques');
+        Route::get('/cotisations/privees', [\App\Http\Controllers\MembreDashboardController::class, 'cotisationsPrivees'])->name('cotisations.privees');
+        Route::get('/cotisations/rechercher', [\App\Http\Controllers\MembreCotisationController::class, 'rechercher'])->name('cotisations.rechercher');
+        Route::post('/cotisations/{cotisation}/adherer', [\App\Http\Controllers\MembreDashboardController::class, 'adhererCotisation'])->name('cotisations.adherer');
         Route::get('/cotisations/{id}', [\App\Http\Controllers\MembreDashboardController::class, 'showCotisation'])->name('cotisations.show');
+        Route::get('/mes-cotisations/creer', [\App\Http\Controllers\MembreCotisationController::class, 'create'])->name('mes-cotisations.create');
+        Route::post('/mes-cotisations/creer', [\App\Http\Controllers\MembreCotisationController::class, 'store'])->name('mes-cotisations.store');
+        Route::get('/mes-cotisations', [\App\Http\Controllers\MembreCotisationController::class, 'mesCotisations'])->name('mes-cotisations');
+        Route::get('/mes-cotisations/{cotisation}', [\App\Http\Controllers\MembreCotisationController::class, 'showMesCotisation'])->name('mes-cotisations.show');
+        Route::post('/adhesions/{adhesion}/accepter', [\App\Http\Controllers\MembreCotisationController::class, 'accepterAdhesion'])->name('adhesions.accepter');
+        Route::post('/adhesions/{adhesion}/refuser', [\App\Http\Controllers\MembreCotisationController::class, 'refuserAdhesion'])->name('adhesions.refuser');
+        Route::post('/mes-cotisations/{cotisation}/designer-admin', [\App\Http\Controllers\MembreCotisationController::class, 'designerAdmin'])->name('mes-cotisations.designer-admin');
+        Route::post('/mes-cotisations/{cotisation}/cloturer', [\App\Http\Controllers\MembreCotisationController::class, 'cloturer'])->name('mes-cotisations.cloturer');
+        Route::post('/mes-cotisations/{cotisation}/demande-versement', [\App\Http\Controllers\MembreCotisationController::class, 'demandeVersement'])->name('mes-cotisations.demande-versement');
         Route::post('/cotisations/{id}/paydunya', [\App\Http\Controllers\MembreDashboardController::class, 'initierPaiementPayDunya'])->name('cotisations.paydunya');
         Route::get('/paiements', [\App\Http\Controllers\MembreDashboardController::class, 'paiements'])->name('paiements');
         Route::get('/paiements/{paiement}/pdf', [\App\Http\Controllers\PaiementController::class, 'pdf'])->name('paiements.pdf');

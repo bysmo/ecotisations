@@ -18,7 +18,7 @@ class Caisse extends Model
     ];
 
     protected $casts = [
-        'solde_initial' => 'decimal:0',
+        'solde_initial' => \App\Casts\EncryptedDecimal::class,
     ];
 
     /**
@@ -26,18 +26,9 @@ class Caisse extends Model
      */
     public function getSoldeActuelAttribute()
     {
-        $solde = $this->solde_initial ?? 0;
-        
-        // Ajouter les entrées (approvisionnements, paiements, transferts entrants)
-        $entrees = $this->mouvements()
-            ->where('sens', 'entree')
-            ->sum('montant');
-        
-        // Soustraire les sorties (sorties de caisse, transferts sortants)
-        $sorties = $this->mouvements()
-            ->where('sens', 'sortie')
-            ->sum('montant');
-        
+        $solde = (float) ($this->solde_initial ?? 0);
+        $entrees = $this->mouvements()->where('sens', 'entree')->get()->sum('montant');
+        $sorties = $this->mouvements()->where('sens', 'sortie')->get()->sum('montant');
         return $solde + $entrees - $sorties;
     }
 

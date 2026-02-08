@@ -120,10 +120,10 @@
                                 <td>{{ $caisse->nom }}</td>
                                 <td>{{ $caisse->description ?? '-' }}</td>
                                 <td>
-                                    {{ number_format($caisse->solde_initial, 0, ',', ' ') }} XOF
+                                    {{ number_format((float) ($caisse->solde_initial ?? 0), 0, ',', ' ') }} XOF
                                 </td>
                                 <td>
-                                    {{ number_format($caisse->solde_actuel, 0, ',', ' ') }} XOF
+                                    {{ number_format((float) ($caisse->solde_actuel ?? 0), 0, ',', ' ') }} XOF
                                 </td>
                                 <td class="{{ $caisse->statut === 'active' ? 'statut-active' : '' }}">
                                     @if($caisse->statut === 'active')

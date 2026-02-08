@@ -53,16 +53,7 @@ class CotisationController extends Controller
             ->pluck('nom')
             ->toArray();
         
-        // Récupérer tous les segments uniques existants
-        $segments = \App\Models\Membre::select('segment')
-            ->whereNotNull('segment')
-            ->where('segment', '!=', '')
-            ->distinct()
-            ->orderBy('segment')
-            ->pluck('segment')
-            ->toArray();
-        
-        return view('cotisations.create', compact('caisses', 'tags', 'segments'));
+        return view('cotisations.create', compact('caisses', 'tags'));
     }
 
     /**
@@ -75,6 +66,15 @@ class CotisationController extends Controller
         } while (Cotisation::where('numero', $numero)->exists());
 
         return $numero;
+    }
+
+    private function generateCodeCotisation(): string
+    {
+        do {
+            $code = strtoupper(Str::random(6));
+        } while (Cotisation::where('code', $code)->exists());
+
+        return $code;
     }
 
     /**
@@ -92,7 +92,7 @@ class CotisationController extends Controller
             'notes' => 'nullable|string',
             'tag' => 'nullable|string|max:255',
             'nouveau_tag' => 'nullable|string|max:255|required_if:tag,__nouveau__',
-            'segment' => 'nullable|string|max:255',
+            'visibilite' => 'required|in:publique,privee',
             'actif' => 'boolean',
         ];
 
@@ -114,8 +114,9 @@ class CotisationController extends Controller
         
         unset($validated['nouveau_tag']);
 
-        // Générer un numéro de cotisation unique
+        // Générer un numéro et un code de cotisation uniques (code pour recherche/adhésion)
         $validated['numero'] = $this->generateNumeroCotisation();
+        $validated['code'] = $this->generateCodeCotisation();
         $validated['actif'] = $request->has('actif');
         
         // Si le montant est libre, mettre null
@@ -125,30 +126,15 @@ class CotisationController extends Controller
 
         $cotisation = Cotisation::create($validated);
 
-        // Envoyer des notifications aux membres concernés par le segment
-        if ($cotisation->actif && $cotisation->segment) {
-            // Récupérer tous les membres ayant ce segment
-            $membres = \App\Models\Membre::where('segment', $cotisation->segment)->get();
-            
+        // Notifier tous les membres des nouvelles cotisations actives
+        if ($cotisation->actif) {
+            $membres = \App\Models\Membre::all();
             foreach ($membres as $membre) {
                 $membre->notify(new \App\Notifications\NewCotisationNotification($cotisation));
             }
-            
             \Log::info('Notifications de nouvelle cotisation envoyées', [
                 'cotisation_id' => $cotisation->id,
-                'segment' => $cotisation->segment,
-                'nombre_membres' => $membres->count(),
-            ]);
-        } elseif ($cotisation->actif && (!$cotisation->segment || $cotisation->segment === '')) {
-            // Si pas de segment, envoyer à tous les membres
-            $membres = \App\Models\Membre::all();
-            
-            foreach ($membres as $membre) {
-                $membre->notify(new \App\Notifications\NewCotisationNotification($cotisation));
-            }
-            
-            \Log::info('Notifications de nouvelle cotisation envoyées à tous les membres', [
-                'cotisation_id' => $cotisation->id,
+                'visibilite' => $cotisation->visibilite,
                 'nombre_membres' => $membres->count(),
             ]);
         }
@@ -180,16 +166,7 @@ class CotisationController extends Controller
             ->pluck('nom')
             ->toArray();
         
-        // Récupérer tous les segments uniques existants
-        $segments = \App\Models\Membre::select('segment')
-            ->whereNotNull('segment')
-            ->where('segment', '!=', '')
-            ->distinct()
-            ->orderBy('segment')
-            ->pluck('segment')
-            ->toArray();
-        
-        return view('cotisations.edit', compact('cotisation', 'caisses', 'tags', 'segments'));
+        return view('cotisations.edit', compact('cotisation', 'caisses', 'tags'));
     }
 
     /**
@@ -207,7 +184,7 @@ class CotisationController extends Controller
             'notes' => 'nullable|string',
             'tag' => 'nullable|string|max:255',
             'nouveau_tag' => 'nullable|string|max:255|required_if:tag,__nouveau__',
-            'segment' => 'nullable|string|max:255',
+            'visibilite' => 'required|in:publique,privee',
             'actif' => 'boolean',
         ];
 
@@ -220,11 +197,24 @@ class CotisationController extends Controller
 
         $validated = $request->validate($rules);
 
+        // Si un nouveau tag est fourni, l'utiliser
+        if ($request->tag === '__nouveau__' && $request->filled('nouveau_tag')) {
+            $validated['tag'] = trim($request->nouveau_tag);
+        } elseif ($request->tag === '__nouveau__') {
+            $validated['tag'] = null;
+        }
+        unset($validated['nouveau_tag']);
+
         $validated['actif'] = $request->has('actif');
         
         // Si le montant est libre, mettre null
         if ($validated['type_montant'] === 'libre') {
             $validated['montant'] = null;
+        }
+
+        // Générer un code si absent (cotisations créées avant migration)
+        if (empty($cotisation->code)) {
+            $validated['code'] = $this->generateCodeCotisation();
         }
 
         $cotisation->update($validated);

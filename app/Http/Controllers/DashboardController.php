@@ -3,10 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Caisse;
-use App\Models\Membre;
 use App\Models\Cotisation;
-use App\Models\Paiement;
 use App\Models\Engagement;
+use App\Models\Membre;
+use App\Models\MouvementCaisse;
+use App\Models\Paiement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -25,21 +26,23 @@ class DashboardController extends Controller
         $totalMembres = Membre::where('statut', 'actif')->count();
         $totalCaisses = Caisse::where('statut', 'active')->count();
         $totalCotisations = Cotisation::where('actif', true)->count();
-        // Total des montants fixes des cotisations (seulement celles avec montant fixe)
+        // Total des montants fixes des cotisations (montants chiffrés : sum en PHP)
         $totalCotisationsMontant = Cotisation::where('actif', true)
             ->where('type_montant', 'fixe')
             ->whereNotNull('montant')
+            ->get()
             ->sum('montant') ?? 0;
         
-        // Total des paiements sur la période
+        // Total des paiements sur la période (montants chiffrés : sum en PHP)
         $totalPaiements = Paiement::whereBetween('date_paiement', [$dateDebut, $dateFin])
+            ->get()
             ->sum('montant');
         
         // Revenus par période (paiements sur la période)
         $revenusPeriode = $totalPaiements;
         
-        // Total des engagements
-        $totalEngagements = Engagement::where('statut', 'en_cours')->sum('montant_engage');
+        // Total des engagements (montants chiffrés : sum en PHP)
+        $totalEngagements = Engagement::where('statut', 'en_cours')->get()->sum('montant_engage');
         
         // Total des montants payés sur les engagements
         $totalPayeEngagements = Engagement::where('statut', 'en_cours')
@@ -59,17 +62,17 @@ class DashboardController extends Controller
                 $query->whereBetween('date_paiement', [$dateDebut, $dateFin]);
             }])
             ->get()
-            ->map(function($caisse) use ($dateDebut, $dateFin) {
-                $entrees = DB::table('mouvements_caisse')
-                    ->where('caisse_id', $caisse->id)
+            ->map(function ($caisse) use ($dateDebut, $dateFin) {
+                $entrees = MouvementCaisse::where('caisse_id', $caisse->id)
                     ->where('sens', 'entree')
                     ->whereBetween('date_operation', [$dateDebut, $dateFin])
+                    ->get()
                     ->sum('montant');
                 
-                $sorties = DB::table('mouvements_caisse')
-                    ->where('caisse_id', $caisse->id)
+                $sorties = MouvementCaisse::where('caisse_id', $caisse->id)
                     ->where('sens', 'sortie')
                     ->whereBetween('date_operation', [$dateDebut, $dateFin])
+                    ->get()
                     ->sum('montant');
                 
                 return [
@@ -87,9 +90,10 @@ class DashboardController extends Controller
                 $query->whereBetween('date_paiement', [$dateDebut, $dateFin]);
             }])
             ->get()
-            ->map(function($cotisation) use ($dateDebut, $dateFin) {
+            ->map(function ($cotisation) use ($dateDebut, $dateFin) {
                 $montantTotal = Paiement::where('cotisation_id', $cotisation->id)
                     ->whereBetween('date_paiement', [$dateDebut, $dateFin])
+                    ->get()
                     ->sum('montant');
                 
                 return [
@@ -101,56 +105,49 @@ class DashboardController extends Controller
             ->sortByDesc('montant_total')
             ->take(10);
 
-        // Évolution des paiements (par jour sur la période)
-        $evolutionPaiements = Paiement::select(
-                DB::raw('DATE(date_paiement) as date'),
-                DB::raw('SUM(montant) as total')
-            )
-            ->whereBetween('date_paiement', [$dateDebut, $dateFin])
-            ->groupBy('date')
-            ->orderBy('date')
-            ->get();
+        // Évolution des paiements (montants chiffrés : groupBy/sum en PHP)
+        $paiementsPeriode = Paiement::whereBetween('date_paiement', [$dateDebut, $dateFin])->orderBy('date_paiement')->get();
+        $evolutionPaiements = $paiementsPeriode->groupBy(fn ($p) => $p->date_paiement?->format('Y-m-d'))
+            ->map(fn ($items, $date) => (object) ['date' => $date, 'total' => (float) $items->sum('montant')])
+            ->values()
+            ->sortBy('date')
+            ->values();
 
-        // Répartition des paiements par mode
-        $paiementsParMode = Paiement::select(
-                'mode_paiement',
-                DB::raw('COUNT(*) as nombre'),
-                DB::raw('SUM(montant) as total')
-            )
-            ->whereBetween('date_paiement', [$dateDebut, $dateFin])
-            ->groupBy('mode_paiement')
-            ->get();
+        // Répartition des paiements par mode (montants chiffrés : groupBy en PHP)
+        $paiementsParMode = $paiementsPeriode->groupBy('mode_paiement')
+            ->map(fn ($items, $mode) => (object) ['mode_paiement' => $mode, 'nombre' => $items->count(), 'total' => (float) $items->sum('montant')])
+            ->values();
 
-        // Top 10 membres par montant payé
+        // Top 10 membres par montant payé (montants chiffrés : sum en PHP)
         $topMembres = Membre::where('statut', 'actif')
-            ->withSum(['paiements' => function($query) use ($dateDebut, $dateFin) {
-                $query->whereBetween('date_paiement', [$dateDebut, $dateFin]);
-            }], 'montant')
-            ->having('paiements_sum_montant', '>', 0)
-            ->orderByDesc('paiements_sum_montant')
-            ->take(10)
+            ->with(['paiements' => fn ($q) => $q->whereBetween('date_paiement', [$dateDebut, $dateFin])])
             ->get()
-            ->map(function($membre) {
-                $membre->total_paye = $membre->paiements_sum_montant ?? 0;
+            ->map(function ($membre) {
+                $membre->total_paye = $membre->paiements->sum('montant');
                 return $membre;
-            });
+            })
+            ->filter(fn ($m) => $m->total_paye > 0)
+            ->sortByDesc('total_paye')
+            ->take(10)
+            ->values();
 
         // Statistiques par membre (total payé par membre)
         $statistiquesMembres = Membre::where('statut', 'actif')
-            ->withSum(['paiements' => function($query) use ($dateDebut, $dateFin) {
-                $query->whereBetween('date_paiement', [$dateDebut, $dateFin]);
-            }], 'montant')
-            ->having('paiements_sum_montant', '>', 0)
-            ->orderByDesc('paiements_sum_montant')
-            ->take(10)
+            ->with(['paiements' => fn ($q) => $q->whereBetween('date_paiement', [$dateDebut, $dateFin])])
             ->get()
-            ->map(function($membre) use ($dateDebut, $dateFin) {
-                return [
-                    'nom' => $membre->nom . ' ' . $membre->prenom,
-                    'total_paye' => $membre->paiements_sum_montant ?? 0,
-                    'nombre_paiements' => $membre->paiements()->whereBetween('date_paiement', [$dateDebut, $dateFin])->count(),
-                ];
-            });
+            ->map(function ($membre) use ($dateDebut, $dateFin) {
+                $totalPaye = $membre->paiements->sum('montant');
+                return ['membre' => $membre, 'total_paye' => $totalPaye];
+            })
+            ->filter(fn ($x) => $x['total_paye'] > 0)
+            ->sortByDesc('total_paye')
+            ->take(10)
+            ->values()
+            ->map(fn ($x) => [
+                'nom' => $x['membre']->nom . ' ' . $x['membre']->prenom,
+                'total_paye' => $x['total_paye'],
+                'nombre_paiements' => $x['membre']->paiements->count(),
+            ]);
 
         return view('dashboard', compact(
             'totalMembres',

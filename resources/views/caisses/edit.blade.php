@@ -52,7 +52,7 @@
                     <input type="text" 
                            class="form-control" 
                            id="solde_initial" 
-                           value="{{ number_format($caisse->solde_initial, 0, ',', ' ') }} XOF" 
+                           value="{{ number_format((float) ($caisse->solde_initial ?? 0), 0, ',', ' ') }} XOF" 
                            readonly
                            style="background-color: #e9ecef; cursor: not-allowed;">
                     <small class="text-muted" style="font-size: 0.7rem;">Le solde de la caisse ne peut pas être modifié directement. Il est mis à jour automatiquement par les mouvements (paiements, approvisionnements, transferts, etc.).</small>

@@ -66,16 +66,10 @@
     }
 </style>
 
-<div class="page-header d-flex justify-content-between align-items-center">
+<div class="page-header">
     <h1 style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">
         <i class="bi bi-speedometer2"></i> Dashboard
     </h1>
-    <div class="text-end">
-        <span class="badge bg-light text-dark fw-light border">
-            <i class="bi bi-telephone text-primary me-1"></i>
-            <a href="tel:{{ $membre->telephone }}" class="text-decoration-none text-dark">{{ $membre->telephone }}</a>
-        </span>
-    </div>
 </div>
 
 @if($annonces->count() > 0)

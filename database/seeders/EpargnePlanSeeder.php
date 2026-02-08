@@ -2,65 +2,83 @@
 
 namespace Database\Seeders;
 
-use App\Models\EpargnePlan;
 use App\Models\Caisse;
+use App\Models\EpargnePlan;
 use Illuminate\Database\Seeder;
 
 class EpargnePlanSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        $this->command->info('Création des plans d\'épargne...');
-
-        $caisse = Caisse::first();
-        $caisseId = $caisse ? $caisse->id : null;
+        $caisseId = Caisse::where('statut', 'active')->first()?->id;
 
         $plans = [
             [
-                'nom' => 'Épargne Journalière Flexible',
-                'description' => 'Épargnez chaque jour selon vos moyens pour réaliser vos projets.',
-                'montant_min' => 500,
-                'montant_max' => 50000,
-                'frequence' => 'quotidien',
-                'taux_remuneration' => 2.00,
-                'duree_mois' => 3,
+                'nom' => 'Épargne Mensuelle Classique',
+                'description' => 'Plan d\'épargne mensuel avec rémunération. Versez chaque mois un montant fixe et recevez un intérêt à l\'échéance.',
+                'montant_min' => 5000,
+                'montant_max' => 100000,
+                'frequence' => 'mensuel',
+                'taux_remuneration' => 3.0,
+                'duree_mois' => 12,
                 'caisse_id' => $caisseId,
                 'actif' => true,
                 'ordre' => 1,
             ],
             [
-                'nom' => 'Épargne Hebdomadaire Sérénité',
-                'description' => 'Un versement par semaine pour une épargne régulière sans stress.',
-                'montant_min' => 5000,
+                'nom' => 'Épargne Longue Durée',
+                'description' => 'Épargnez sur 24 mois avec un taux de rémunération avantageux. Idéal pour constituer un capital.',
+                'montant_min' => 10000,
                 'montant_max' => 200000,
-                'frequence' => 'hebdomadaire',
-                'taux_remuneration' => 3.50,
-                'duree_mois' => 6,
+                'frequence' => 'mensuel',
+                'taux_remuneration' => 4.5,
+                'duree_mois' => 24,
                 'caisse_id' => $caisseId,
                 'actif' => true,
                 'ordre' => 2,
             ],
             [
-                'nom' => 'Plan Épargne Mensuel Projet',
-                'description' => 'Le plan idéal pour les grands projets avec une rémunération attractive.',
-                'montant_min' => 25000,
-                'montant_max' => null,
-                'frequence' => 'mensuel',
-                'taux_remuneration' => 5.00,
+                'nom' => 'Épargne Hebdomadaire',
+                'description' => 'Versez chaque semaine un petit montant. Adapté aux revenus irréguliers.',
+                'montant_min' => 1000,
+                'montant_max' => 25000,
+                'frequence' => 'hebdomadaire',
+                'taux_remuneration' => 2.5,
                 'duree_mois' => 12,
                 'caisse_id' => $caisseId,
                 'actif' => true,
                 'ordre' => 3,
             ],
+            [
+                'nom' => 'Épargne Trimestrielle',
+                'description' => 'Versements trimestriels pour les gros montants. Rémunération à l\'échéance.',
+                'montant_min' => 50000,
+                'montant_max' => 500000,
+                'frequence' => 'trimestriel',
+                'taux_remuneration' => 5.0,
+                'duree_mois' => 12,
+                'caisse_id' => $caisseId,
+                'actif' => true,
+                'ordre' => 4,
+            ],
+            [
+                'nom' => 'Épargne Découverte',
+                'description' => 'Plan court (6 mois) pour découvrir l\'épargne avec des montants modestes.',
+                'montant_min' => 2000,
+                'montant_max' => 30000,
+                'frequence' => 'mensuel',
+                'taux_remuneration' => 2.0,
+                'duree_mois' => 6,
+                'caisse_id' => $caisseId,
+                'actif' => true,
+                'ordre' => 5,
+            ],
         ];
 
-        foreach ($plans as $plan) {
-            EpargnePlan::create($plan);
+        foreach ($plans as $data) {
+            EpargnePlan::updateOrCreate(['nom' => $data['nom']], $data);
         }
 
-        $this->command->info('Plans d\'épargne créés avec succès.');
+        $this->command->info(count($plans) . ' plan(s) d\'épargne créé(s) ou mis à jour.');
     }
 }

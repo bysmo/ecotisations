@@ -11,8 +11,6 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::disableForeignKeyConstraints();
-
         Schema::create('nano_credits', function (Blueprint $table) {
             $table->id();
             $table->foreignId('membre_id')->constrained('membres')->onDelete('cascade');
@@ -29,8 +27,6 @@ return new class extends Migration
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
         });
-
-        Schema::enableForeignKeyConstraints();
     }
 
     /**
@@ -38,8 +34,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::disableForeignKeyConstraints();
         Schema::dropIfExists('nano_credits');
-        Schema::enableForeignKeyConstraints();
     }
 };

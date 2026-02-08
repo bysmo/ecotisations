@@ -8,8 +8,6 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::disableForeignKeyConstraints();
-
         Schema::create('kyc_documents', function (Blueprint $table) {
             $table->id();
             $table->foreignId('kyc_verification_id')->constrained('kyc_verifications')->onDelete('cascade');
@@ -18,14 +16,10 @@ return new class extends Migration
             $table->string('nom_original');
             $table->timestamps();
         });
-
-        Schema::enableForeignKeyConstraints();
     }
 
     public function down(): void
     {
-        Schema::disableForeignKeyConstraints();
         Schema::dropIfExists('kyc_documents');
-        Schema::enableForeignKeyConstraints();
     }
 };

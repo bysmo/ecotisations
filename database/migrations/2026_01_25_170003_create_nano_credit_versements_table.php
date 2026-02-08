@@ -8,8 +8,6 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::disableForeignKeyConstraints();
-
         Schema::create('nano_credit_versements', function (Blueprint $table) {
             $table->id();
             $table->foreignId('nano_credit_id')->constrained('nano_credits')->cascadeOnDelete();
@@ -20,14 +18,10 @@ return new class extends Migration
             $table->string('reference')->nullable();
             $table->timestamps();
         });
-
-        Schema::enableForeignKeyConstraints();
     }
 
     public function down(): void
     {
-        Schema::disableForeignKeyConstraints();
         Schema::dropIfExists('nano_credit_versements');
-        Schema::enableForeignKeyConstraints();
     }
 };

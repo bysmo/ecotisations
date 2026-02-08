@@ -3,6 +3,19 @@
 @section('title', 'Mes Remboursements')
 
 @section('content')
+<style>
+    .table-remboursements-compact { font-size: 0.65rem; font-weight: 300; font-family: 'Ubuntu', sans-serif; margin-bottom: 0; }
+    .table-remboursements-compact thead th { padding: 0.15rem 0.35rem !important; font-size: 0.6rem !important; line-height: 1.05 !important; vertical-align: middle !important; font-weight: 300 !important; font-family: 'Ubuntu', sans-serif !important; color: #ffffff !important; background-color: var(--primary-dark-blue) !important; }
+    .table-remboursements-compact tbody td { padding: 0.15rem 0.35rem !important; font-size: 0.65rem !important; line-height: 1.05 !important; vertical-align: middle !important; border-bottom: 1px solid #f0f0f0 !important; font-weight: 300 !important; font-family: 'Ubuntu', sans-serif !important; color: var(--primary-dark-blue) !important; }
+    .table-remboursements-compact tbody tr:last-child td { border-bottom: none !important; }
+    table.table.table-remboursements-compact.table-hover tbody tr { background-color: #ffffff !important; transition: background-color 0.2s ease !important; }
+    table.table.table-remboursements-compact.table-hover tbody tr:nth-child(even) { background-color: #d4dde8 !important; }
+    table.table.table-remboursements-compact.table-hover tbody tr:hover { background-color: #b8c7d9 !important; cursor: pointer !important; }
+    table.table.table-remboursements-compact.table-hover tbody tr:nth-child(even):hover { background-color: #9fb3cc !important; }
+    .table-remboursements-compact .btn { padding: 0 0.35rem !important; font-size: 0.5rem !important; line-height: 1 !important; height: 18px !important; font-weight: 300 !important; }
+    .table-remboursements-compact .btn i { font-size: 0.6rem !important; line-height: 1 !important; }
+</style>
+
 <div class="page-header">
     <h1><i class="bi bi-arrow-counterclockwise"></i> Mes Demandes de Remboursement</h1>
 </div>
@@ -14,7 +27,7 @@
     <div class="card-body">
         @if($remboursements->count() > 0)
             <div class="table-responsive">
-                <table class="table table-hover mb-0">
+                <table class="table table-sm table-hover mb-0 table-remboursements-compact">
                     <thead>
                         <tr>
                             <th>Numéro</th>
@@ -31,19 +44,15 @@
                             <tr>
                                 <td>{{ $remboursement->numero ?? '-' }}</td>
                                 <td>{{ $remboursement->paiement->numero ?? '-' }}</td>
-                                <td>
-                                    <span class="badge bg-warning">
-                                        {{ number_format($remboursement->montant, 0, ',', ' ') }} XOF
-                                    </span>
-                                </td>
+                                <td>{{ number_format($remboursement->montant, 0, ',', ' ') }} XOF</td>
                                 <td>{{ \Illuminate\Support\Str::limit($remboursement->raison, 50) }}</td>
                                 <td>
                                     @if($remboursement->statut === 'en_attente')
-                                        <span class="badge bg-warning">En attente</span>
+                                        En attente
                                     @elseif($remboursement->statut === 'approuve')
-                                        <span class="badge bg-success">Approuvé</span>
+                                        Approuvé
                                     @else
-                                        <span class="badge bg-danger">Refusé</span>
+                                        Refusé
                                     @endif
                                 </td>
                                 <td>{{ $remboursement->created_at->format('d/m/Y') }}</td>
@@ -75,11 +84,7 @@
                                                 <dd class="col-sm-8">{{ $remboursement->paiement->numero ?? '-' }}</dd>
                                                 
                                                 <dt class="col-sm-4">Montant</dt>
-                                                <dd class="col-sm-8">
-                                                    <span class="badge bg-warning">
-                                                        {{ number_format($remboursement->montant, 0, ',', ' ') }} XOF
-                                                    </span>
-                                                </dd>
+                                                <dd class="col-sm-8">{{ number_format($remboursement->montant, 0, ',', ' ') }} XOF</dd>
                                                 
                                                 <dt class="col-sm-4">Raison</dt>
                                                 <dd class="col-sm-8">{{ $remboursement->raison }}</dd>
@@ -87,11 +92,11 @@
                                                 <dt class="col-sm-4">Statut</dt>
                                                 <dd class="col-sm-8">
                                                     @if($remboursement->statut === 'en_attente')
-                                                        <span class="badge bg-warning">En attente</span>
+                                                        En attente
                                                     @elseif($remboursement->statut === 'approuve')
-                                                        <span class="badge bg-success">Approuvé</span>
+                                                        Approuvé
                                                     @else
-                                                        <span class="badge bg-danger">Refusé</span>
+                                                        Refusé
                                                     @endif
                                                 </dd>
                                                 

@@ -25,9 +25,9 @@ class EpargnePlan extends Model
     ];
 
     protected $casts = [
-        'montant_min' => 'decimal:0',
-        'montant_max' => 'decimal:0',
-        'taux_remuneration' => 'decimal:2',
+        'montant_min' => \App\Casts\EncryptedDecimal::class,
+        'montant_max' => \App\Casts\EncryptedDecimal::class,
+        'taux_remuneration' => \App\Casts\EncryptedDecimal::class,
         'actif' => 'boolean',
     ];
 
@@ -44,7 +44,6 @@ class EpargnePlan extends Model
     public function getFrequenceLabelAttribute(): string
     {
         return match ($this->frequence) {
-            'quotidien' => 'Quotidien',
             'hebdomadaire' => 'Hebdomadaire',
             'mensuel' => 'Mensuel',
             'trimestriel' => 'Trimestriel',
@@ -59,7 +58,6 @@ class EpargnePlan extends Model
     {
         $duree = (int) ($this->duree_mois ?? 12);
         return match ($this->frequence) {
-            'quotidien' => $duree * 30, // Approximation 30 jours/mois
             'hebdomadaire' => (int) ceil(52 * $duree / 12),
             'mensuel' => $duree,
             'trimestriel' => (int) max(1, ceil($duree / 3)),

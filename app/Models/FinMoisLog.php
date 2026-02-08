@@ -31,7 +31,7 @@ class FinMoisLog extends Model
         'periode_fin' => 'date',
         'envoye_at' => 'datetime',
         'resume_paiements' => 'array',
-        'montant_total' => 'decimal:0',
+        'montant_total' => \App\Casts\EncryptedDecimal::class,
     ];
 
     /**

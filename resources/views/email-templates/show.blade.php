@@ -27,8 +27,6 @@
                                 Paiement
                             @elseif($emailTemplate->type === 'engagement')
                                 Engagement
-                            @elseif($emailTemplate->type === 'authentification')
-                                Authentification
                             @else
                                 Autre
                             @endif

@@ -55,15 +55,8 @@ class CampagneController extends Controller
     {
         $cotisations = Cotisation::where('actif', true)->orderBy('nom')->get();
         
-        // Récupérer tous les segments uniques existants
-        $segments = Membre::select('segment')
-            ->whereNotNull('segment')
-            ->where('segment', '!=', '')
-            ->distinct()
-            ->orderBy('segment')
-            ->pluck('segment')
-            ->toArray();
-        
+        // Le champ segment a été retiré de la table membres
+        $segments = [];
         return view('campagnes.create', compact('cotisations', 'segments'));
     }
 
@@ -99,7 +92,6 @@ class CampagneController extends Controller
             'statut_membre' => 'nullable|array',
             'statut_membre.*' => 'in:actif,inactif,suspendu',
             'cotisation_id' => 'nullable|exists:cotisations,id',
-            'segment' => 'nullable|string|max:255',
             'date_adhesion_debut' => 'nullable|date',
             'date_adhesion_fin' => 'nullable|date',
         ]);
@@ -125,7 +117,6 @@ class CampagneController extends Controller
                 'filtres' => [
                     'statut_membre' => $request->statut_membre ?? null,
                     'cotisation_id' => $request->cotisation_id ?? null,
-                    'segment' => $request->segment ?? null,
                     'date_adhesion_debut' => $request->date_adhesion_debut ?? null,
                     'date_adhesion_fin' => $request->date_adhesion_fin ?? null,
                 ],
@@ -215,18 +206,6 @@ class CampagneController extends Controller
             $query->whereHas('paiements', function($q) use ($cotisationId) {
                 $q->where('cotisation_id', $cotisationId);
             });
-        }
-
-        // Filtre par segment
-        if (!empty($filtres['segment'])) {
-            if ($filtres['segment'] === '__sans_segment__') {
-                $query->where(function($q) {
-                    $q->whereNull('segment')
-                      ->orWhere('segment', '');
-                });
-            } else {
-                $query->where('segment', $filtres['segment']);
-            }
         }
 
         // Filtre par date d'adhésion

@@ -16,36 +16,29 @@
     </div>
     <div class="card-body">
         <form method="GET" action="{{ route('epargne-plans.index') }}" class="mb-3">
-            <div class="row g-2 align-items-end">
-                <div class="col-md-7">
-                    <label class="form-label small mb-0">Recherche</label>
-                    <input type="text"
-                           name="search"
-                           class="form-control form-control-sm"
-                           placeholder="Nom ou description..."
-                           value="{{ request('search') }}">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label small mb-0">Statut</label>
-                    <select name="actif" class="form-select form-select-sm">
-                        <option value="">Tous</option>
-                        <option value="1" {{ request('actif') === '1' ? 'selected' : '' }}>Actifs</option>
-                        <option value="0" {{ request('actif') === '0' ? 'selected' : '' }}>Inactifs</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-primary btn-sm w-100">
-                        <i class="bi bi-search"></i> Filtrer
-                    </button>
-                </div>
-            </div>
-            @if(request()->hasAny(['search', 'actif']))
-                <div class="mt-2">
-                    <a href="{{ route('epargne-plans.index') }}" class="btn btn-secondary btn-sm">
+            <div class="d-flex flex-nowrap align-items-center gap-2 w-100">
+                <label class="form-label small mb-0 text-nowrap flex-shrink-0">Recherche</label>
+                <input type="text"
+                       name="search"
+                       class="form-control form-control-sm flex-grow-1"
+                       placeholder="Nom ou description..."
+                       value="{{ request('search') }}"
+                       style="min-width: 0;">
+                <label class="form-label small mb-0 text-nowrap flex-shrink-0">Statut</label>
+                <select name="actif" class="form-select form-select-sm flex-shrink-0" style="width: 200px;">
+                    <option value="">Tous</option>
+                    <option value="1" {{ request('actif') === '1' ? 'selected' : '' }}>Actifs</option>
+                    <option value="0" {{ request('actif') === '0' ? 'selected' : '' }}>Inactifs</option>
+                </select>
+                <button type="submit" class="btn btn-primary btn-sm flex-shrink-0">
+                    <i class="bi bi-search"></i> Filtrer
+                </button>
+                @if(request()->hasAny(['search', 'actif']))
+                    <a href="{{ route('epargne-plans.index') }}" class="btn btn-secondary btn-sm flex-shrink-0">
                         <i class="bi bi-x-circle"></i> Effacer
                     </a>
-                </div>
-            @endif
+                @endif
+            </div>
         </form>
 
         @if($plans->count() > 0)

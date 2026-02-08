@@ -108,7 +108,7 @@
                             <th>Montant</th>
                             <th>Caisse</th>
                             <th>Tag</th>
-                            <th>Segment membre</th>
+                            <th>Public / Privé</th>
                             <th>Statut</th>
                             <th>Actions</th>
                         </tr>
@@ -136,10 +136,10 @@
                                     @endif
                                 </td>
                                 <td style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">
-                                    @if($cotisation->segment)
-                                        {{ $cotisation->segment }}
+                                    @if($cotisation->isPublique())
+                                        Public
                                     @else
-                                        Tous
+                                        Privé
                                     @endif
                                 </td>
                                 <td style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">

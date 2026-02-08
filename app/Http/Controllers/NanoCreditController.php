@@ -112,7 +112,7 @@ class NanoCreditController extends Controller
 
         $dateOctroi = now()->toDateString();
         $type = $nanoCredit->nanoCreditType;
-        $dateFinRemb = $type ? Carbon::parse($dateOctroi)->addDays((int) $type->duree_jours)->toDateString() : null;
+        $dateFinRemb = $type ? Carbon::parse($dateOctroi)->addMonths((int) $type->duree_mois)->toDateString() : null;
 
         $nanoCredit->update([
             'statut' => 'debourse',
@@ -129,6 +129,8 @@ class NanoCreditController extends Controller
         }
 
         $nanoCredit->membre->notify(new NanoCreditOctroyeNotification($nanoCredit));
+
+        app(\App\Services\EmailService::class)->sendNanoCreditOctroyeEmail($nanoCredit);
 
         return redirect()->route('nano-credits.show', $nanoCredit)
             ->with('success', 'Crédit octroyé avec succès. Le montant a été envoyé au mobile money du membre.');
@@ -150,11 +152,9 @@ class NanoCreditController extends Controller
         $dateDebut = Carbon::parse($nanoCredit->date_octroi);
 
         $addPeriod = match ($type->frequence_remboursement) {
-            'journalier' => fn ($date, $i) => $date->copy()->addDays($i),
             'hebdomadaire' => fn ($date, $i) => $date->copy()->addWeeks($i),
-            'mensuel' => fn ($date, $i) => $date->copy()->addMonths($i),
             'trimestriel' => fn ($date, $i) => $date->copy()->addMonths(3 * $i),
-            default => fn ($date, $i) => $date->copy()->addDays($type->duree_jours), // Par défaut, fin du crédit
+            default => fn ($date, $i) => $date->copy()->addMonths($i),
         };
 
         for ($i = 1; $i <= $nbEcheances; $i++) {

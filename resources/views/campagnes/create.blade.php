@@ -91,20 +91,6 @@
                         <small class="text-muted">Limiter aux membres ayant effectué un paiement pour cette cotisation</small>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="segment" class="form-label">Segment (optionnel)</label>
-                        <select class="form-select form-select-sm" id="segment" name="segment">
-                            <option value="">Tous les segments</option>
-                            <option value="__sans_segment__" {{ old('segment') === '__sans_segment__' ? 'selected' : '' }}>Sans segment</option>
-                            @foreach($segments as $segment)
-                                <option value="{{ $segment }}" {{ old('segment') === $segment ? 'selected' : '' }}>
-                                    {{ $segment }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <small class="text-muted">Limiter aux membres d'un segment spécifique</small>
-                    </div>
-
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="date_adhesion_debut" class="form-label">Date d'adhésion - Début (optionnel)</label>
@@ -196,7 +182,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Mettre à jour la prévisualisation lors du changement des filtres
-    ['statut_actif', 'statut_inactif', 'statut_suspendu', 'cotisation_id', 'segment', 'date_adhesion_debut', 'date_adhesion_fin'].forEach(id => {
+    ['statut_actif', 'statut_inactif', 'statut_suspendu', 'cotisation_id', 'date_adhesion_debut', 'date_adhesion_fin'].forEach(id => {
         const element = document.getElementById(id);
         if (element) {
             element.addEventListener('change', updatePreview);

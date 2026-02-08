@@ -10,16 +10,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('membres', function (Blueprint $table) {
-            //$table->timestamp('email_verified_at')->nullable()->after('email');
+            $table->timestamp('email_verified_at')->nullable()->after('email');
         });
         // Marquer les membres existants comme déjà vérifiés pour ne pas bloquer leur connexion
-        //DB::table('membres')->whereNull('email_verified_at')->update(['email_verified_at' => now()]);
+        DB::table('membres')->whereNull('email_verified_at')->update(['email_verified_at' => now()]);
     }
 
     public function down(): void
     {
         Schema::table('membres', function (Blueprint $table) {
-            //$table->dropColumn('email_verified_at');
+            $table->dropColumn('email_verified_at');
         });
     }
 };

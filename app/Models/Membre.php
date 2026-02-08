@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-class Membre extends Authenticatable
+class Membre extends Authenticatable implements MustVerifyEmail
 {
     use HasFactory, Notifiable;
 
@@ -109,6 +109,16 @@ class Membre extends Authenticatable
     {
         return $this->hasMany(\App\Models\Engagement::class);
     }
+
+
+    /**
+     * Adhésions aux cotisations (pratiques)
+     */
+    public function cotisationAdhesions()
+    {
+        return $this->hasMany(\App\Models\CotisationAdhesion::class);
+    }
+
 
     /**
      * Relation avec les remboursements

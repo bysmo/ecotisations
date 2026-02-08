@@ -8,11 +8,9 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::disableForeignKeyConstraints();
-
         Schema::create('kyc_verifications', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('membre_id')->unique()->constrained('membres')->cascadeOnDelete();
+            $table->foreignId('membre_id')->unique()->constrained('membres')->onDelete('cascade');
             $table->enum('statut', ['en_attente', 'valide', 'rejete'])->default('en_attente');
             $table->text('motif_rejet')->nullable();
             $table->string('type_piece')->nullable();
@@ -26,14 +24,10 @@ return new class extends Migration
             $table->foreignId('rejected_by')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamps();
         });
-
-        Schema::enableForeignKeyConstraints();
     }
 
     public function down(): void
     {
-        Schema::disableForeignKeyConstraints();
         Schema::dropIfExists('kyc_verifications');
-        Schema::enableForeignKeyConstraints();
     }
 };

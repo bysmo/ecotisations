@@ -18,14 +18,6 @@ class AdminAuthController extends Controller
     }
 
     /**
-     * Afficher le formulaire de mot de passe oublié
-     */
-    public function showForgotPasswordForm()
-    {
-        return view('auth.forgot-password', ['type' => 'admin']);
-    }
-
-    /**
      * Traiter la connexion admin
      */
     public function login(Request $request)

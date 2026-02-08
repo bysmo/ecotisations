@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Helpers\GeoHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Membre;
-use App\Models\Segment;
+use App\Services\OtpService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -12,30 +13,63 @@ use Illuminate\Validation\ValidationException;
 
 class MembreAuthController extends Controller
 {
-    /**
-     * Afficher le formulaire de connexion
-     */
-    public function showLoginForm()
+    protected function normalizePhone(string $countryCode, string $number): string
     {
-        return view('membres.login');
+        $digits = preg_replace('/\D/', '', $countryCode . $number);
+        return $digits;
     }
 
     /**
-     * Traiter la connexion
+     * Détermine l'indicatif pays par défaut selon l'emplacement (IP).
+     */
+    protected function getDefaultCountryAndDial(): array
+    {
+        $countryCode = GeoHelper::getCountryCodeFromIp('SN');
+        $dialCode = GeoHelper::getDialCodeForCountry($countryCode);
+        $countries = config('country_dial_codes', []);
+        return [
+            'country_code' => $countryCode,
+            'dial_code' => $dialCode,
+            'countries' => $countries,
+        ];
+    }
+
+    /**
+     * Afficher le formulaire de connexion (téléphone + mot de passe, indicatif pays)
+     */
+    public function showLoginForm()
+    {
+        $geo = $this->getDefaultCountryAndDial();
+        return view('membres.login', [
+            'default_country' => $geo['country_code'],
+            'default_dial' => $geo['dial_code'],
+            'countries' => $geo['countries'],
+        ]);
+    }
+
+    /**
+     * Traiter la connexion (par numéro de téléphone + mot de passe)
      */
     public function login(Request $request)
     {
         $request->validate([
-            'telephone' => 'required',
+            'country_code' => 'required|string|size:2',
+            'telephone' => 'required|string|max:20',
             'password' => 'required',
         ]);
 
-        $telephone = $request->input('telephone');
-        $password = $request->input('password');
-        $remember = $request->filled('remember');
+        $phoneNormalized = $this->normalizePhone(
+            GeoHelper::getDialCodeForCountry($request->input('country_code')),
+            $request->input('telephone')
+        );
 
-        // Recherche flexible du membre par son téléphone
-        $membre = \App\Models\Membre::findByTelephone($telephone);
+        if (strlen($phoneNormalized) < 8) {
+            throw ValidationException::withMessages([
+                'telephone' => ['Le numéro de téléphone est invalide.'],
+            ]);
+        }
+
+        $membre = Membre::where('telephone', $phoneNormalized)->first();
 
         if (!$membre) {
             throw ValidationException::withMessages([
@@ -43,111 +77,173 @@ class MembreAuthController extends Controller
             ]);
         }
 
-        /*
-        // Vérifier si l'email a été vérifié
         if (!$membre->hasVerifiedEmail()) {
-            $request->session()->flash('unverified_email', $membre->email);
+            $request->session()->flash('unverified_phone', $membre->telephone);
             throw ValidationException::withMessages([
-                'email' => ['Vous devez vérifier votre adresse email avant de vous connecter. Un lien vous a été envoyé par email.'],
+                'telephone' => ['Vous devez vérifier votre numéro de téléphone avant de vous connecter. Un code OTP vous a été envoyé par SMS.'],
             ]);
         }
-        */
 
-        // Vérifier si le membre est actif
         if ($membre->statut !== 'actif') {
             throw ValidationException::withMessages([
                 'telephone' => ['Votre compte est inactif. Veuillez contacter l\'administrateur.'],
             ]);
         }
 
-        // Tenter la connexion avec le téléphone exact stocké en base
-        if (Auth::guard('membre')->attempt(['telephone' => $membre->telephone, 'password' => $password], $remember)) {
-            $request->session()->regenerate();
-            
-            return redirect()->route('membre.dashboard');
+        if (!Hash::check($request->input('password'), $membre->password)) {
+            throw ValidationException::withMessages([
+                'telephone' => ['Les identifiants fournis sont incorrects.'],
+            ]);
         }
 
-        throw ValidationException::withMessages([
-            'telephone' => ['Les identifiants fournis sont incorrects.'],
-        ]);
+        Auth::guard('membre')->login($membre, $request->boolean('remember'));
+        $request->session()->regenerate();
+
+        return redirect()->intended(route('membre.dashboard'));
     }
 
     /**
-     * Afficher le formulaire d'inscription
+     * Afficher le formulaire d'inscription (avec indicatif pays)
      */
     public function showRegisterForm()
     {
-        // Récupérer les segments existants
-        $segments = Segment::orderBy('nom')->pluck('nom')->toArray();
-        
-        return view('membres.register', compact('segments'));
+        $geo = $this->getDefaultCountryAndDial();
+        return view('membres.register', [
+            'default_country' => $geo['country_code'],
+            'default_dial' => $geo['dial_code'],
+            'countries' => $geo['countries'],
+        ]);
     }
 
     /**
-     * Traiter l'inscription
+     * Traiter l'inscription : créer le membre puis envoyer un code OTP par SMS (au lieu du lien email)
      */
     public function register(Request $request)
     {
+        $countryCode = $request->input('country_code', 'SN');
+        $dialCode = GeoHelper::getDialCodeForCountry($countryCode);
+        $phoneNormalized = $this->normalizePhone($dialCode, $request->input('telephone', ''));
+
         $validated = $request->validate([
             'nom' => 'required|string|max:255',
             'prenom' => 'required|string|max:255',
-            'email' => 'nullable|email|max:255|unique:membres,email',
-            'telephone' => 'required|string|max:20|unique:membres,telephone',
+            'email' => 'required|email|max:255|unique:membres,email',
+            'country_code' => 'required|string|size:2',
+            'telephone' => 'required|string|max:20',
             'adresse' => 'nullable|string',
-            'segment' => 'nullable|string|max:255',
-            'nouveau_segment' => 'nullable|string|max:255|required_if:segment,__nouveau__',
             'password' => 'required|string|min:6|confirmed',
         ]);
 
-        // Si un nouveau segment est fourni, l'utiliser
-        if ($request->segment === '__nouveau__' && $request->filled('nouveau_segment')) {
-            $validated['segment'] = trim($request->nouveau_segment);
-        } elseif ($request->segment === '__nouveau__') {
-            $validated['segment'] = null;
+        if (strlen($phoneNormalized) < 8) {
+            throw ValidationException::withMessages([
+                'telephone' => ['Le numéro de téléphone est invalide.'],
+            ]);
         }
-        
-        unset($validated['nouveau_segment']);
 
-        // Normaliser le téléphone avant l'inscription
-        $validated['telephone'] = Membre::normalizePhoneNumber($validated['telephone']);
+        $existing = Membre::where('telephone', $phoneNormalized)->first();
+        if ($existing) {
+            throw ValidationException::withMessages([
+                'telephone' => ['Ce numéro de téléphone est déjà utilisé.'],
+            ]);
+        }
 
-        // Générer un numéro de membre unique
         $validated['numero'] = $this->generateNumeroMembre();
-        
-        // Définir les valeurs par défaut
         $validated['date_adhesion'] = now();
         $validated['statut'] = 'actif';
-
-        // Hasher le mot de passe
         $validated['password'] = Hash::make($validated['password']);
+        $validated['telephone'] = $phoneNormalized;
+        unset($validated['country_code']);
 
-        // Créer le membre et marquer comme vérifié automatiquement
-        $validated['email_verified_at'] = now();
         $membre = Membre::create($validated);
 
-        /*
-        try {
-            $membre->sendEmailVerificationNotification();
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Envoi email vérification après inscription: ' . $e->getMessage());
+        $activeGateway = \App\Models\SmsGateway::getActive();
+        if (!$activeGateway) {
+            // Aucune passerelle SMS active : pas d'envoi OTP, le membre poursuit sans être bloqué
+            $membre->markEmailAsVerified();
             return redirect()->route('membre.login')
-                ->with('error', 'Votre compte a été créé mais l\'envoi du lien de vérification a échoué. Vérifiez la configuration SMTP dans Paramètres > SMTP, ou demandez à l\'administrateur de renvoyer le lien.');
+                ->with('success', 'Votre compte a été créé. Vous pouvez vous connecter avec votre numéro de téléphone et votre mot de passe.');
         }
 
-        return redirect()->route('membre.login')
-            ->with('success', 'Un lien de vérification a été envoyé à votre adresse email. Cliquez sur ce lien pour activer votre compte, puis connectez-vous.');
-        */
+        $otpService = app(OtpService::class);
+        $code = $otpService->generateAndStore($phoneNormalized);
+        $otpService->sendOtp($phoneNormalized, $code);
 
-        Auth::guard('membre')->login($membre);
-        return redirect()->route('membre.dashboard')->with('success', 'Bienvenue sur FlexFin ! Votre compte a été créé avec succès.');
+        $request->session()->put('membre_otp_phone', $phoneNormalized);
+        $request->session()->put('membre_otp_membre_id', $membre->id);
+
+        return redirect()->route('membre.verify-otp')
+            ->with('success', 'Un code de vérification a été envoyé par SMS au ' . $dialCode . ' ' . $request->input('telephone') . '. Entrez-le ci-dessous.');
     }
 
     /**
-     * Vérifier l'email du membre via le lien reçu par mail
+     * Afficher la page de saisie du code OTP (après inscription)
+     */
+    public function showVerifyOtpForm(Request $request)
+    {
+        if (!$request->session()->has('membre_otp_phone')) {
+            return redirect()->route('membre.register')
+                ->with('error', 'Session expirée. Veuillez vous réinscrire.');
+        }
+        $phone = $request->session()->get('membre_otp_phone');
+        $masked = strlen($phone) > 4 ? '***' . substr($phone, -4) : '***';
+        return view('membres.verify-otp', ['phone_masked' => $masked]);
+    }
+
+    /**
+     * Vérifier le code OTP et activer le compte (marquer email_verified_at)
+     */
+    public function verifyOtp(Request $request)
+    {
+        $request->validate([
+            'otp' => 'required|string|size:6',
+        ]);
+
+        $phone = $request->session()->get('membre_otp_phone');
+        $membreId = $request->session()->get('membre_otp_membre_id');
+
+        if (!$phone || !$membreId) {
+            return redirect()->route('membre.register')
+                ->with('error', 'Session expirée. Veuillez vous réinscrire.');
+        }
+
+        $otpService = app(OtpService::class);
+        if (!$otpService->verify($phone, $request->input('otp'))) {
+            throw ValidationException::withMessages([
+                'otp' => ['Code OTP invalide ou expiré. Demandez un nouveau code.'],
+            ]);
+        }
+
+        $membre = Membre::findOrFail($membreId);
+        $membre->markEmailAsVerified();
+
+        $request->session()->forget(['membre_otp_phone', 'membre_otp_membre_id']);
+
+        return redirect()->route('membre.login')
+            ->with('success', 'Votre compte est activé. Connectez-vous avec votre numéro de téléphone et votre mot de passe.');
+    }
+
+    /**
+     * Renvoyer un code OTP (depuis la page verify-otp)
+     */
+    public function resendOtp(Request $request)
+    {
+        $phone = $request->session()->get('membre_otp_phone');
+        if (!$phone) {
+            return redirect()->route('membre.register')->with('error', 'Session expirée.');
+        }
+
+        $otpService = app(OtpService::class);
+        $code = $otpService->generateAndStore($phone);
+        $otpService->sendOtp($phone, $code);
+
+        return back()->with('success', 'Un nouveau code a été envoyé par SMS.');
+    }
+
+    /**
+     * Vérifier l'email du membre via le lien reçu par mail (legacy, conservé pour compatibilité)
      */
     public function verifyEmail(Request $request)
     {
-        // id et hash sont dans l'URL (paramètres de route), pas dans le corps de la requête
         $id = $request->route('id');
         $hash = $request->route('hash');
 
@@ -165,17 +261,17 @@ class MembreAuthController extends Controller
 
         if ($membre->hasVerifiedEmail()) {
             return redirect()->route('membre.login')
-                ->with('success', 'Votre adresse email est déjà vérifiée. Vous pouvez vous connecter.');
+                ->with('success', 'Votre compte est déjà vérifié. Vous pouvez vous connecter.');
         }
 
         $membre->markEmailAsVerified();
 
         return redirect()->route('membre.login')
-            ->with('success', 'Votre adresse email a été vérifiée. Vous pouvez maintenant vous connecter.');
+            ->with('success', 'Votre compte a été vérifié. Vous pouvez vous connecter.');
     }
 
     /**
-     * Renvoyer l'email de vérification
+     * Renvoyer l'email de vérification (legacy)
      */
     public function resendVerification(Request $request)
     {
@@ -185,7 +281,7 @@ class MembreAuthController extends Controller
 
         if ($membre->hasVerifiedEmail()) {
             return redirect()->route('membre.login')
-                ->with('success', 'Votre adresse email est déjà vérifiée.');
+                ->with('success', 'Votre compte est déjà vérifié.');
         }
 
         try {
@@ -200,16 +296,11 @@ class MembreAuthController extends Controller
             ->with('success', 'Un nouveau lien de vérification a été envoyé à votre adresse email.');
     }
 
-    /**
-     * Générer un numéro de membre unique
-     */
-    private function generateNumeroMembre()
+    private function generateNumeroMembre(): string
     {
         do {
-            // Générer une combinaison de lettres et chiffres
             $numero = 'MEM-' . strtoupper(\Illuminate\Support\Str::random(6));
         } while (Membre::where('numero', $numero)->exists());
-
         return $numero;
     }
 
@@ -219,10 +310,8 @@ class MembreAuthController extends Controller
     public function logout(Request $request)
     {
         Auth::guard('membre')->logout();
-        
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        
         return redirect()->route('membre.login');
     }
 }

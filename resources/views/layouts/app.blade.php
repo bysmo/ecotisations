@@ -1205,6 +1205,34 @@
             </a>
             @endif
             
+            <!-- Menu Demandes d'adhésion -->
+            @if(auth()->user()->hasRole('admin'))
+            <a href="{{ route('cotisation-adhesions.index') }}" class="nav-link {{ request()->routeIs('cotisation-adhesions.*') ? 'active' : '' }}">
+                <i class="bi bi-people"></i>
+                <span>Demandes d'adhésion</span>
+                @php
+                    $nbAdhesionsEnAttente = \App\Models\CotisationAdhesion::where('statut', 'en_attente')->whereHas('cotisation', fn($q) => $q->whereNull('created_by_membre_id'))->count();
+                @endphp
+                @if($nbAdhesionsEnAttente > 0)
+                    <span class="badge bg-danger ms-auto" style="font-size: 0.65rem;">{{ $nbAdhesionsEnAttente }}</span>
+                @endif
+            </a>
+            @endif
+
+            <!-- Menu Demandes de versement -->
+            @if(auth()->user()->hasRole('admin'))
+            <a href="{{ route('cotisation-versement-demandes.index') }}" class="nav-link {{ request()->routeIs('cotisation-versement-demandes.*') ? 'active' : '' }}">
+                <i class="bi bi-cash-stack"></i>
+                <span>Demandes de versement</span>
+                @php
+                    $nbVersementEnAttente = \App\Models\CotisationVersementDemande::where('statut', 'en_attente')->count();
+                @endphp
+                @if($nbVersementEnAttente > 0)
+                    <span class="badge bg-warning text-dark ms-auto" style="font-size: 0.65rem;">{{ $nbVersementEnAttente }}</span>
+                @endif
+            </a>
+            @endif
+            
             <!-- Menu Campagnes d'Emails -->
             @if(auth()->user()->hasRole('admin') || auth()->user()->hasPermission('campagnes.create'))
             <a href="{{ route('campagnes.index') }}" class="nav-link {{ request()->routeIs('campagnes.*') ? 'active' : '' }}">
@@ -1256,18 +1284,18 @@
             <!-- Menu Paramètres avec sous-menus -->
             @if(auth()->user()->hasRole('admin') || auth()->user()->hasPermission('settings.smtp') || auth()->user()->hasPermission('settings.templates') || auth()->user()->hasPermission('settings.paydunya'))
             <div>
-                <a class="nav-link has-submenu {{ request()->routeIs('smtp.*') || request()->routeIs('email-templates.*') || request()->routeIs('payment-methods.*') ? 'active' : '' }}" 
+                <a class="nav-link has-submenu {{ request()->routeIs('smtp.*') || request()->routeIs('email-templates.*') || request()->routeIs('payment-methods.*') || request()->routeIs('sms-gateways.*') ? 'active' : '' }}" 
                    data-bs-toggle="collapse" 
                    href="#parametresSubmenu" 
                    role="button" 
-                   aria-expanded="{{ request()->routeIs('smtp.*') || request()->routeIs('email-templates.*') || request()->routeIs('payment-methods.*') ? 'true' : 'false' }}" 
+                   aria-expanded="{{ request()->routeIs('smtp.*') || request()->routeIs('email-templates.*') || request()->routeIs('payment-methods.*') || request()->routeIs('sms-gateways.*') ? 'true' : 'false' }}" 
                    aria-controls="parametresSubmenu">
                     <div style="display: flex; align-items: center; gap: 0.75rem;">
                         <i class="bi bi-gear"></i>
                         <span>Paramètres</span>
                     </div>
                 </a>
-                <div class="collapse {{ request()->routeIs('smtp.*') || request()->routeIs('email-templates.*') || request()->routeIs('payment-methods.*') ? 'show' : '' }}" id="parametresSubmenu">
+                <div class="collapse {{ request()->routeIs('smtp.*') || request()->routeIs('email-templates.*') || request()->routeIs('payment-methods.*') || request()->routeIs('sms-gateways.*') ? 'show' : '' }}" id="parametresSubmenu">
                     <ul class="sidebar-submenu">
                         @if(auth()->user()->hasRole('admin') || auth()->user()->hasPermission('settings.smtp'))
                         <li>
@@ -1285,6 +1313,12 @@
                             </a>
                         </li>
                         @endif
+                        <li>
+                            <a href="{{ route('sms-gateways.index') }}" class="nav-link {{ request()->routeIs('sms-gateways.*') ? 'active' : '' }}">
+                                <i class="bi bi-chat-dots"></i>
+                                <span>SMS</span>
+                            </a>
+                        </li>
                         @if(auth()->user()->hasRole('admin') || auth()->user()->hasPermission('settings.paydunya'))
                         <li>
                             <a href="{{ route('payment-methods.index') }}" class="nav-link {{ request()->routeIs('payment-methods.*') ? 'active' : '' }}">
@@ -1669,6 +1703,17 @@
         })();
     </script>
     
+    <script>
+        (function() {
+            document.querySelectorAll('.alert').forEach(function(alert) {
+                setTimeout(function() {
+                    alert.style.transition = 'opacity 0.5s ease';
+                    alert.style.opacity = '0';
+                    setTimeout(function() { alert.remove(); }, 500);
+                }, 5000);
+            });
+        })();
+    </script>
     @stack('scripts')
 </body>
 </html>

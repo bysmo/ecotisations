@@ -29,7 +29,7 @@ class NanoCredit extends Model
     ];
 
     protected $casts = [
-        'montant' => 'decimal:0',
+        'montant' => \App\Casts\EncryptedDecimal::class,
         'callback_received' => 'boolean',
         'date_octroi' => 'date',
         'date_fin_remboursement' => 'date',

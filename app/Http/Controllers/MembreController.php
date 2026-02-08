@@ -39,16 +39,7 @@ class MembreController extends Controller
      */
     public function create()
     {
-        // Récupérer tous les segments uniques existants
-        $segments = Membre::select('segment')
-            ->whereNotNull('segment')
-            ->where('segment', '!=', '')
-            ->distinct()
-            ->orderBy('segment')
-            ->pluck('segment')
-            ->toArray();
-        
-        return view('membres.create', compact('segments'));
+        return view('membres.create');
     }
 
     /**
@@ -68,34 +59,16 @@ class MembreController extends Controller
      */
     public function store(Request $request)
     {
-        // Normaliser le téléphone avant validation et recherche d'unicité
-        if ($request->has('telephone')) {
-            $request->merge([
-                'telephone' => \App\Models\Membre::normalizePhoneNumber($request->telephone)
-            ]);
-        }
-
         $validated = $request->validate([
             'nom' => 'required|string|max:255',
             'prenom' => 'required|string|max:255',
-            'email' => 'nullable|email|max:255|unique:membres,email',
-            'telephone' => 'required|string|max:20|unique:membres,telephone',
+            'email' => 'required|email|max:255|unique:membres,email',
+            'telephone' => 'nullable|string|max:20',
             'adresse' => 'nullable|string',
             'date_adhesion' => 'required|date',
             'statut' => 'required|in:actif,inactif,suspendu',
-            'segment' => 'nullable|string|max:255',
-            'nouveau_segment' => 'nullable|string|max:255|required_if:segment,__nouveau__',
             'password' => 'required|string|min:6',
         ]);
-        
-        // Si un nouveau segment est fourni, l'utiliser
-        if ($request->segment === '__nouveau__' && $request->filled('nouveau_segment')) {
-            $validated['segment'] = trim($request->nouveau_segment);
-        } elseif ($request->segment === '__nouveau__') {
-            $validated['segment'] = null;
-        }
-        
-        unset($validated['nouveau_segment']);
 
         // Générer un numéro de membre unique
         $validated['numero'] = $this->generateNumeroMembre();
@@ -122,16 +95,7 @@ class MembreController extends Controller
      */
     public function edit(Membre $membre)
     {
-        // Récupérer tous les segments uniques existants
-        $segments = Membre::select('segment')
-            ->whereNotNull('segment')
-            ->where('segment', '!=', '')
-            ->distinct()
-            ->orderBy('segment')
-            ->pluck('segment')
-            ->toArray();
-        
-        return view('membres.edit', compact('membre', 'segments'));
+        return view('membres.edit', compact('membre'));
     }
 
     /**
@@ -139,44 +103,21 @@ class MembreController extends Controller
      */
     public function update(Request $request, Membre $membre)
     {
-        // Normaliser le téléphone avant validation et recherche d'unicité
-        if ($request->has('telephone')) {
-            $request->merge([
-                'telephone' => \App\Models\Membre::normalizePhoneNumber($request->telephone)
-            ]);
-        }
-
         $validated = $request->validate([
             'nom' => 'required|string|max:255',
             'prenom' => 'required|string|max:255',
             'email' => [
-                'nullable',
+                'required',
                 'email',
                 'max:255',
                 Rule::unique('membres')->ignore($membre->id),
             ],
-            'telephone' => [
-                'required',
-                'string',
-                'max:20',
-                Rule::unique('membres')->ignore($membre->id),
-            ],
+            'telephone' => 'nullable|string|max:20',
             'adresse' => 'nullable|string',
             'date_adhesion' => 'required|date',
             'statut' => 'required|in:actif,inactif,suspendu',
-            'segment' => 'nullable|string|max:255',
-            'nouveau_segment' => 'nullable|string|max:255|required_if:segment,__nouveau__',
             'password' => 'nullable|string|min:6',
         ]);
-        
-        // Si un nouveau segment est fourni, l'utiliser
-        if ($request->segment === '__nouveau__' && $request->filled('nouveau_segment')) {
-            $validated['segment'] = trim($request->nouveau_segment);
-        } elseif ($request->segment === '__nouveau__') {
-            $validated['segment'] = null;
-        }
-        
-        unset($validated['nouveau_segment']);
 
         // Si le mot de passe est fourni, le hasher
         if (!empty($validated['password'])) {

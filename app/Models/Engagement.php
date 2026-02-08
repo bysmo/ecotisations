@@ -23,7 +23,7 @@ class Engagement extends Model
     ];
 
     protected $casts = [
-        'montant_engage' => 'decimal:0',
+        'montant_engage' => \App\Casts\EncryptedDecimal::class,
         'periode_debut' => 'date',
         'periode_fin' => 'date',
     ];
@@ -175,6 +175,7 @@ class Engagement extends Model
             ->where('cotisation_id', $this->cotisation_id)
             ->whereDate('date_paiement', '>=', $this->periode_debut)
             ->whereDate('date_paiement', '<=', $this->periode_fin)
+            ->get()
             ->sum('montant');
     }
 

@@ -29,7 +29,7 @@
                         <option value="">Sélectionner une caisse</option>
                         @foreach($caisses as $caisse)
                             <option value="{{ $caisse->id }}" {{ old('caisse_source_id') == $caisse->id ? 'selected' : '' }}>
-                                {{ $caisse->nom }} (Solde: {{ number_format($caisse->solde_actuel, 0, ',', ' ') }} XOF)
+                                {{ $caisse->nom }} (Solde: {{ number_format((float) ($caisse->solde_actuel ?? 0), 0, ',', ' ') }} XOF)
                             </option>
                         @endforeach
                     </select>
@@ -49,7 +49,7 @@
                         <option value="">Sélectionner une caisse</option>
                         @foreach($caisses as $caisse)
                             <option value="{{ $caisse->id }}" {{ old('caisse_destination_id') == $caisse->id ? 'selected' : '' }}>
-                                {{ $caisse->nom }} (Solde: {{ number_format($caisse->solde_actuel, 0, ',', ' ') }} XOF)
+                                {{ $caisse->nom }} (Solde: {{ number_format((float) ($caisse->solde_actuel ?? 0), 0, ',', ' ') }} XOF)
                             </option>
                         @endforeach
                     </select>

@@ -20,7 +20,6 @@ use App\Models\Remboursement;
 use App\Models\EmailCampaign;
 use App\Models\EmailLog;
 use App\Models\PaymentMethod;
-use App\Models\NanoCreditType;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -58,7 +57,6 @@ class DatabaseSeeder extends Seeder
         EmailTemplate::truncate();
         SMTPConfiguration::truncate();
         PaymentMethod::truncate();
-        NanoCreditType::truncate();
         User::truncate();
         
         // Truncate des tables de sessions et tokens si elles existent
@@ -78,6 +76,8 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class, // Créer l'utilisateur admin par défaut
             PaymentMethodSeeder::class, // Créer les moyens de paiement (PayDunya, PayPal, Stripe)
             CaisseSeeder::class,
+            EpargnePlanSeeder::class,
+            NanoCreditTypeSeeder::class,
             ApprovisionnementSeeder::class,
             TransfertSeeder::class,
             SortieSeeder::class,
@@ -86,13 +86,11 @@ class DatabaseSeeder extends Seeder
             SegmentMembreSeeder::class, // Assigner les segments aux membres (après MembreSeeder)
             CotisationSeeder::class,
             UpdateSegmentsSeeder::class, // Mettre à jour les segments des membres et cotisations (exactement 3 cotisations VIP, pas de cotisations sans segment)
-            EpargnePlanSeeder::class, // Nouveau seeder pour les plans d'épargne
             EngagementSeeder::class,
             PaiementSeeder::class,
             RemboursementSeeder::class,
             EmailCampaignSeeder::class,
             EmailLogSeeder::class,
-            NanoCreditTypeSeeder::class,
         ]);
         
         $this->command->info('Seed terminé avec succès !');

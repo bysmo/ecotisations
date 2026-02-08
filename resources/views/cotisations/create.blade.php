@@ -45,7 +45,7 @@
                         <option value="">Sélectionner une caisse</option>
                         @foreach($caisses as $caisse)
                             <option value="{{ $caisse->id }}" {{ old('caisse_id') == $caisse->id ? 'selected' : '' }}>
-                                {{ $caisse->nom }} (Solde: {{ number_format($caisse->solde_actuel, 0, ',', ' ') }} XOF)
+                                {{ $caisse->nom }} (Solde: {{ number_format((float) ($caisse->solde_actuel ?? 0), 0, ',', ' ') }} XOF)
                             </option>
                         @endforeach
                     </select>
@@ -153,20 +153,18 @@
                 </div>
                 
                 <div class="col-md-6 mb-3">
-                    <label for="segment" class="form-label">Segment membre</label>
-                    <select class="form-select @error('segment') is-invalid @enderror" 
-                            id="segment" 
-                            name="segment">
-                        <option value="">-- Tous les segments --</option>
-                        @foreach($segments as $segment)
-                            <option value="{{ $segment }}" {{ old('segment') === $segment ? 'selected' : '' }}>{{ $segment }}</option>
-                        @endforeach
+                    <label for="visibilite" class="form-label">Type de cotisation</label>
+                    <select class="form-select @error('visibilite') is-invalid @enderror" 
+                            id="visibilite" 
+                            name="visibilite">
+                        <option value="publique" {{ old('visibilite', 'publique') === 'publique' ? 'selected' : '' }}>Publique</option>
+                        <option value="privee" {{ old('visibilite') === 'privee' ? 'selected' : '' }}>Privée</option>
                     </select>
-                    @error('segment')
+                    @error('visibilite')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                     <small class="form-text text-muted" style="font-size: 0.7rem;">
-                        Limite cette cotisation à un segment spécifique de membres.
+                        <strong>Publique :</strong> tout membre peut adhérer directement. <strong>Privée :</strong> le membre doit demander l'adhésion, l'admin valide.
                     </small>
                 </div>
             </div>

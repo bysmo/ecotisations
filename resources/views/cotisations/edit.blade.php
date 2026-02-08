@@ -131,6 +131,16 @@
                 </div>
             </div>
             
+            @if($cotisation->code)
+            <div class="mb-3">
+                <label class="form-label">Code de partage</label>
+                <div class="input-group">
+                    <input type="text" class="form-control" value="{{ $cotisation->code }}" readonly style="background-color: #e9ecef;">
+                    <span class="input-group-text text-muted small">Les membres recherchent ce code pour adhérer</span>
+                </div>
+            </div>
+            @endif
+            
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label for="tag" class="form-label">Tag</label>
@@ -154,20 +164,18 @@
                 </div>
                 
                 <div class="col-md-6 mb-3">
-                    <label for="segment" class="form-label">Segment membre</label>
-                    <select class="form-select @error('segment') is-invalid @enderror" 
-                            id="segment" 
-                            name="segment">
-                        <option value="">-- Tous les segments --</option>
-                        @foreach($segments as $segment)
-                            <option value="{{ $segment }}" {{ old('segment', $cotisation->segment) === $segment ? 'selected' : '' }}>{{ $segment }}</option>
-                        @endforeach
+                    <label for="visibilite" class="form-label">Type de cotisation</label>
+                    <select class="form-select @error('visibilite') is-invalid @enderror" 
+                            id="visibilite" 
+                            name="visibilite">
+                        <option value="publique" {{ old('visibilite', $cotisation->visibilite ?? 'publique') === 'publique' ? 'selected' : '' }}>Publique</option>
+                        <option value="privee" {{ old('visibilite', $cotisation->visibilite ?? 'publique') === 'privee' ? 'selected' : '' }}>Privée</option>
                     </select>
-                    @error('segment')
+                    @error('visibilite')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                     <small class="form-text text-muted" style="font-size: 0.7rem;">
-                        Limite cette cotisation à un segment spécifique de membres. Si vide, la cotisation est accessible à tous les membres.
+                        <strong>Publique :</strong> tout membre peut adhérer directement. <strong>Privée :</strong> le membre doit demander l'adhésion, l'admin valide.
                     </small>
                 </div>
             </div>

@@ -12,10 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('membres', function (Blueprint $table) {
-            $table->date('date_naissance')->nullable()->after('prenom');
-            $table->string('lieu_naissance')->nullable()->after('date_naissance');
-            $table->enum('sexe', ['M', 'F', 'Autre'])->nullable()->after('lieu_naissance');
-            $table->string('nom_mere')->nullable()->after('sexe');
+            $table->dropColumn('segment');
         });
     }
 
@@ -25,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('membres', function (Blueprint $table) {
-            $table->dropColumn(['date_naissance', 'lieu_naissance', 'sexe', 'nom_mere']);
+            $table->string('segment')->nullable()->after('statut');
         });
     }
 };

@@ -85,10 +85,20 @@
         }
         
         .sidebar-menu {
-            padding: 0.5rem 0;
+            padding: 0;
+            margin: 0;
         }
-        
-        .sidebar-menu .nav-link {
+        .sidebar-menu-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .sidebar-menu-list > li {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+        .sidebar-menu-list .nav-link {
             color: rgba(255,255,255,0.8);
             padding: 0.5rem 1.25rem;
             display: flex;
@@ -98,25 +108,65 @@
             border-left: 3px solid transparent;
             font-weight: 300;
             font-size: 0.75rem;
+            text-decoration: none;
         }
-        
-        .sidebar-menu .nav-link:hover {
+        .sidebar-menu-list .nav-link:hover {
             background-color: rgba(255,255,255,0.1);
             color: white;
             border-left-color: var(--light-blue);
         }
-        
-        .sidebar-menu .nav-link.active {
+        .sidebar-menu-list .nav-link.active {
             background-color: rgba(255,255,255,0.15);
             color: white;
             border-left-color: white;
             font-weight: 400;
         }
-        
-        .sidebar-menu .nav-link i {
+        .sidebar-menu-list .nav-link i {
             font-size: 0.85rem;
             width: 18px;
             text-align: center;
+        }
+        .sidebar-nav-toggle .sidebar-chevron {
+            font-size: 0.7rem;
+            margin-left: auto;
+            transition: transform 0.2s ease;
+        }
+        .sidebar-nav-toggle:not(.collapsed) .sidebar-chevron {
+            transform: rotate(180deg);
+        }
+        .sidebar-submenu-wrap {
+            margin: 0;
+            padding: 0;
+        }
+        .sidebar-submenu {
+            list-style: none;
+            padding: 0 0 0.25rem 0;
+            margin: 0 0 0 1.25rem;
+            border-left: 1px solid rgba(255,255,255,0.15);
+            padding-left: 0.5rem;
+        }
+        .sidebar-submenu li {
+            margin: 0;
+            padding: 0;
+        }
+        .sidebar-submenu .nav-link {
+            position: relative;
+            padding: 0.35rem 0.75rem 0.35rem 1rem;
+            font-size: 0.7rem;
+            border-left: none !important;
+        }
+        .sidebar-submenu .nav-link.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: white;
+        }
+        .sidebar-submenu .nav-link i {
+            width: 16px;
+            font-size: 0.75rem;
         }
         
         .top-bar {
@@ -449,65 +499,104 @@
             <h4><i class="bi bi-cash-coin"></i>  {{ $appNom }}</h4>
         </div>
         <nav class="sidebar-menu">
-            <a href="{{ route('membre.dashboard') }}" class="nav-link {{ request()->routeIs('membre.dashboard') ? 'active' : '' }}">
-                <i class="bi bi-speedometer2"></i>
-                <span>Dashboard</span>
-            </a>
-            
-            <a href="{{ route('membre.cotisations') }}" class="nav-link {{ request()->routeIs('membre.cotisations') ? 'active' : '' }}">
-                <i class="bi bi-receipt-cutoff"></i>
-                <span>Mes Cotisations</span>
-            </a>
-            
-            <a href="{{ route('membre.paiements') }}" class="nav-link {{ request()->routeIs('membre.paiements') ? 'active' : '' }}">
-                <i class="bi bi-receipt"></i>
-                <span>Mes Paiements</span>
-            </a>
-            
-            <a href="{{ route('membre.engagements') }}" class="nav-link {{ request()->routeIs('membre.engagements') ? 'active' : '' }}">
-                <i class="bi bi-clipboard-check"></i>
-                <span>Mes Engagements</span>
-            </a>
-            
-            <a href="{{ route('membre.remboursements') }}" class="nav-link {{ request()->routeIs('membre.remboursements*') ? 'active' : '' }}">
-                <i class="bi bi-arrow-counterclockwise"></i>
-                <span>Mes Remboursements</span>
-            </a>
-            
-            <a href="{{ route('membre.kyc.index') }}" class="nav-link {{ request()->routeIs('membre.kyc*') ? 'active' : '' }}">
-                <i class="bi bi-shield-check"></i>
-                <span>Mon KYC</span>
-            </a>
-            
-            <a href="{{ route('membre.nano-credits') }}" class="nav-link {{ request()->routeIs('membre.nano-credits*') ? 'active' : '' }}">
-                <i class="bi bi-credit-card-2-front"></i>
-                <span>Nano Crédits</span>
-            </a>
-            
-            <a href="{{ route('membre.epargne.index') }}" class="nav-link {{ request()->routeIs('membre.epargne*') ? 'active' : '' }}">
-                <i class="bi bi-piggy-bank"></i>
-                <span>Épargne</span>
-            </a>
-            
-            <a href="{{ route('membre.profil') }}" class="nav-link {{ request()->routeIs('membre.profil') ? 'active' : '' }}">
-                <i class="bi bi-person-circle"></i>
-                <span>Mes Infos Personnelles</span>
-            </a>
+            <ul class="sidebar-menu-list">
+                <li>
+                    <a href="{{ route('membre.dashboard') }}" class="nav-link {{ request()->routeIs('membre.dashboard') ? 'active' : '' }}">
+                        <i class="bi bi-speedometer2"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    @php
+                        $cotisationsRoutesActive = request()->routeIs('membre.cotisations*') || request()->routeIs('membre.mes-cotisations*');
+                    @endphp
+                    <a href="#" class="nav-link sidebar-nav-toggle {{ $cotisationsRoutesActive ? '' : 'collapsed' }}" data-bs-toggle="collapse" data-bs-target="#cotisationsSubmenu" aria-expanded="{{ $cotisationsRoutesActive ? 'true' : 'false' }}">
+                        <i class="bi bi-receipt-cutoff"></i>
+                        <span>Cotisations</span>
+                        <i class="bi bi-chevron-down sidebar-chevron"></i>
+                    </a>
+                    <div class="collapse sidebar-submenu-wrap {{ $cotisationsRoutesActive ? 'show' : '' }}" id="cotisationsSubmenu">
+                        <ul class="sidebar-submenu">
+                            <li>
+                                <a href="{{ route('membre.cotisations.publiques') }}" class="nav-link {{ request()->routeIs('membre.cotisations.publiques') ? 'active' : '' }}">
+                                    <i class="bi bi-globe"></i>
+                                    <span>Cotisations publiques</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('membre.cotisations.privees') }}" class="nav-link {{ request()->routeIs('membre.cotisations.privees') ? 'active' : '' }}">
+                                    <i class="bi bi-lock"></i>
+                                    <span>Cotisations privées</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('membre.cotisations.rechercher') }}" class="nav-link {{ request()->routeIs('membre.cotisations.rechercher') ? 'active' : '' }}">
+                                    <i class="bi bi-search"></i>
+                                    <span>Rechercher par code</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('membre.mes-cotisations') }}" class="nav-link {{ request()->routeIs('membre.mes-cotisations*') ? 'active' : '' }}">
+                                    <i class="bi bi-plus-circle"></i>
+                                    <span>Mes cotisations créées</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+                <li>
+                    <a href="{{ route('membre.paiements') }}" class="nav-link {{ request()->routeIs('membre.paiements') ? 'active' : '' }}">
+                        <i class="bi bi-receipt"></i>
+                        <span>Mes Paiements</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('membre.engagements') }}" class="nav-link {{ request()->routeIs('membre.engagements') ? 'active' : '' }}">
+                        <i class="bi bi-clipboard-check"></i>
+                        <span>Mes Engagements</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('membre.remboursements') }}" class="nav-link {{ request()->routeIs('membre.remboursements*') ? 'active' : '' }}">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                        <span>Mes Remboursements</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('membre.kyc.index') }}" class="nav-link {{ request()->routeIs('membre.kyc*') ? 'active' : '' }}">
+                        <i class="bi bi-shield-check"></i>
+                        <span>Mon KYC</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('membre.nano-credits') }}" class="nav-link {{ request()->routeIs('membre.nano-credits*') ? 'active' : '' }}">
+                        <i class="bi bi-credit-card-2-front"></i>
+                        <span>Nano Crédits</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('membre.epargne.index') }}" class="nav-link {{ request()->routeIs('membre.epargne*') ? 'active' : '' }}">
+                        <i class="bi bi-piggy-bank"></i>
+                        <span>Épargne</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('membre.profil') }}" class="nav-link {{ request()->routeIs('membre.profil') ? 'active' : '' }}">
+                        <i class="bi bi-person-circle"></i>
+                        <span>Mes Infos Personnelles</span>
+                    </a>
+                </li>
+            </ul>
         </nav>
     </div>
     
     <!-- Top Bar -->
     <div class="top-bar">
         <div class="top-bar-left">
-            <span class="d-flex flex-column" style="color: var(--primary-dark-blue); font-weight: 300;">
-                <span style="font-size: 0.85rem;">
-                    <i class="bi bi-person-circle"></i> 
-                    {{ $membre->nom_complet ?? 'Membre' }}
-                    <small class="text-muted ms-2">({{ $membre->numero ?? '' }})</small>
-                </span>
-                <span style="font-size: 0.7rem; color: #666; margin-left: 1.2rem;">
-                    <i class="bi bi-telephone"></i> {{ $membre->telephone }}
-                </span>
+            <span style="font-size: 0.85rem; color: var(--primary-dark-blue); font-weight: 300;">
+                <i class="bi bi-person-circle"></i> 
+                {{ $membre->nom_complet ?? 'Membre' }}
+                <small class="text-muted ms-2">({{ $membre->numero ?? '' }})</small>
             </span>
         </div>
         <div class="top-bar-right">
@@ -701,6 +790,17 @@
         })();
     </script>
     
+    <script>
+        (function() {
+            document.querySelectorAll('.alert').forEach(function(alert) {
+                setTimeout(function() {
+                    alert.style.transition = 'opacity 0.5s ease';
+                    alert.style.opacity = '0';
+                    setTimeout(function() { alert.remove(); }, 500);
+                }, 5000);
+            });
+        })();
+    </script>
     @stack('scripts')
 </body>
 </html>

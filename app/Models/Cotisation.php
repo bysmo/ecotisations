@@ -11,8 +11,11 @@ class Cotisation extends Model
 
     protected $fillable = [
         'numero',
+        'code',
         'nom',
         'caisse_id',
+        'created_by_membre_id',
+        'admin_membre_id',
         'type',
         'frequence',
         'type_montant',
@@ -21,11 +24,11 @@ class Cotisation extends Model
         'notes',
         'actif',
         'tag',
-        'segment',
+        'visibilite',
     ];
 
     protected $casts = [
-        'montant' => 'decimal:0',
+        'montant' => \App\Casts\EncryptedDecimal::class,
         'actif' => 'boolean',
     ];
 
@@ -35,6 +38,46 @@ class Cotisation extends Model
     public function caisse()
     {
         return $this->belongsTo(Caisse::class);
+    }
+
+    /**
+     * Membre créateur - pour les cotisations créées par un membre
+     */
+    public function createdByMembre()
+    {
+        return $this->belongsTo(Membre::class, 'created_by_membre_id');
+    }
+
+    /**
+     * Membre désigné comme administrateur (optionnel). Si null, l'admin est le créateur.
+     */
+    public function adminMembre()
+    {
+        return $this->belongsTo(Membre::class, 'admin_membre_id');
+    }
+
+    /**
+     * Vérifier si la cotisation est créée par un membre (vs admin app)
+     */
+    public function isCreatedByMembre(): bool
+    {
+        return $this->created_by_membre_id !== null;
+    }
+
+    /**
+     * Obtenir l'id du membre administrateur : désigné ou créateur
+     */
+    public function getAdminMembreId(): ?int
+    {
+        return $this->admin_membre_id ?? $this->created_by_membre_id;
+    }
+
+    /**
+     * Demandes de versement des fonds vers l'admin app
+     */
+    public function versementDemandes()
+    {
+        return $this->hasMany(CotisationVersementDemande::class);
     }
 
     /**
@@ -51,6 +94,30 @@ class Cotisation extends Model
     public function engagements()
     {
         return $this->hasMany(\App\Models\Engagement::class);
+    }
+
+    /**
+     * Adhésions des membres à cette cotisation (pratique)
+     */
+    public function adhesions()
+    {
+        return $this->hasMany(CotisationAdhesion::class);
+    }
+
+    /**
+     * Vérifier si la cotisation est publique
+     */
+    public function isPublique(): bool
+    {
+        return ($this->visibilite ?? 'publique') === 'publique';
+    }
+
+    /**
+     * Vérifier si la cotisation est privée
+     */
+    public function isPrivee(): bool
+    {
+        return ($this->visibilite ?? 'publique') === 'privee';
     }
 
     /**

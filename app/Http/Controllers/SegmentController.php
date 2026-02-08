@@ -24,15 +24,12 @@ class SegmentController extends Controller
         
         $segments = $query->orderBy('nom')->get();
         
-        // Calculer le nombre de membres pour chaque segment
+        // Le champ segment a été retiré de la table membres
         foreach ($segments as $segment) {
-            $segment->nombre_membres = Membre::where('segment', $segment->nom)->count();
+            $segment->nombre_membres = 0;
         }
         
-        // Total des membres sans segment
-        $membresSansSegment = Membre::whereNull('segment')
-            ->orWhere('segment', '')
-            ->count();
+        $membresSansSegment = Membre::count();
         
         return view('segments.index', compact('segments', 'membresSansSegment'));
     }
@@ -69,13 +66,16 @@ class SegmentController extends Controller
      */
     public function show(Request $request, $segment)
     {
-        // Décoder le segment si nécessaire (pour gérer les espaces et caractères spéciaux)
         $segmentNom = urldecode($segment);
         
-        $membres = Membre::where('segment', $segmentNom)
-            ->orderBy('nom')
-            ->orderBy('prenom')
-            ->paginate(15);
+        // Le champ segment a été retiré de la table membres
+        $membres = new \Illuminate\Pagination\LengthAwarePaginator(
+            [],
+            0,
+            15,
+            \Illuminate\Pagination\Paginator::resolveCurrentPage(),
+            ['path' => \Illuminate\Pagination\Paginator::resolveCurrentPath()]
+        );
         
         return view('segments.show', compact('segmentNom', 'membres'));
     }

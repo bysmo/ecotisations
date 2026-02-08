@@ -98,7 +98,6 @@
                             <th>Téléphone</th>
                             <th>Date d'adhésion</th>
                             <th>Statut</th>
-                            <th>Segment</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -119,10 +118,7 @@
                                     @else
                                         <i class="bi bi-exclamation-triangle"></i> Suspendu
                                     @endif
-                                </td>
-                                <td>
-                                    {{ $membre->segment ?? '-' }}
-                                </td>
+                                </td>       
                                 <td>
                                     <div class="btn-group btn-group-sm" role="group">
                                         <a href="{{ route('membres.show', $membre) }}" 

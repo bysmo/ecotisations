@@ -35,7 +35,6 @@ class EmailLog extends Model
     const TYPE_CAMPAGNE = 'campagne';
     const TYPE_PAIEMENT = 'paiement';
     const TYPE_ENGAGEMENT = 'engagement';
-    const TYPE_ACTIVATION = 'activation';
     const TYPE_FIN_MOIS = 'fin_mois';
     const TYPE_RAPPEL = 'rappel';
     const TYPE_AUTRE = 'autre';

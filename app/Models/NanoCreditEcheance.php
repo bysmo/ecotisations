@@ -19,7 +19,7 @@ class NanoCreditEcheance extends Model
     ];
 
     protected $casts = [
-        'montant' => 'decimal:0',
+        'montant' => \App\Casts\EncryptedDecimal::class,
         'date_echeance' => 'date',
         'paye_le' => 'datetime',
     ];

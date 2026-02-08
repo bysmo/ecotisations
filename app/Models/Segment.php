@@ -15,10 +15,11 @@ class Segment extends Model
     ];
 
     /**
-     * Récupérer le nombre de membres pour ce segment
+     * Récupérer le nombre de membres pour ce segment.
+     * Note: Le champ segment a été retiré de la table membres.
      */
     public function getNombreMembresAttribute()
     {
-        return \App\Models\Membre::where('segment', $this->nom)->count();
+        return 0;
     }
 }

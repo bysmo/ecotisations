@@ -8,6 +8,7 @@ use App\Models\Paiement;
 use App\Models\Engagement;
 use App\Models\EmailLog;
 use App\Models\Membre;
+use App\Models\NanoCredit;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
@@ -58,7 +59,9 @@ class EmailService
     }
 
     /**
-     * Envoyer l'email de vérification de compte membre (utilise la config SMTP admin)
+     * Envoyer l'email de vérification de compte membre (utilise la config SMTP admin).
+     * Si un template actif de type "membre_inscrit" existe, il est utilisé (avec {{lien_validation}}).
+     * Sinon, message codé en dur avec le lien de validation.
      */
     public function sendVerificationEmail(Membre $membre): bool
     {
@@ -72,7 +75,7 @@ class EmailService
             $this->configureSMTP();
 
             $appNom = \App\Models\AppSetting::get('app_nom', 'Gestion des Cotisations');
-            $url = URL::temporarySignedRoute(
+            $lienValidation = URL::temporarySignedRoute(
                 'membre.verification.verify',
                 Carbon::now()->addMinutes(60),
                 [
@@ -81,20 +84,54 @@ class EmailService
                 ]
             );
 
-            $sujet = "Vérifiez votre adresse email - {$appNom}";
-            $corps = "Bonjour {$membre->prenom},\n\n"
-                . "Merci de vous être inscrit sur {$appNom}. Veuillez cliquer sur le lien ci-dessous pour vérifier votre adresse email.\n\n"
-                . $url . "\n\n"
-                . "Ce lien expirera dans 60 minutes. Si vous n'êtes pas à l'origine de cette inscription, vous pouvez ignorer cet email.";
+            $template = EmailTemplate::where('type', 'membre_inscrit')
+                ->where('actif', true)
+                ->first();
+
+            $emailLog = null;
+            if ($template) {
+                $variables = [
+                    'nom' => $membre->nom ?? '',
+                    'prenom' => $membre->prenom ?? '',
+                    'email' => $membre->email ?? '',
+                    'lien_validation' => $lienValidation,
+                    'app_nom' => $appNom,
+                ];
+                $emailContent = $template->remplacerVariables($variables);
+                $sujet = $emailContent['sujet'];
+                $corps = $emailContent['corps'];
+
+                $emailLog = EmailLog::create([
+                    'type' => 'membre_inscrit',
+                    'membre_id' => $membre->id,
+                    'destinataire_email' => $membre->email,
+                    'sujet' => $sujet,
+                    'message' => $corps,
+                    'statut' => EmailLog::STATUT_EN_ATTENTE,
+                ]);
+            } else {
+                $sujet = "Vérifiez votre adresse email - {$appNom}";
+                $corps = "Bonjour {$membre->prenom},\n\n"
+                    . "Merci de vous être inscrit sur {$appNom}. Veuillez cliquer sur le lien ci-dessous pour vérifier votre adresse email.\n\n"
+                    . $lienValidation . "\n\n"
+                    . "Ce lien expirera dans 60 minutes. Si vous n'êtes pas à l'origine de cette inscription, vous pouvez ignorer cet email.";
+            }
 
             Mail::raw($corps, function ($message) use ($membre, $sujet) {
                 $message->to($membre->email)
                     ->subject($sujet);
             });
 
+            if ($emailLog) {
+                $emailLog->markAsSent();
+            }
+
             Log::info('Email de vérification envoyé au membre: ' . $membre->email);
             return true;
         } catch (\Exception $e) {
+            if (isset($emailLog) && $emailLog) {
+                $emailLog->markAsFailed($e->getMessage());
+            }
             Log::error('Erreur envoi email de vérification: ' . $e->getMessage());
             throw $e;
         }
@@ -372,6 +409,74 @@ class EmailService
             }
             Log::error('Erreur lors de l\'envoi de l\'email d\'engagement: ' . $e->getMessage());
             // Ne pas bloquer le processus si l'email échoue
+            return false;
+        }
+    }
+
+    /**
+     * Envoyer un email au membre lorsque son nano crédit est octroyé.
+     * Utilise le template actif de type "nano_credit_octroye" s'il existe, sinon aucun email n'est envoyé.
+     */
+    public function sendNanoCreditOctroyeEmail(NanoCredit $nanoCredit): bool
+    {
+        try {
+            $smtp = SMTPConfiguration::where('actif', true)->first();
+            if (!$smtp) {
+                Log::warning('Aucune configuration SMTP active. Email nano crédit octroyé non envoyé pour le membre: ' . $nanoCredit->membre_id);
+                return false;
+            }
+
+            $template = EmailTemplate::where('type', 'nano_credit_octroye')
+                ->where('actif', true)
+                ->first();
+
+            if (!$template) {
+                Log::debug('Aucun template actif pour nano_credit_octroye. Email non envoyé.');
+                return false;
+            }
+
+            $nanoCredit->load(['membre', 'nanoCreditType']);
+            $membre = $nanoCredit->membre;
+            if (!$membre || !$membre->email) {
+                Log::warning('Le membre n\'a pas d\'email. Email nano crédit octroyé non envoyé.');
+                return false;
+            }
+
+            $this->configureSMTP();
+
+            $variables = [
+                'nom' => $membre->nom ?? '',
+                'prenom' => $membre->prenom ?? '',
+                'email' => $membre->email ?? '',
+                'montant' => number_format($nanoCredit->montant, 0, ',', ' ') . ' XOF',
+                'type_nano' => $nanoCredit->nanoCreditType ? $nanoCredit->nanoCreditType->nom : '',
+                'date_octroi' => $nanoCredit->date_octroi ? \Carbon\Carbon::parse($nanoCredit->date_octroi)->format('d/m/Y') : '',
+            ];
+
+            $emailContent = $template->remplacerVariables($variables);
+
+            $emailLog = EmailLog::create([
+                'type' => 'nano_credit_octroye',
+                'membre_id' => $membre->id,
+                'destinataire_email' => $membre->email,
+                'sujet' => $emailContent['sujet'],
+                'message' => $emailContent['corps'],
+                'statut' => EmailLog::STATUT_EN_ATTENTE,
+            ]);
+
+            Mail::raw($emailContent['corps'], function ($message) use ($membre, $emailContent) {
+                $message->to($membre->email)
+                    ->subject($emailContent['sujet']);
+            });
+
+            $emailLog->markAsSent();
+            Log::info('Email nano crédit octroyé envoyé au membre: ' . $membre->email);
+            return true;
+        } catch (\Exception $e) {
+            if (isset($emailLog)) {
+                $emailLog->markAsFailed($e->getMessage());
+            }
+            Log::error('Erreur envoi email nano crédit octroyé: ' . $e->getMessage());
             return false;
         }
     }
