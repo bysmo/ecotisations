@@ -133,7 +133,7 @@ class MembreDashboardController extends Controller
     public function cotisationsPubliques()
     {
         $membre = Auth::guard('membre')->user();
-        $baseQuery = \App\Models\Cotisation::where('actif', true)->with(['caisse'])->orderBy('nom');
+        $baseQuery = \App\Models\Cotisation::where('actif', true)->with(['caisse'])->withCount('paiements')->orderBy('nom');
         $cotisations = (clone $baseQuery)->where(function ($q) {
             $q->where('visibilite', 'publique')->orWhereNull('visibilite');
         })->paginate(15)->withQueryString();
@@ -154,6 +154,7 @@ class MembreDashboardController extends Controller
             ->pluck('cotisation_id');
         $cotisations = \App\Models\Cotisation::where('actif', true)
             ->with(['caisse'])
+            ->withCount('paiements')
             ->where('visibilite', 'privee')
             ->whereIn('id', $cotisationIdsAcceptees)
             ->orderBy('nom')

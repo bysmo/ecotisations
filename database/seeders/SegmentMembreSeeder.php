@@ -70,7 +70,7 @@ class SegmentMembreSeeder extends Seeder
         $sansSegment = 0;
         while ($index < $totalMembres) {
             $membre = $membres[$index];
-            $membre->segment = null;
+            //$membre->segment = null;
             $membre->save();
             $sansSegment++;
             $index++;

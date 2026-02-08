@@ -52,105 +52,137 @@ table.table.table-cotisations-membre.table-hover tbody tr:nth-child(even):hover 
 .card-header-compact-cot { padding: 0.35rem 0.6rem !important; font-size: 0.75rem !important; font-weight: 300 !important; font-family: 'Ubuntu', sans-serif !important; }
 </style>
 
-<div class="card">
-    <div class="card-header card-header-compact-cot" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">
+<div class="card border-0 bg-transparent shadow-none">
+    <div class="card-header border-0 bg-transparent px-0 pb-3" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">
         <i class="bi bi-list-ul"></i> Cotisations publiques disponibles
     </div>
-    <div class="card-body pt-2 pb-3">
-        <div class="mb-2 d-flex align-items-center gap-2 w-100">
-            <label class="small mb-0 text-muted flex-shrink-0">Rechercher :</label>
-            <input type="text" class="form-control form-control-sm table-search-cot flex-grow-1" placeholder="Nom, tag, description…" style="height: 28px; font-size: 0.75rem;" data-table-target="table-cot-publiques">
-            <button type="button" class="btn btn-sm btn-outline-secondary flex-shrink-0" style="height: 28px;" title="Filtrer"><i class="bi bi-search"></i> Rechercher</button>
-        </div>
-        @if($cotisations->total() > 0)
-            <div class="table-responsive">
-                <table class="table table-cotisations-membre table-striped table-hover" id="table-cot-publiques">
-                    <thead>
-                        <tr>
-                            <th>Nom</th>
-                            <th>Tag</th>
-                            <th>Type</th>
-                            <th>Fréquence</th>
-                            <th>Montant</th>
-                            <th>Statut</th>
-                            <th>Description</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($cotisations as $cotisation)
-                            @php $adhesion = $adhesions[$cotisation->id] ?? null; @endphp
-                            <tr>
-                                <td>{{ $cotisation->nom }}</td>
-                                <td>{{ $cotisation->tag ?? '-' }}</td>
-                                <td>{{ ucfirst($cotisation->type ?? 'N/A') }}</td>
-                                <td>{{ $cotisation->frequence ? ucfirst($cotisation->frequence) : '-' }}</td>
-                                <td>{{ number_format((float)($cotisation->montant ?? 0), 0, ',', ' ') }} XOF</td>
-                                <td>@if($cotisation->actif)<span style="color: #28a745;">Active</span>@else<span style="color: #dc3545;">Inactive</span>@endif</td>
-                                <td>{{ Str::limit($cotisation->description ?? 'Aucune description', 40) }}</td>
-                                <td>
-                                    <div class="actions-cell">
-                                        <a href="{{ route('membre.cotisations.show', $cotisation->id) }}" class="btn btn-info btn-sm" title="Voir"><i class="bi bi-eye"></i></a>
-                                        @if(!$adhesion)
-                                            <form action="{{ route('membre.cotisations.adherer', $cotisation) }}" method="POST" class="d-inline">@csrf
-                                                <button type="submit" class="btn btn-success btn-sm" title="Adhérer"><i class="bi bi-plus-circle"></i><span>Adhérer</span></button>
-                                            </form>
-                                        @elseif($adhesion->statut === 'en_attente')
-                                            <span class="btn btn-secondary btn-sm disabled"><i class="bi bi-clock"></i> Attente</span>
-                                        @elseif($adhesion->statut === 'accepte' && $paydunyaEnabled && $cotisation->actif)
-                                            <button type="button" class="btn btn-primary btn-sm" onclick="initierPaiementPayDunya({{ $cotisation->id }}, '{{ addslashes($cotisation->nom) }}', {{ (float)($cotisation->montant ?? 0) }})" title="Payer"><i class="bi bi-phone"></i><span>Payer</span></button>
-                                        @endif
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+    <div class="card-body p-0">
+        <div class="mb-4 d-flex align-items-center gap-2 w-100">
+            <div class="input-group">
+                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                <input type="text" class="form-control border-start-0 ps-0 table-search-cot" placeholder="Rechercher par nom, tag, description..." id="searchCotisations">
             </div>
+        </div>
+
+        @if($cotisations->total() > 0)
+            <div class="row g-3" id="cotisations-grid">
+                @foreach($cotisations as $cotisation)
+                    @php 
+                        $adhesion = $adhesions[$cotisation->id] ?? null; 
+                        $currentMembreId = Auth::guard('membre')->id();
+                        $canSeeAmount = ($cotisation->created_by_membre_id === $currentMembreId) || 
+                                      ($cotisation->admin_membre_id === $currentMembreId);
+                    @endphp
+                    <div class="col-md-6 col-lg-4 cotisation-item">
+                        <div class="card h-100 border shadow-sm" style="border-radius: 8px; transition: transform 0.2s;">
+                            <div class="card-body d-flex flex-column">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="card-title mb-0 text-truncate" style="font-weight: 500; color: var(--primary-dark-blue);" title="{{ $cotisation->nom }}">
+                                        {{ $cotisation->nom }}
+                                    </h6>
+                                    @if($cotisation->actif)
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill" style="font-size: 0.65rem;">Active</span>
+                                    @else
+                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill" style="font-size: 0.65rem;">Inactive</span>
+                                    @endif
+                                </div>
+                                
+                                <p class="card-text small text-muted mb-3 flex-grow-1" style="font-size: 0.8rem;">
+                                    {{ Str::limit($cotisation->description ?? 'Aucune description disponible', 100) }}
+                                </p>
+                                
+                                <div class="bg-light rounded p-2 mb-3">
+                                    <ul class="list-unstyled small mb-0 text-secondary" style="font-size: 0.75rem;">
+                                        <li class="mb-1 d-flex justify-content-between">
+                                            <span><i class="bi bi-tag me-1"></i> Type :</span>
+                                            <strong>{{ ucfirst($cotisation->type) }}</strong>
+                                        </li>
+                                        <li class="mb-1 d-flex justify-content-between">
+                                            <span><i class="bi bi-cash-stack me-1"></i> Montant :</span>
+                                            @if($cotisation->type_montant === 'libre')
+                                                <strong>Libre</strong>
+                                            @else
+                                                @if($canSeeAmount)
+                                                    <strong>{{ number_format((float)($cotisation->montant ?? 0), 0, ',', ' ') }} XOF</strong>
+                                                @else
+                                                    <span class="text-muted fst-italic">Masqué</span>
+                                                @endif
+                                            @endif
+                                        </li>
+                                        <li class="mb-1 d-flex justify-content-between">
+                                            <span><i class="bi bi-calendar-event me-1"></i> Début :</span>
+                                            <span>{{ $cotisation->created_at->format('d/m/Y') }}</span>
+                                        </li>
+                                        <li class="mb-1 d-flex justify-content-between">
+                                            <span><i class="bi bi-calendar-x me-1"></i> Fin :</span>
+                                            <span>Illimitée</span>
+                                        </li>
+                                        <li class="d-flex justify-content-between">
+                                            <span><i class="bi bi-receipt me-1"></i> Paiements :</span>
+                                            <span class="badge bg-secondary rounded-pill">{{ $cotisation->paiements_count }}</span>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <div class="d-grid gap-2 mt-auto">
+                                    <a href="{{ route('membre.cotisations.show', $cotisation->id) }}" class="btn btn-outline-primary btn-sm">
+                                        <i class="bi bi-eye"></i> Voir détails
+                                    </a>
+                                    
+                                    @if(!$adhesion)
+                                        <form action="{{ route('membre.cotisations.adherer', $cotisation) }}" method="POST" class="d-block w-100">
+                                            @csrf
+                                            <button type="submit" class="btn btn-success btn-sm w-100 shadow-sm">
+                                                <i class="bi bi-person-plus-fill"></i> Adhérer
+                                            </button>
+                                        </form>
+                                    @elseif($adhesion->statut === 'en_attente')
+                                        <button class="btn btn-warning btn-sm w-100 disabled text-white" disabled>
+                                            <i class="bi bi-hourglass-split"></i> En attente
+                                        </button>
+                                    @elseif($adhesion->statut === 'accepte' && $paydunyaEnabled && $cotisation->actif)
+                                         <button type="button" class="btn btn-primary btn-sm w-100 shadow-sm" onclick="initierPaiementPayDunya({{ $cotisation->id }}, '{{ addslashes($cotisation->nom) }}', {{ (float)($cotisation->montant ?? 0) }})">
+                                            <i class="bi bi-wallet2"></i> Payer maintenant
+                                        </button>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+            
             @if($cotisations->hasPages())
-                <div class="d-flex justify-content-end mt-2">
+                <div class="d-flex justify-content-end mt-4">
                     <div class="pagination-custom">{{ $cotisations->links() }}</div>
                 </div>
             @endif
         @else
-            <div class="text-center py-3">
-                <i class="bi bi-inbox" style="font-size: 1.5rem; color: #ccc;"></i>
-                <p class="text-muted mt-2 mb-0" style="font-size: 0.75rem;">Aucune cotisation publique</p>
+            <div class="text-center py-5 bg-white rounded shadow-sm">
+                <i class="bi bi-inbox text-muted" style="font-size: 3rem; opacity: 0.5;"></i>
+                <h5 class="mt-3 text-muted fw-light">Aucune cotisation publique disponible</h5>
+                <p class="text-muted small">Revenez plus tard pour voir les nouvelles cotisations.</p>
             </div>
         @endif
     </div>
 </div>
 
-@if($paydunyaEnabled)
-<div class="modal fade" id="modalPaiementPayDunya" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-phone"></i> Paiement via PayDunya</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p class="mb-0">Voulez-vous payer la cotisation <strong id="modalPayDunyaNom"></strong> d'un montant de <strong id="modalPayDunyaMontant"></strong> XOF via PayDunya ?</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                <a href="#" id="modalPayDunyaConfirmLink" class="btn btn-primary">OK</a>
-            </div>
-        </div>
-    </div>
-</div>
-@endif
-
 <script>
-document.querySelectorAll('.table-search-cot').forEach(function(inp) {
-    var tableId = inp.getAttribute('data-table-target');
-    var table = document.getElementById(tableId);
-    if (!table) return;
-    inp.addEventListener('input', function() {
-        var q = this.value.trim().toLowerCase();
-        table.querySelectorAll('tbody tr').forEach(function(tr) {
-            var text = tr.textContent.replace(/\s+/g, ' ').toLowerCase();
-            tr.style.display = text.indexOf(q) !== -1 ? '' : 'none';
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchCotisations');
+    if (!searchInput) return;
+
+    searchInput.addEventListener('input', function() {
+        const query = this.value.trim().toLowerCase();
+        const items = document.querySelectorAll('.cotisation-item');
+        
+        items.forEach(function(item) {
+            const text = item.textContent.replace(/\s+/g, ' ').toLowerCase();
+            if (text.indexOf(query) !== -1) {
+                item.style.display = '';
+            } else {
+                item.style.display = 'none';
+            }
         });
     });
 });

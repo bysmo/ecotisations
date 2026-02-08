@@ -22,9 +22,9 @@ class NanoCreditType extends Model
     ];
 
     protected $casts = [
-        'montant_min' => 'decimal:0',
-        'montant_max' => 'decimal:0',
-        'taux_interet' => 'decimal:2',
+        'montant_min' => \App\Casts\EncryptedDecimal::class,
+        'montant_max' => \App\Casts\EncryptedDecimal::class,
+        'taux_interet' => \App\Casts\EncryptedDecimal::class,
         'actif' => 'boolean',
     ];
 

@@ -57,7 +57,6 @@ class MembreSeeder extends Seeder
                 'adresse' => $adresse,
                 'date_adhesion' => $dateAdhesion,
                 'statut' => $statut,
-                'segment' => $segment,
                 'password' => $passwordHash, // Utiliser le hash pré-calculé
                 'created_at' => $dateAdhesion,
                 'updated_at' => $dateAdhesion,

@@ -65,7 +65,7 @@
                     <div class="d-flex phone-input-group">
                         <select class="form-select form-select-sm @error('country_code') is-invalid @enderror" id="phone_country" name="country_code" required>
                             @foreach($countries ?? [] as $code => $data)
-                                <option value="{{ $code }}" {{ (old('country_code', $default_country ?? 'SN')) === $code ? 'selected' : '' }}>+{{ $data['dial'] ?? '' }}</option>
+                                <option value="{{ $code }}" {{ (old('country_code', $default_country ?? 'BF')) === $code ? 'selected' : '' }}>+{{ $data['dial'] ?? '' }}</option>
                             @endforeach
                         </select>
                         <input type="tel" class="form-control @error('telephone') is-invalid @enderror" id="telephone" name="telephone" value="{{ old('telephone') }}" placeholder="77 123 45 67" required autofocus>

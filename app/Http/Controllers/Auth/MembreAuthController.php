@@ -24,7 +24,7 @@ class MembreAuthController extends Controller
      */
     protected function getDefaultCountryAndDial(): array
     {
-        $countryCode = GeoHelper::getCountryCodeFromIp('SN');
+        $countryCode = GeoHelper::getCountryCodeFromIp('BF');
         $dialCode = GeoHelper::getDialCodeForCountry($countryCode);
         $countries = config('country_dial_codes', []);
         return [

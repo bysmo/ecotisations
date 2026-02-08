@@ -10,52 +10,77 @@
     </h1>
 </div>
 
-<div class="card mb-3">
-    <div class="card-header" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">
-        <i class="bi bi-info-circle"></i> Informations de la Cotisation
+@php
+    $currentMembreId = Auth::guard('membre')->id();
+    $canSeeAmount = ($cotisation->created_by_membre_id === $currentMembreId) || 
+                    ($cotisation->admin_membre_id === $currentMembreId);
+@endphp
+
+<div class="card mb-4 border shadow-sm" style="border-radius: 8px;">
+    <div class="card-header bg-white border-bottom-0 pt-4 pb-0" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <h4 class="card-title fw-light text-primary mb-1">
+                    <i class="bi bi-wallet2 me-2"></i> {{ $cotisation->nom }}
+                </h4>
+                <div class="d-flex gap-2 mt-2">
+                    <span class="badge bg-light text-secondary border fw-normal">{{ $cotisation->numero }}</span>
+                    @if($cotisation->actif)
+                        <span class="badge bg-success-subtle text-success border border-success-subtle fw-normal">Active</span>
+                    @else
+                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle fw-normal">Inactive</span>
+                    @endif
+                    <span class="badge bg-info-subtle text-info border border-info-subtle fw-normal text-capitalize">{{ $cotisation->visibilite }}</span>
+                </div>
+            </div>
+            
+        </div>
     </div>
-    <br>
-    <div class="card-body p-0">
-        <style>
-            .table-info-cotisation { margin-bottom: 0; font-weight: 300; font-family: 'Ubuntu', sans-serif; font-size: 0.75rem; }
-            .table-info-cotisation thead th { padding: 0.15rem 0.35rem !important; font-size: 0.7rem !important; line-height: 1.05 !important; vertical-align: middle !important; font-weight: 300 !important; color: #fff !important; background-color: var(--primary-dark-blue) !important; border: 1px solid #dee2e6 !important; white-space: nowrap; }
-            .table-info-cotisation tbody td { padding: 0.15rem 0.35rem !important; font-size: 0.75rem !important; line-height: 1.05 !important; vertical-align: middle !important; border: 1px solid #dee2e6 !important; color: var(--primary-dark-blue) !important; }
-            .table-info-cotisation tbody tr { background-color: #ffffff !important; }
-            .table-info-cotisation tbody tr:nth-child(even) td { background-color: #f8f9fa !important; }
-        </style>
-        <div class="table-responsive">
-            <table class="table table-info-cotisation mb-0">
-                <thead>
-                    <tr>
-                        <th>Nom</th>
-                        <th>Numéro</th>
-                        <th>Type</th>
-                        <th>Fréquence</th>
-                        <th>Montant</th>
-                        <th>Visibilité</th>
-                        <th>Tag</th>
-                        <th>Caisse</th>
-                        <th>Statut</th>
-                        <th>Total payé</th>
-                        @if($cotisation->description)<th>Description</th>@endif
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>{{ $cotisation->nom }}</td>
-                        <td>{{ $cotisation->numero ?? '-' }}</td>
-                        <td>{{ ucfirst($cotisation->type ?? 'N/A') }}</td>
-                        <td>{{ $cotisation->frequence ? ucfirst($cotisation->frequence) : '-' }}</td>
-                        <td><strong>{{ $cotisation->montant ? number_format((float) $cotisation->montant, 0, ',', ' ') . ' XOF' : 'Libre' }}</strong></td>
-                        <td>{{ ($cotisation->visibilite ?? 'publique') === 'publique' ? 'Publique' : 'Privée' }}</td>
-                        <td>{{ $cotisation->tag ?? '-' }}</td>
-                        <td>{{ $cotisation->caisse->nom ?? '-' }}</td>
-                        <td>@if($cotisation->actif)<span style="color: #28a745;">Active</span>@else<span style="color: #dc3545;">Inactive</span>@endif</td>
-                        <td><strong style="color: #28a745;">{{ number_format($totalPaye, 0, ',', ' ') }} XOF</strong></td>
-                        @if($cotisation->description)<td>{{ Str::limit($cotisation->description, 50) }}</td>@endif
-                    </tr>
-                </tbody>
-            </table>
+    <div class="card-body">
+        <div class="row g-4">
+             <div class="col-md-12">
+                <h6 class="text-muted text-uppercase small fw-bold mb-2">Description</h6>
+                <p class="text-secondary small">{{ $cotisation->description ?? 'Aucune description fournie.' }}</p>
+            </div>
+            
+            <div class="col-md-4">
+                <h6 class="text-muted text-uppercase small fw-bold mb-2">Configuration</h6>
+                <ul class="list-unstyled small text-secondary">
+                    <li class="mb-2"><i class="bi bi-tag me-2"></i> {{ ucfirst($cotisation->type) }}</li>
+                    <li class="mb-2"><i class="bi bi-arrow-repeat me-2"></i> {{ ucfirst($cotisation->frequence) }}</li>
+                    <li class="mb-2"><i class="bi bi-bank me-2"></i> {{ $cotisation->caisse->nom ?? 'Caisse inconnue' }}</li>
+                </ul>
+            </div>
+            
+            <div class="col-md-4">
+                <h6 class="text-muted text-uppercase small fw-bold mb-2">Finances</h6>
+                <ul class="list-unstyled small text-secondary">
+                    <li class="mb-2">
+                        <i class="bi bi-cash-stack me-2"></i>
+                        @if($cotisation->type_montant === 'libre')
+                            Montant : <span class="fw-bold">Libre</span>
+                        @else
+                            Montant : 
+                            @if($canSeeAmount)
+                                <span class="fw-bold">{{ number_format((float)$cotisation->montant, 0, ',', ' ') }} XOF</span>
+                            @else
+                                <span class="fst-italic text-muted">Masqué</span>
+                            @endif
+                        @endif
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-pie-chart me-2"></i> Total payé : <span class="fw-bold text-success">{{ number_format($totalPaye, 0, ',', ' ') }} XOF</span>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="col-md-4">
+                <h6 class="text-muted text-uppercase small fw-bold mb-2">Autres</h6>
+                <ul class="list-unstyled small text-secondary">
+                    <li class="mb-2"><i class="bi bi-calendar-check me-2"></i> Créé le : {{ $cotisation->created_at->format('d/m/Y') }}</li>
+                    <li class="mb-2"><i class="bi bi-hash me-2"></i> Tag : {{ $cotisation->tag ?? 'Aucun' }}</li>
+                </ul>
+            </div>
         </div>
     </div>
 </div>
