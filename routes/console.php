@@ -24,3 +24,13 @@ Schedule::command('app:check-upcoming-engagements')
 Schedule::command('app:check-upcoming-payments')
     ->dailyAt('09:00')
     ->description('Vérifier les paiements de cotisations à venir et envoyer des rappels');
+
+// Audit financier : racine Merkle toutes les heures
+Schedule::command('audit:merkle --period=1')
+    ->hourly()
+    ->description('Calcul racine Merkle journal audit');
+
+// Réconciliation soldes (calculé vs livre) toutes les 5 minutes
+Schedule::command('audit:reconcile')
+    ->everyFiveMinutes()
+    ->description('Réconciliation soldes caisses');

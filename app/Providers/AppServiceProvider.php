@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\View;
 use App\Models\AppSetting;
+use App\Models\MouvementCaisse;
+use App\Observers\MouvementCaisseAuditObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -40,6 +42,15 @@ class AppServiceProvider extends ServiceProvider
             return \App\Models\Caisse::findOrFail($value);
         });
         
+        // Audit financier : chaque mouvement caisse est enregistré en append-only (si la table existe)
+        try {
+            if (file_exists(storage_path('installed')) && Schema::hasTable('audit_financier')) {
+                MouvementCaisse::observe(MouvementCaisseAuditObserver::class);
+            }
+        } catch (\Throwable $e) {
+            // Ignorer si DB non dispo (ex: php artisan config:clear avant migrate)
+        }
+
         // Partager les paramètres de l'application avec toutes les vues
         View::composer('layouts.app', function ($view) {
             $appNom = AppSetting::get('app_nom', 'Gestion Cotisations');

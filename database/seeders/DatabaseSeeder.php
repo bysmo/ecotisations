@@ -83,9 +83,9 @@ class DatabaseSeeder extends Seeder
             SortieSeeder::class,
             TagSeeder::class, // Créer les tags (doit être avant les cotisations et engagements)
             MembreSeeder::class,
-            //SegmentMembreSeeder::class, // Assigner les segments aux membres (après MembreSeeder)
+            SegmentMembreSeeder::class, // Assigner les segments aux membres (après MembreSeeder)
             CotisationSeeder::class,
-            //UpdateSegmentsSeeder::class, // Mettre à jour les segments des membres et cotisations (exactement 3 cotisations VIP, pas de cotisations sans segment)
+            UpdateSegmentsSeeder::class, // Mettre à jour les segments des membres et cotisations (exactement 3 cotisations VIP, pas de cotisations sans segment)
             EngagementSeeder::class,
             PaiementSeeder::class,
             RemboursementSeeder::class,

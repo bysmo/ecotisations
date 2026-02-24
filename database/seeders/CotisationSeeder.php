@@ -89,6 +89,7 @@ class CotisationSeeder extends Seeder
                 'notes' => rand(1, 2) === 1 ? 'Notes additionnelles pour cette cotisation' : null,
                 'actif' => $actif,
                 'tag' => $tag,
+                'segment' => $segment,
                 'created_at' => Carbon::now()->subDays(rand(1, 180)),
                 'updated_at' => Carbon::now()->subDays(rand(1, 180)),
             ]);
@@ -96,6 +97,19 @@ class CotisationSeeder extends Seeder
             $created++;
         }
         
+        // Afficher les statistiques par segment
+        $statsSegments = Cotisation::select('segment')
+            ->selectRaw('COUNT(*) as nombre')
+            ->where('actif', true)
+            ->groupBy('segment')
+            ->get();
+        
+        $this->command->info("Répartition des cotisations actives par segment :");
+        foreach ($statsSegments as $stat) {
+            $segmentName = $stat->segment ?? 'Sans segment (Tous)';
+            $this->command->info("  - {$segmentName}: {$stat->nombre} cotisation(s)");
+        }
+
         $this->command->info("{$created} cotisation(s) créée(s) avec succès.");
     }
 }
