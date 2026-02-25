@@ -67,13 +67,24 @@
                 
                 <div class="col-md-6 mb-3">
                     <label for="telephone" class="form-label">Téléphone</label>
-                    <input type="text" 
-                           class="form-control @error('telephone') is-invalid @enderror" 
-                           id="telephone" 
-                           name="telephone" 
-                           value="{{ old('telephone') }}">
+                    <div class="input-group">
+                        <select class="form-select" name="country_code" id="country_code" style="max-width: 140px;" required>
+                            @foreach($countries as $code => $country)
+                                <option value="{{ $code }}" 
+                                    data-dial="{{ $country['dial_code'] }}"
+                                    {{ (old('country_code', $default_country) == $code) ? 'selected' : '' }}>
+                                    {{ $country['name'] }} ({{ $country['dial_code'] }})
+                                </option>
+                            @endforeach
+                        </select>
+                        <input type="text" 
+                               class="form-control @error('telephone') is-invalid @enderror" 
+                               id="telephone" 
+                               name="telephone" 
+                               value="{{ old('telephone') }}">
+                    </div>
                     @error('telephone')
-                        <div class="invalid-feedback">{{ $message }}</div>
+                        <div class="invalid-feedback d-block">{{ $message }}</div>
                     @enderror
                 </div>
             </div>

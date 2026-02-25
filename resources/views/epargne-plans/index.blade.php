@@ -116,9 +116,12 @@
                                 </td>
                                 <td class="text-center">
                                     <div class="btn-group btn-group-sm" role="group">
+                                        @if(auth()->user()->hasRole('admin') && auth()->user()->hasPermission('epargne.edit'))
                                         <a href="{{ route('epargne-plans.edit', $plan) }}" class="btn btn-sm btn-outline-warning" title="Modifier">
                                             <i class="bi bi-pencil"></i>
                                         </a>
+                                        @endif
+                                        @if(auth()->user()->hasRole('admin') && auth()->user()->hasPermission('epargne.delete'))
                                         <form action="{{ route('epargne-plans.destroy', $plan) }}"
                                               method="POST"
                                               class="d-inline delete-form"
@@ -129,6 +132,7 @@
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         </form>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
@@ -140,9 +144,11 @@
             <div class="text-center py-4">
                 <i class="bi bi-piggy-bank" style="font-size: 2rem; color: #ccc;"></i>
                 <p class="text-muted mt-2 mb-2">Aucun plan d'épargne défini</p>
-                <a href="{{ route('epargne-plans.create') }}" class="btn btn-primary btn-sm">
+                @if(auth()->user()->hasRole('admin') || auth()->user()->hasRole('tresorier'))
+                <!--a href="{{ route('epargne-plans.create') }}" class="btn btn-primary btn-sm">
                     <i class="bi bi-plus-circle"></i> Créer un plan
-                </a>
+                </a-->
+                @endif
             </div>
         @endif
     </div>

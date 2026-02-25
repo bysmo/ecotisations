@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Membre;
+use App\Helpers\GeoHelper;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
@@ -10,6 +11,33 @@ use Illuminate\Support\Facades\Hash;
 
 class MembreController extends Controller
 {
+    /**
+     * Normaliser le numéro de téléphone avec l'indicatif.
+     */
+    protected function normalizePhone(string $countryCode, string $number): string
+    {
+        if (empty($number)) {
+            return '';
+        }
+        $digits = preg_replace('/\D/', '', $countryCode . $number);
+        return '+' . $digits;
+    }
+
+    /**
+     * Détermine l'indicatif pays par défaut selon l'emplacement (IP).
+     */
+    protected function getDefaultCountryAndDial(): array
+    {
+        $countryCode = GeoHelper::getCountryCodeFromIp('BF');
+        $dialCode = GeoHelper::getDialCodeForCountry($countryCode);
+        $countries = config('country_dial_codes', []);
+        return [
+            'country_code' => $countryCode,
+            'dial_code' => $dialCode,
+            'countries' => $countries,
+        ];
+    }
+
     /**
      * Afficher la liste des membres
      */
@@ -39,7 +67,12 @@ class MembreController extends Controller
      */
     public function create()
     {
-        return view('membres.create');
+        $geo = $this->getDefaultCountryAndDial();
+        return view('membres.create', [
+            'default_country' => $geo['country_code'],
+            'default_dial' => $geo['dial_code'],
+            'countries' => $geo['countries'],
+        ]);
     }
 
     /**
@@ -63,6 +96,7 @@ class MembreController extends Controller
             'nom' => 'required|string|max:255',
             'prenom' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:membres,email',
+            'country_code' => 'required|string|size:2',
             'telephone' => 'nullable|string|max:20',
             'adresse' => 'nullable|string',
             'date_adhesion' => 'required|date',
@@ -78,8 +112,12 @@ class MembreController extends Controller
 
         // Normaliser le téléphone
         if (!empty($validated['telephone'])) {
-            $validated['telephone'] = Membre::normalizePhoneNumber($validated['telephone']);
+            $dialCode = GeoHelper::getDialCodeForCountry($validated['country_code']);
+            $validated['telephone'] = $this->normalizePhone($dialCode, $validated['telephone']);
+        } else {
+            $validated['telephone'] = null;
         }
+        unset($validated['country_code']);
 
         // Auto-vérifier le numéro de téléphone pour les membres créés par l'admin
         $validated['email_verified_at'] = now();
@@ -103,7 +141,31 @@ class MembreController extends Controller
      */
     public function edit(Membre $membre)
     {
-        return view('membres.edit', compact('membre'));
+        $geo = $this->getDefaultCountryAndDial();
+        
+        $membreCountry = $geo['country_code'];
+        $membreLocalPhone = $membre->telephone;
+        
+        if ($membre->telephone && str_starts_with($membre->telephone, '+')) {
+            foreach ($geo['countries'] as $code => $country) {
+                // Ensure the dial code includes the '+' for accurate matching
+                $dial = '+' . ltrim($country['dial_code'], '+');
+                if (str_starts_with($membre->telephone, $dial)) {
+                    $membreCountry = $code;
+                    $membreLocalPhone = substr($membre->telephone, strlen($dial));
+                    break;
+                }
+            }
+        }
+
+        return view('membres.edit', [
+            'membre' => $membre,
+            'membreCountry' => $membreCountry,
+            'membreLocalPhone' => $membreLocalPhone,
+            'default_country' => $geo['country_code'],
+            'default_dial' => $geo['dial_code'],
+            'countries' => $geo['countries'],
+        ]);
     }
 
     /**
@@ -120,6 +182,7 @@ class MembreController extends Controller
                 'max:255',
                 Rule::unique('membres')->ignore($membre->id),
             ],
+            'country_code' => 'required|string|size:2',
             'telephone' => 'nullable|string|max:20',
             'adresse' => 'nullable|string',
             'date_adhesion' => 'required|date',
@@ -136,8 +199,12 @@ class MembreController extends Controller
 
         // Normaliser le téléphone
         if (!empty($validated['telephone'])) {
-            $validated['telephone'] = Membre::normalizePhoneNumber($validated['telephone']);
+            $dialCode = GeoHelper::getDialCodeForCountry($validated['country_code']);
+            $validated['telephone'] = $this->normalizePhone($dialCode, $validated['telephone']);
+        } else {
+            $validated['telephone'] = null;
         }
+        unset($validated['country_code']);
 
         $membre->update($validated);
 

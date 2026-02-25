@@ -201,9 +201,11 @@
             <div class="text-center py-3">
                 <i class="bi bi-inbox" style="font-size: 1.5rem; color: #ccc;"></i>
                 <p class="text-muted mt-2 mb-2" style="font-size: 0.75rem;">Aucun engagement enregistré</p>
-                <a href="{{ route('engagements.create') }}" class="btn btn-primary btn-sm">
+                @if(auth()->user()->hasRole('admin') || auth()->user()->hasRole('tresorier'))
+                <!--a href="{{ route('engagements.create') }}" class="btn btn-primary btn-sm">
                     <i class="bi bi-plus-circle"></i> Créer le premier engagement
-                </a>
+                </a-->
+                @endif
             </div>
         @endif
     </div>
