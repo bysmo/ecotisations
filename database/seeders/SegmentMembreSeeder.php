@@ -59,7 +59,7 @@ class SegmentMembreSeeder extends Seeder
             $stats[$segment] = 0;
             for ($i = 0; $i < $nombre && $index < $totalMembres; $i++) {
                 $membre = $membres[$index];
-                $membre->segment = $segment;
+                //$membre->segment = $segment;
                 $membre->save();
                 $stats[$segment]++;
                 $index++;
