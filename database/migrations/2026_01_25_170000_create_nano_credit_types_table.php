@@ -14,9 +14,9 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->decimal('montant_min', 15, 0);
             $table->decimal('montant_max', 15, 0)->nullable();
-            $table->unsignedSmallInteger('duree_mois');
+            $table->unsignedSmallInteger('duree_jours');
             $table->decimal('taux_interet', 5, 2)->default(0)->comment('Taux annuel en %');
-            $table->enum('frequence_remboursement', ['hebdomadaire', 'mensuel', 'trimestriel'])->default('mensuel');
+            $table->enum('frequence_remboursement', ['journalier', 'hebdomadaire', 'mensuel', 'trimestriel'])->default('hebdomadaire');
             $table->boolean('actif')->default(true);
             $table->unsignedInteger('ordre')->default(0);
             $table->timestamps();

@@ -16,11 +16,11 @@ class MembreSeeder extends Seeder
     {
         $this->command->info('Création des membres...');
 
-        $prenoms = ['Jean', 'Marie', 'Pierre', 'Sophie', 'Paul', 'Julie', 'Luc', 'Anne', 'Marc', 'Céline', 'Thomas', 'Isabelle', 'David', 'Nathalie', 'Laurent', 'Sandrine', 'Nicolas', 'Caroline', 'Olivier', 'Emilie'];
-        $noms = ['Dupont', 'Martin', 'Bernard', 'Dubois', 'Thomas', 'Robert', 'Richard', 'Petit', 'Durand', 'Leroy', 'Moreau', 'Simon', 'Laurent', 'Lefebvre', 'Michel', 'Garcia', 'David', 'Bertrand', 'Roux', 'Vincent'];
+        $prenoms = ['Arouna', 'Abdoulaye', 'Issouf', 'Salif', 'Moussa', 'Abdourahamane', 'Abdoulaye', 'Issiaka', 'Mohamad', 'Céline', 'Thomas', 'Isabelle', 'David', 'Nathalie', 'Laurent', 'Sandrine', 'Nicolas', 'Caroline', 'Olivier', 'Emilie'];
+        $noms = ['SOMDA','OUEDRAOGO','BAMBA','KABORE','TRAORE','SANFO','SANOU','ZONGO','TUINA','DIALLO','SANKARA','TALL','DIARRA','KEITA','SISSOKO','CISSE','DEMBELE','NIANG','SYLLA','TOURE','OUATTARA','SIDIBE','KAMATE','KANTE','KONE','KOURBA','SOMTORE','TIENDREBEOGO','ZOMODO','SOME','HIEN','LALSAGA','COMPAORE','NASSA','KASSAMBA','DAH','BANAO','LOURE','LOMPO','ILBOUDO','TINDANO'];
         $domaines = ['gmail.com', 'yahoo.fr', 'hotmail.com', 'outlook.com', 'example.com'];
-        $villes = ['Paris', 'Lyon', 'Marseille', 'Toulouse', 'Nice', 'Nantes', 'Strasbourg', 'Montpellier', 'Bordeaux', 'Lille'];
-        $rues = ['Rue de la Paix', 'Avenue des Champs', 'Boulevard Saint-Michel', 'Rue Victor Hugo', 'Avenue de la République', 'Rue du Commerce', 'Boulevard Voltaire', 'Rue Pasteur', 'Avenue Foch', 'Rue de France'];
+        $villes = ['Ouagadougou', 'Bobo-Dioulasso', 'Koudougou', 'Ouahigouya', 'Banfora', 'Fada N\'Gourma', 'Kaya', 'Gaoua', 'Dédougou', 'Tenkodogo'];
+        $rues = ['Boulevard Thomas SANKARA','Rue de l\'independance','Avenue de la Paix','Rue de la Liberté','Rue de la Renaissance','Avenue Bassawarga','Avenue de l\'Unité','Avenue de la Fraternité','Avenue des Martyrs'];
         
         // Calculer le hash du mot de passe UNE SEULE FOIS (bcrypt est très lent)
         $passwordHash = bcrypt('password');
@@ -35,7 +35,7 @@ class MembreSeeder extends Seeder
             $prenom = $prenoms[array_rand($prenoms)];
             $nom = $noms[array_rand($noms)];
             $email = strtolower($prenom . '.' . $nom . rand(1, 999) . '@' . $domaines[array_rand($domaines)]);
-            $telephone = '06' . rand(10000000, 99999999);
+            $telephone = '+226' .rand([50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77]). rand(100000, 999999);
             $adresse = rand(1, 200) . ' ' . $rues[array_rand($rues)] . ', ' . $villes[array_rand($villes)];
             $statut = (rand(1, 10) <= 8) ? 'actif' : 'inactif'; // 80% actifs
             $dateAdhesion = Carbon::now()->subDays(rand(1, 365));
