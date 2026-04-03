@@ -1,4 +1,4 @@
-# Guide de Collaboration - Projet Ecotisations
+# Guide de Collaboration - Projet Serenity
 
 Ce document définit les règles de travail pour assurer une collaboration fluide et éviter les régressions (erreurs de migrations, conflits Git).
 

@@ -1,6 +1,6 @@
-# Ecotisations - Système de Gestion des Cotisations
+# Serenity - Système de Gestion des Cotisations
 
-Ecotisations est une application web moderne basée sur Laravel, conçue pour simplifier la gestion des membres, des cotisations, des engagements et des flux financiers au sein d'une organisation ou d'une association.
+Serenity est une application web moderne basée sur Laravel, conçue pour simplifier la gestion des membres, des cotisations, des engagements et des flux financiers au sein d'une organisation ou d'une association.
 
 ## 🚀 Fonctionnalités Clés
 
@@ -9,10 +9,10 @@ Ecotisations est une application web moderne basée sur Laravel, conçue pour si
 - Tableaux de bord personnalisés pour les membres et les administrateurs.
 - Segmentation des membres pour une meilleure organisation.
 
-### 💰 Gestion des Cotisations et Engagements
-- Création et suivi des campagnes de cotisations.
-- Gestion complète des engagements financiers.
-- Génération de reçus au format PDF.
+### 💰 Gestion des Cagnottes, Tontines et Nano-crédits
+- Création et suivi des campagnes de Cagnottes.
+- Création et suivi des campagnes de Tontines.
+- Gestion complète des nano-crédits par palliers.
 
 ### 💳 Paiements Multi-Moyens
 - Intégration native avec **PayDunya**, **PayPal** et **Stripe**.
