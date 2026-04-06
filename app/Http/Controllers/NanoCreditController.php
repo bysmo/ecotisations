@@ -71,106 +71,18 @@ class NanoCreditController extends Controller
             return redirect()->back()->withInput()->with('error', 'Numéro de téléphone invalide.');
         }
 
-        $montant = (int) $nanoCredit->montant;
-        $callbackUrl = url()->route('paydunya.disburse.callback');
-
-        try {
-            $paydunya = app(PayDunyaService::class);
-        } catch (\Exception $e) {
-            Log::error('NanoCredit octroyer: PayDunya non configuré', ['error' => $e->getMessage()]);
-            return redirect()->back()->with('error', 'PayDunya n\'est pas configuré ou activé.');
-        }
-
-        $result = $paydunya->createDisburseInvoice(
-            $telephone,
-            $montant,
-            $validated['withdraw_mode'],
-            $callbackUrl
-        );
+        $service = app(\App\Services\NanoCreditService::class);
+        $result = $service->debourser($nanoCredit, $telephone, $validated['withdraw_mode']);
 
         if (!$result['success']) {
-            return redirect()->back()->withInput()->with('error', $result['message'] ?? 'Impossible de créer le déboursement.');
+            return redirect()->back()->withInput()->with('error', $result['message']);
         }
-
-        $nanoCredit->update([
-            'telephone' => $telephone,
-            'withdraw_mode' => $validated['withdraw_mode'],
-            'disburse_token' => $result['disburse_token'],
-            'disburse_id' => (string) $nanoCredit->id,
-        ]);
-
-        $submit = $paydunya->submitDisburseInvoice($result['disburse_token'], (string) $nanoCredit->id);
-
-        if (!$submit['success']) {
-            $nanoCredit->update([
-                'statut' => 'demande_en_attente',
-                'error_message' => $submit['message'] ?? 'Erreur à la soumission',
-            ]);
-            return redirect()->route('nano-credits.show', $nanoCredit)
-                ->with('error', 'Soumission échouée : ' . ($submit['message'] ?? 'Erreur inconnue'));
-        }
-
-        $dateOctroi = now()->toDateString();
-        $palier = $nanoCredit->palier;
-        $dateFinRemb = $palier ? Carbon::parse($dateOctroi)->addDays((int) $palier->duree_jours)->toDateString() : null;
-
-        $nanoCredit->update([
-            'statut' => 'debourse',
-            'date_octroi' => $dateOctroi,
-            'date_fin_remboursement' => $dateFinRemb,
-            'transaction_id' => $submit['transaction_id'] ?? null,
-            'provider_ref' => $submit['provider_ref'] ?? null,
-            'created_by' => auth()->id(),
-            'error_message' => null,
-        ]);
-
-        if ($palier) {
-            $this->genererEcheances($nanoCredit);
-        }
-
-        $nanoCredit->membre->notify(new NanoCreditOctroyeNotification($nanoCredit));
-
-        app(\App\Services\EmailService::class)->sendNanoCreditOctroyeEmail($nanoCredit);
 
         return redirect()->route('nano-credits.show', $nanoCredit)
-            ->with('success', 'Crédit octroyé avec succès. Le montant a été envoyé au mobile money du membre.');
+            ->with('success', $result['message']);
     }
 
-    /**
-     * Génère les échéances de remboursement (tableau d'amortissement)
-     */
-    private function genererEcheances(NanoCredit $nanoCredit): void
-    {
-        $palier = $nanoCredit->palier;
-        if (!$palier) {
-            return;
-        }
 
-        $calc = $palier->calculAmortissement((float) $nanoCredit->montant);
-        $nbEcheances = $calc['nombre_echeances'];
-        $montantEcheance = $calc['montant_echeance'];
-        $dateDebut = Carbon::parse($nanoCredit->date_octroi);
-
-        $addPeriod = match ($palier->frequence_remboursement) {
-            'journalier' => fn ($date, $i) => $date->copy()->addDays($i),
-            'hebdomadaire' => fn ($date, $i) => $date->copy()->addWeeks($i),
-            'trimestriel' => fn ($date, $i) => $date->copy()->addMonths(3 * $i),
-            default => fn ($date, $i) => $date->copy()->addMonths($i),
-        };
-
-        for ($i = 1; $i <= $nbEcheances; $i++) {
-            $dateEcheance = $addPeriod($dateDebut, $i);
-            $montant = $i === $nbEcheances
-                ? $calc['montant_total_du'] - ($montantEcheance * ($nbEcheances - 1))
-                : $montantEcheance;
-            NanoCreditEcheance::create([
-                'nano_credit_id' => $nanoCredit->id,
-                'date_echeance' => $dateEcheance->toDateString(),
-                'montant' => $montant,
-                'statut' => 'a_venir',
-            ]);
-        }
-    }
 
     private function normalizePhoneForPayDunya(string $telephone): string
     {

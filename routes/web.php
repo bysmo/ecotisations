@@ -308,6 +308,9 @@ Route::prefix('membre')->name('membre.')->group(function () {
         Route::get('/nano-credits/mes', [\App\Http\Controllers\MembreNanoCreditController::class, 'mes'])->name('nano-credits.mes');
         Route::get('/nano-credits/demander', [\App\Http\Controllers\MembreNanoCreditController::class, 'demander'])->name('nano-credits.demander');
         Route::post('/nano-credits/demander', [\App\Http\Controllers\MembreNanoCreditController::class, 'storeDemande'])->name('nano-credits.demander.store');
+        Route::get('/nano-credits/search-guarantors', [\App\Http\Controllers\MembreNanoCreditController::class, 'searchGuarantors'])->name('nano-credits.search-guarantors');
+        Route::get('/nano-credits/{nanoCredit}/modifier-garants', [\App\Http\Controllers\MembreNanoCreditController::class, 'modifierGarants'])->name('nano-credits.modifier-garants');
+        Route::post('/nano-credits/{nanoCredit}/modifier-garants', [\App\Http\Controllers\MembreNanoCreditController::class, 'updateGarants'])->name('nano-credits.update-garants');
         Route::get('/nano-credits/{nanoCredit}', [\App\Http\Controllers\MembreNanoCreditController::class, 'show'])->name('nano-credits.show');
         Route::get('/epargne', [\App\Http\Controllers\MembreEpargneController::class, 'index'])->name('epargne.index');
         Route::get('/epargne/mes-epargnes', [\App\Http\Controllers\MembreEpargneController::class, 'mesEpargnes'])->name('epargne.mes-epargnes');

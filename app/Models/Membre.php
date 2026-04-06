@@ -37,6 +37,8 @@ class Membre extends Authenticatable implements MustVerifyEmail
         'nb_defauts_paiement',
         'garant_qualite',
         'garant_solde',
+        'fcm_token',
+        'push_platform',
     ];
 
     protected $hidden = [

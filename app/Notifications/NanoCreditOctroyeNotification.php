@@ -19,7 +19,23 @@ class NanoCreditOctroyeNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['database'];
+        $channels = ['database'];
+        if ($notifiable->fcm_token) {
+            $channels[] = \App\Channels\FcmChannel::class;
+        }
+        return $channels;
+    }
+
+    public function toFcm(object $notifiable): array
+    {
+        return [
+            'title' => 'Argent reçu !',
+            'body' => 'Votre nano-crédit de ' . number_format($this->nanoCredit->montant, 0, ',', ' ') . ' XOF a été décaissé sur votre mobile money.',
+            'data' => [
+                'type' => 'nano_credit_octroye',
+                'nano_credit_id' => $this->nanoCredit->id,
+            ],
+        ];
     }
 
     /**

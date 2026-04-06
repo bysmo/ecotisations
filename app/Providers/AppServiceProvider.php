@@ -53,8 +53,8 @@ class AppServiceProvider extends ServiceProvider
 
         // Partager les paramètres de l'application avec toutes les vues
         View::composer('layouts.app', function ($view) {
-            $appNom = AppSetting::get('app_nom', 'Gestion Cotisations');
-            $appDescription = AppSetting::get('app_description', 'Application de gestion des cotisations');
+            $appNom = AppSetting::get('app_nom', 'Serenity');
+            $appDescription = AppSetting::get('app_description', 'Application de gestion financière en toute sérénité');
             
             $view->with([
                 'appNom' => $appNom,

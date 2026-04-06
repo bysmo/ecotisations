@@ -8,7 +8,8 @@ use App\Models\NanoCreditGarant;
 use App\Models\GarantGainRetrait;
 use App\Models\NanoCredit;
 use App\Models\User;
-use App\Notifications\GarantGainRetraitRequestNotification; // To be created or simulated
+use App\Notifications\GarantRefusNotification;
+use App\Services\NanoCreditService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -74,6 +75,29 @@ class MembreGarantController extends Controller
             'accepte_le' => now(),
         ]);
 
+        // --- Vérifier si tous les garants ont accepté pour déblocage automatique ---
+        $nanoCredit = $garant->nanoCredit;
+        $tousAcceptes = $nanoCredit->garants()->where('statut', '!=', 'accepte')->count() === 0;
+
+        if ($tousAcceptes) {
+             $service = app(NanoCreditService::class);
+             $membre = $nanoCredit->membre;
+             
+             // On utilise le numéro et le mode configurés par défaut ou récupérés du profil
+             // Pour PayDunya, on a besoin du téléphone local sans indicatif (normalizePhoneForPayDunya)
+             $telephone = $membre->telephone; 
+             // Mode par défaut ou premier mode compatible
+             $withdrawMode = 'orange-money-burkina'; // Fallback ou mode du membre
+
+             $result = $service->debourser($nanoCredit, $telephone, $withdrawMode);
+             
+             if ($result['success']) {
+                 return redirect()->route('membre.garant.sollicitations')->with('success', 'Vous avez accepté. Comme tous les garants ont validé, le crédit a été décaissé automatiquement.');
+             } else {
+                 Log::error('Déplacement auto échoué après validation garants', ['credit_id' => $nanoCredit->id, 'error' => $result['message']]);
+             }
+        }
+
         return redirect()->route('membre.garant.sollicitations')->with('success', 'Vous avez accepté de supporter ce nano-crédit.');
     }
 
@@ -96,7 +120,13 @@ class MembreGarantController extends Controller
             'motif_refus' => $request->motif_refus,
         ]);
 
-        return redirect()->route('membre.garant.sollicitations')->with('success', 'Vous avez refusé cette sollicitation.');
+        // Notifier le demandeur du refus
+        $nanoCredit = $garant->nanoCredit;
+        if ($nanoCredit && $nanoCredit->membre) {
+            $nanoCredit->membre->notify(new GarantRefusNotification($garant));
+        }
+
+        return redirect()->route('membre.garant.sollicitations')->with('success', 'Vous avez refusé cette sollicitation. Le demandeur a été informé.');
     }
 
     /**
