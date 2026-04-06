@@ -101,6 +101,26 @@
                                     <input type="password" class="form-control" id="password_confirmation" name="password_confirmation" required>
                                 </div>
                             </div>
+
+                            @php $parrainageConfig = \App\Models\ParrainageConfig::current(); @endphp
+                            @if($parrainageConfig->actif)
+                            <div class="mb-3">
+                                <label for="code_parrainage" class="form-label">
+                                    <i class="bi bi-people me-1 text-primary"></i>Code de parrainage
+                                    <small class="text-muted">(optionnel)</small>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-gift text-primary"></i></span>
+                                    <input type="text" class="form-control text-uppercase @error('code_parrainage') is-invalid @enderror"
+                                           id="code_parrainage" name="code_parrainage"
+                                           placeholder="Ex: ABC12345"
+                                           maxlength="12"
+                                           value="{{ old('code_parrainage', $code_parrainage ?? '') }}">
+                                    @error('code_parrainage')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                </div>
+                                <small class="text-muted">Si un membre vous a parrainé, entrez son code ici</small>
+                            </div>
+                            @endif
                             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 register-actions-row">
                                 <span class="login-link-text">Vous avez déjà un compte ?</span>
                                 <div class="d-flex gap-2">

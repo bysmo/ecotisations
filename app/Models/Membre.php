@@ -42,6 +42,9 @@ class Membre extends Authenticatable implements MustVerifyEmail
         'fcm_token',
         'push_platform',
         'checksum',
+        // Parrainage
+        'code_parrainage',
+        'parrain_id',
     ];
 
     protected $hidden = [
@@ -314,6 +317,97 @@ class Membre extends Authenticatable implements MustVerifyEmail
         }
 
         return '+' . $defaultCountryCode . $digits;
+    }
+
+    // ─── Relations de parrainage ──────────────────────────────────────────────
+
+    /**
+     * Le membre qui a parrainé ce membre
+     */
+    public function parrain()
+    {
+        return $this->belongsTo(Membre::class, 'parrain_id');
+    }
+
+    /**
+     * Les membres que ce membre a parrainés (filleuls directs niveau 1)
+    */
+    public function filleuls()
+    {
+        return $this->hasMany(Membre::class, 'parrain_id');
+    }
+
+    /**
+     * Commissions de parrainage générées pour ce membre (en tant que parrain)
+     */
+    public function commissionsParrainage()
+    {
+        return $this->hasMany(\App\Models\ParrainageCommission::class, 'parrain_id');
+    }
+
+    /**
+     * Commission générée quand ce membre s'est inscrit via un parrain
+     */
+    public function commissionFilleul()
+    {
+        return $this->hasOne(\App\Models\ParrainageCommission::class, 'filleul_id');
+    }
+
+    /**
+     * Générer un code de parrainage unique pour ce membre
+     */
+    public function genererCodeParrainage(): string
+    {
+        do {
+            // Code : 3 lettres majuscules + 5 chiffres, ex: ABX12345
+            $code = strtoupper(substr(preg_replace('/[^A-Z]/', '', strtoupper(base_convert(crc32($this->nom . $this->prenom . uniqid()), 10, 36))), 0, 3))
+                  . str_pad((string) random_int(0, 99999), 5, '0', STR_PAD_LEFT);
+        } while (self::where('code_parrainage', $code)->exists());
+
+        $this->update(['code_parrainage' => $code]);
+        return $code;
+    }
+
+    /**
+     * Obtenir ou créer le code de parrainage
+     */
+    public function getOrCreateCodeParrainage(): string
+    {
+        if (!$this->code_parrainage) {
+            return $this->genererCodeParrainage();
+        }
+        return $this->code_parrainage;
+    }
+
+    /**
+     * Total des commissions disponibles (réclamables)
+     */
+    public function totalCommissionsDisponibles(): float
+    {
+        return (float) $this->commissionsParrainage()
+            ->where('statut', 'disponible')
+            ->where(function ($q) {
+                $q->whereNull('disponible_le')->orWhere('disponible_le', '<=', now());
+            })
+            ->sum('montant');
+    }
+
+    /**
+     * Total des commissions déjà payées
+     */
+    public function totalCommissionsPayees(): float
+    {
+        return (float) $this->commissionsParrainage()
+            ->where('statut', 'paye')
+            ->sum('montant');
+    }
+
+    /**
+     * Nombre de filleuls actifs (statut actif)
+     */
+    public function nbFilleulsActifs(): int
+    {
+        return $this->filleuls()->where('statut', 'actif')->count();
     }
 
     /**

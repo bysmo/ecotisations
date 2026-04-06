@@ -56,3 +56,8 @@ Schedule::command('nano-credits:prelever-garants')
 Schedule::command('audit:checksums')
     ->everyTenMinutes()
     ->description('Vérifier l\'intégrité des checksums financiers');
+
+// ─── Parrainage : Activation des commissions dont le délai est écoulé ────────
+Schedule::command('parrainage:activer-commissions')
+    ->hourly()
+    ->description('Activer les commissions de parrainage dont le délai de validation est écoulé');
