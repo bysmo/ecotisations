@@ -40,7 +40,7 @@
     <div class="login-container">
         <div class="login-card">
             <div class="login-header">
-                <h2><i class="bi bi-person-circle"></i> Connexion Membre</h2>
+                <h2><i class="bi bi-person-circle"></i> Serenity - Membres</h2>
                 <p>Votre sérénité financière commence ici.</p>
             </div>
 

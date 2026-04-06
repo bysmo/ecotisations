@@ -6,7 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
     @php
-        $appNomComplet = \App\Models\AppSetting::get('app_nom', 'Gestion des Cotisations');
+        $appNomComplet = \App\Models\AppSetting::get('app_nom', 'Serenity');
         $logoPath = \App\Models\AppSetting::get('entreprise_logo');
         $faviconUrl = null;
         
@@ -164,7 +164,7 @@
     <div class="login-container">
         <div class="login-card">
             <div class="login-header">
-                <h2><i class="bi bi-cash-coin"></i> E-Cotisations</h2>
+                <h2><i class="bi bi-cash-coin"></i> Serenity - Administrateur</h2>
             </div>
             
             
