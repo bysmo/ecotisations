@@ -338,3 +338,27 @@ Route::prefix('membre')->name('membre.')->group(function () {
         Route::get('/notifications', [\App\Http\Controllers\MembreNotificationController::class, 'index'])->name('notifications.index');
     });
 });
+
+// ─── Routes Membre - Système de Parrainage ─────────────────────────────────────
+Route::prefix('membre')->name('membre.')->middleware(['auth:membre'])->group(function () {
+    Route::prefix('parrainage')->name('parrainage.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\MembreParrainageController::class, 'index'])->name('index');
+        Route::get('/filleuls', [\App\Http\Controllers\MembreParrainageController::class, 'filleuls'])->name('filleuls');
+        Route::get('/commissions', [\App\Http\Controllers\MembreParrainageController::class, 'commissions'])->name('commissions');
+        Route::post('/reclamer', [\App\Http\Controllers\MembreParrainageController::class, 'reclamer'])->name('reclamer');
+        Route::get('/code', [\App\Http\Controllers\MembreParrainageController::class, 'getCode'])->name('code');
+        Route::post('/regenerer-code', [\App\Http\Controllers\MembreParrainageController::class, 'regenererCode'])->name('regenerer-code');
+    });
+});
+
+// ─── Routes Admin - Système de Parrainage ─────────────────────────────────────
+Route::middleware(['auth:web'])->prefix('parrainage')->name('parrainage.admin.')->group(function () {
+    Route::get('/config', [\App\Http\Controllers\ParrainageAdminController::class, 'config'])->name('config');
+    Route::put('/config', [\App\Http\Controllers\ParrainageAdminController::class, 'updateConfig'])->name('config.update');
+    Route::get('/commissions', [\App\Http\Controllers\ParrainageAdminController::class, 'commissions'])->name('commissions');
+    Route::get('/commissions/{commission}', [\App\Http\Controllers\ParrainageAdminController::class, 'showCommission'])->name('commissions.show');
+    Route::post('/commissions/{commission}/approuver', [\App\Http\Controllers\ParrainageAdminController::class, 'approuverCommission'])->name('commissions.approuver');
+    Route::post('/commissions/{commission}/rejeter', [\App\Http\Controllers\ParrainageAdminController::class, 'rejeterCommission'])->name('commissions.rejeter');
+    Route::post('/commissions/payer-tout', [\App\Http\Controllers\ParrainageAdminController::class, 'payerToutesReclamations'])->name('commissions.payer-tout');
+    Route::get('/parrains', [\App\Http\Controllers\ParrainageAdminController::class, 'parrains'])->name('parrains');
+});

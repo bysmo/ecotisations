@@ -1102,6 +1102,52 @@
                 </div>
             </div>
             
+            <!-- Menu Parrainage -->
+            @if(auth()->user()->hasRole('admin') || auth()->user()->hasPermission('parrainage.view'))
+            <div>
+                <a class="nav-link has-submenu {{ request()->is('parrainage*') ? 'active' : '' }}"
+                   data-bs-toggle="collapse"
+                   href="#parrainageSubmenu"
+                   role="button"
+                   aria-expanded="{{ request()->is('parrainage*') ? 'true' : 'false' }}"
+                   aria-controls="parrainageSubmenu">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <i class="bi bi-people"></i>
+                        <span>Parrainage</span>
+                        @php
+                            $nbReclamations = \App\Models\ParrainageCommission::where('statut', 'reclame')->count();
+                        @endphp
+                        @if($nbReclamations > 0)
+                            <span class="badge bg-warning text-dark ms-auto" style="font-size:0.65rem;">{{ $nbReclamations }}</span>
+                        @endif
+                    </div>
+                </a>
+                <div class="collapse {{ request()->is('parrainage*') ? 'show' : '' }}" id="parrainageSubmenu">
+                    <ul class="sidebar-submenu">
+                        <li>
+                            <a href="{{ route('parrainage.admin.config') }}" class="nav-link {{ request()->routeIs('parrainage.admin.config') ? 'active' : '' }}">
+                                <i class="bi bi-gear"></i><span>Configuration</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('parrainage.admin.commissions') }}" class="nav-link {{ request()->routeIs('parrainage.admin.commissions*') ? 'active' : '' }}">
+                                <i class="bi bi-cash-coin"></i>
+                                <span>Commissions</span>
+                                @if($nbReclamations > 0)
+                                    <span class="badge bg-warning text-dark ms-auto" style="font-size:0.65rem;">{{ $nbReclamations }}</span>
+                                @endif
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('parrainage.admin.parrains') }}" class="nav-link {{ request()->routeIs('parrainage.admin.parrains') ? 'active' : '' }}">
+                                <i class="bi bi-person-lines-fill"></i><span>Parrains</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            @endif
+
             <!-- Menu Annonces -->
             @if(auth()->user()->hasRole('admin') || auth()->user()->hasPermission('annonces.view'))
             <div>

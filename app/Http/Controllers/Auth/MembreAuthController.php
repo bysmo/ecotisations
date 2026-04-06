@@ -6,6 +6,7 @@ use App\Helpers\GeoHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Membre;
 use App\Services\OtpService;
+use App\Services\ParrainageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -105,13 +106,14 @@ class MembreAuthController extends Controller
     /**
      * Afficher le formulaire d'inscription (avec indicatif pays)
      */
-    public function showRegisterForm()
+    public function showRegisterForm(Request $request)
     {
         $geo = $this->getDefaultCountryAndDial();
         return view('membres.register', [
             'default_country' => $geo['country_code'],
-            'default_dial' => $geo['dial_code'],
-            'countries' => $geo['countries'],
+            'default_dial'    => $geo['dial_code'],
+            'countries'       => $geo['countries'],
+            'code_parrainage' => $request->query('ref'),   // pré-remplir le code depuis l'URL
         ]);
     }
 
@@ -125,13 +127,14 @@ class MembreAuthController extends Controller
         $phoneNormalized = $this->normalizePhone($dialCode, $request->input('telephone', ''));
 
         $validated = $request->validate([
-            'nom' => 'required|string|max:255',
-            'prenom' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:membres,email',
-            'country_code' => 'required|string|size:2',
-            'telephone' => 'required|string|max:20',
-            'adresse' => 'nullable|string',
-            'password' => 'required|string|min:6|confirmed',
+            'nom'              => 'required|string|max:255',
+            'prenom'           => 'required|string|max:255',
+            'email'            => 'required|email|max:255|unique:membres,email',
+            'country_code'     => 'required|string|size:2',
+            'telephone'        => 'required|string|max:20',
+            'adresse'          => 'nullable|string',
+            'password'         => 'required|string|min:6|confirmed',
+            'code_parrainage'  => 'nullable|string|max:12',
         ]);
 
         if (strlen($phoneNormalized) < 8) {
@@ -154,7 +157,27 @@ class MembreAuthController extends Controller
         $validated['telephone'] = $phoneNormalized;
         unset($validated['country_code']);
 
+        // ─── Résolution du parrain via le code de parrainage ────────────────
+        $parrainId = null;
+        if (!empty($validated['code_parrainage'])) {
+            $parrain = Membre::where('code_parrainage', strtoupper(trim($validated['code_parrainage'])))->first();
+            if ($parrain) {
+                $parrainId = $parrain->id;
+            }
+        }
+        unset($validated['code_parrainage']);
+
         $membre = Membre::create($validated);
+
+        // Attribuer le parrain si trouvé
+        if ($parrainId) {
+            $membre->update(['parrain_id' => $parrainId]);
+            // Générer la commission de parrainage (événement : inscription)
+            app(ParrainageService::class)->genererCommissions($membre, 'inscription');
+        }
+
+        // Générer le code de parrainage pour ce nouveau membre
+        $membre->genererCodeParrainage();
 
         $activeGateway = \App\Models\SmsGateway::getActive();
         if (!$activeGateway) {

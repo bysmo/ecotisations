@@ -612,6 +612,49 @@
                         </ul>
                     </div>
                 </li>
+                @php
+                    $parrainageActif = \App\Models\ParrainageConfig::current()->actif;
+                    $parrainageRoutesActive = request()->routeIs('membre.parrainage*');
+                @endphp
+                @if($parrainageActif)
+                <li>
+                    <a href="#" class="nav-link sidebar-nav-toggle {{ $parrainageRoutesActive ? '' : 'collapsed' }}"
+                       data-bs-toggle="collapse" data-bs-target="#parrainageSubmenu"
+                       aria-expanded="{{ $parrainageRoutesActive ? 'true' : 'false' }}">
+                        <i class="bi bi-people"></i>
+                        <span>Parrainage</span>
+                        @php
+                            $totalDispoParrainage = auth('membre')->user() ? auth('membre')->user()->totalCommissionsDisponibles() : 0;
+                        @endphp
+                        @if($totalDispoParrainage > 0)
+                            <span class="badge bg-success ms-auto" style="font-size:0.6rem;">FCFA</span>
+                        @endif
+                        <i class="bi bi-chevron-down sidebar-chevron"></i>
+                    </a>
+                    <div class="collapse sidebar-submenu-wrap {{ $parrainageRoutesActive ? 'show' : '' }}" id="parrainageSubmenu">
+                        <ul class="sidebar-submenu">
+                            <li>
+                                <a href="{{ route('membre.parrainage.index') }}" class="nav-link {{ request()->routeIs('membre.parrainage.index') ? 'active' : '' }}">
+                                    <i class="bi bi-house"></i>
+                                    <span>Tableau de bord</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('membre.parrainage.filleuls') }}" class="nav-link {{ request()->routeIs('membre.parrainage.filleuls') ? 'active' : '' }}">
+                                    <i class="bi bi-person-check"></i>
+                                    <span>Mes filleuls</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('membre.parrainage.commissions') }}" class="nav-link {{ request()->routeIs('membre.parrainage.commissions') ? 'active' : '' }}">
+                                    <i class="bi bi-cash-coin"></i>
+                                    <span>Mes commissions</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+                @endif
                 <li>
                     <a href="{{ route('membre.profil') }}" class="nav-link {{ request()->routeIs('membre.profil') ? 'active' : '' }}">
                         <i class="bi bi-person-circle"></i>
