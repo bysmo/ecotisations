@@ -92,7 +92,7 @@ class DatabaseSeeder extends Seeder
             EmailCampaignSeeder::class,
             EmailLogSeeder::class,
             EmailTemplateSeeder::class,
-            SMTPConfigurationSeeder::class,
+            //SMTPConfigurationSeeder::class,
         ]);
         
         $this->command->info('Seed terminé avec succès !');

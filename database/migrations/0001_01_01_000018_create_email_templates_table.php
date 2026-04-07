@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('nom')->unique();
             $table->string('sujet');
             $table->text('corps');
-            $table->enum('type', ['paiement', 'engagement', 'autre'])->default('paiement');
+            $table->enum('type', ['paiement', 'engagement','activation', 'autre'])->default('paiement');
             $table->boolean('actif')->default(true);
             $table->timestamps();
         });
