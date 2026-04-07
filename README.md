@@ -1,4 +1,4 @@
-# Serenity - Système de Gestion des Cotisations
+# Serenity - Système de Gestion de la serenité financiere
 
 Serenity est une application web moderne basée sur Laravel, conçue pour simplifier la gestion des membres, des cotisations, des engagements et des flux financiers au sein d'une organisation ou d'une association.
 

@@ -28,7 +28,7 @@ class VerifyMembreEmailNotification extends Notification implements ShouldQueue
         // Utiliser la configuration SMTP paramétrée par l'admin (pas le .env)
         (new \App\Services\EmailService())->configureSMTP();
 
-        $appNom = \App\Models\AppSetting::get('app_nom', 'Gestion des Cotisations');
+        $appNom = \App\Models\AppSetting::get('app_nom', 'Serenity');
         $url = $this->verificationUrl($notifiable);
 
         return (new MailMessage)

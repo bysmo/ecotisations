@@ -26,8 +26,8 @@ class PayDunyaService
         \Paydunya\Setup::setMode($this->config->mode); // 'test' ou 'live'
 
         // Configuration des informations du store
-        \Paydunya\Checkout\Store::setName(config('app.name', 'Ecotisations'));
-        \Paydunya\Checkout\Store::setTagline('Gestion des cotisations');
+        \Paydunya\Checkout\Store::setName(config('app.name', 'Serenity'));
+        \Paydunya\Checkout\Store::setTagline('Gestion de la serenité financiere');
         \Paydunya\Checkout\Store::setWebsiteUrl(config('app.url'));
         
         // Configuration globale de l'URL de callback IPN si définie

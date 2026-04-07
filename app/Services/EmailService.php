@@ -74,7 +74,7 @@ class EmailService
 
             $this->configureSMTP();
 
-            $appNom = \App\Models\AppSetting::get('app_nom', 'Gestion des Cotisations');
+            $appNom = \App\Models\AppSetting::get('app_nom', 'Serenity');
             $lienValidation = URL::temporarySignedRoute(
                 'membre.verification.verify',
                 Carbon::now()->addMinutes(60),

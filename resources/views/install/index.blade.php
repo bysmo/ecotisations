@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @php
-        $appNomComplet = \App\Models\AppSetting::get('app_nom', 'Gestion des Cotisations');
+        $appNomComplet = \App\Models\AppSetting::get('app_nom', 'Serenity');
     @endphp
     <title>{{ $appNomComplet }} - Installation</title>
     

@@ -16,14 +16,14 @@ class AppSettingSeeder extends Seeder
             // Paramètres généraux
             [
                 'cle' => 'app_nom',
-                'valeur' => 'Gestion des Cotisations',
+                'valeur' => 'Serenity',
                 'type' => 'string',
                 'description' => 'Nom de l\'application',
                 'groupe' => 'general',
             ],
             [
                 'cle' => 'app_description',
-                'valeur' => 'Application de gestion des cotisations et paiements',
+                'valeur' => 'Application de gestion de la sérénité financiere',
                 'type' => 'string',
                 'description' => 'Description de l\'application',
                 'groupe' => 'general',

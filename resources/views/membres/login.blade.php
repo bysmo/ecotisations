@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @php
-        $appNomComplet = \App\Models\AppSetting::get('app_nom', 'Gestion des Cotisations');
+        $appNomComplet = \App\Models\AppSetting::get('app_nom', 'Serenity');
         $logoPath = \App\Models\AppSetting::get('entreprise_logo');
         $faviconUrl = $logoPath && \Illuminate\Support\Facades\File::exists(storage_path('app/public/' . $logoPath)) ? asset('storage/' . $logoPath) : (isset($logoPath) ? route('storage.logo', ['filename' => basename($logoPath)]) : asset('favicon.ico'));
     @endphp

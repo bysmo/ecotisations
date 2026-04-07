@@ -24,7 +24,7 @@ class KycValidatedNotification extends Notification
     {
         (new \App\Services\EmailService())->configureSMTP();
 
-        $appNom = \App\Models\AppSetting::get('app_nom', 'Gestion des Cotisations');
+        $appNom = \App\Models\AppSetting::get('app_nom', 'Serenity');
 
         return (new MailMessage)
             ->subject("Votre KYC a été validé - {$appNom}")
