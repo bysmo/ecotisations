@@ -65,6 +65,7 @@
                         <label for="frequence" class="form-label">Fréquence <span class="text-danger">*</span></label>
                         <select class="form-select @error('frequence') is-invalid @enderror" id="frequence" name="frequence" required>
                             <option value="">Choisir...</option>
+                            <option value="journalier" {{ old('frequence') === 'journalier' ? 'selected' : '' }}>Journalier</option>
                             <option value="hebdomadaire" {{ old('frequence') === 'hebdomadaire' ? 'selected' : '' }}>Hebdomadaire</option>
                             <option value="mensuel" {{ old('frequence') === 'mensuel' ? 'selected' : '' }}>Mensuel</option>
                             <option value="trimestriel" {{ old('frequence') === 'trimestriel' ? 'selected' : '' }}>Trimestriel</option>

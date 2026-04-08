@@ -544,6 +544,18 @@
                         </ul>
                     </div>
                 </li>
+                  <li>
+                    <a href="{{ route('membre.nano-credits') }}" class="nav-link {{ request()->routeIs('membre.nano-credits*') ? 'active' : '' }}">
+                        <i class="bi bi-credit-card-2-front"></i>
+                        <span>Nano Crédits</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('membre.epargne.index') }}" class="nav-link {{ request()->routeIs('membre.epargne*') ? 'active' : '' }}">
+                        <i class="bi bi-piggy-bank"></i>
+                        <span>Tontines</span>
+                    </a>
+                </li>
                 <li>
                     <a href="{{ route('membre.paiements') }}" class="nav-link {{ request()->routeIs('membre.paiements') ? 'active' : '' }}">
                         <i class="bi bi-receipt"></i>
@@ -568,18 +580,7 @@
                         <span>Mon KYC</span>
                     </a>
                 </li>
-                <li>
-                    <a href="{{ route('membre.nano-credits') }}" class="nav-link {{ request()->routeIs('membre.nano-credits*') ? 'active' : '' }}">
-                        <i class="bi bi-credit-card-2-front"></i>
-                        <span>Nano Crédits</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ route('membre.epargne.index') }}" class="nav-link {{ request()->routeIs('membre.epargne*') ? 'active' : '' }}">
-                        <i class="bi bi-piggy-bank"></i>
-                        <span>Tontines</span>
-                    </a>
-                </li>
+              
                 <li>
                     @php
                         $garantRoutesActive = request()->routeIs('membre.garant*');

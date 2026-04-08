@@ -56,7 +56,7 @@ class NanoCreditPaliersSeeder extends Seeder
             // --- PALIER 2 : Seduction ---
             [
                 'numero' => 2,
-                'nom' => 'Seduction',
+                'nom' => 'Fiabilité',
                 'description' => 'Pour les membres ayant prouvé leur fiabilité. Montant modéré avec un garant.',
                 
                 'min_credits_rembourses' => 1,
@@ -117,10 +117,10 @@ class NanoCreditPaliersSeeder extends Seeder
                 'updated_at' => Carbon::now(),
             ],
 
-            // --- PALIER 4 : Partenariat ---
+            // --- PALIER 4 : Alliance ---
             [
                 'numero' => 4,
-                'nom' => 'Partenariat',
+                'nom' => 'Alliance',
                 'description' => 'Pour les membres actifs et réguliers. Grande flexibilité.',
                 
                 'min_credits_rembourses' => 5,

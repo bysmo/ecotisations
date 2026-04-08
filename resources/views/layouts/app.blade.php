@@ -923,33 +923,6 @@
             </div>
             @endif
             
-            <!-- Menu Utilisateurs avec sous-menus -->
-            @if(auth()->user()->hasRole('admin') || auth()->user()->hasPermission('users.view'))
-            <div>
-                <a class="nav-link has-submenu {{ request()->routeIs('users.*') ? 'active' : '' }}" 
-                   data-bs-toggle="collapse" 
-                   href="#usersSubmenu" 
-                   role="button" 
-                   aria-expanded="{{ request()->routeIs('users.*') ? 'true' : 'false' }}" 
-                   aria-controls="usersSubmenu">
-                    <div style="display: flex; align-items: center; gap: 0.75rem;">
-                        <i class="bi bi-person-badge"></i>
-                        <span>Utilisateurs</span>
-                    </div>
-                </a>
-                <div class="collapse {{ request()->routeIs('users.*') ? 'show' : '' }}" id="usersSubmenu">
-                    <ul class="sidebar-submenu">
-                        <li>
-                            <a href="{{ route('users.index') }}" class="nav-link {{ request()->routeIs('users.index') ? 'active' : '' }}">
-                                <i class="bi bi-list-ul"></i>
-                                <span>Liste des utilisateurs</span>
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-            @endif
-            
             <!-- Menu Cagnottes avec sous-menus -->
             @if(auth()->user()->hasRole('admin') || auth()->user()->hasPermission('cotisations.view'))
             <div>
@@ -982,38 +955,19 @@
                 </div>
             </div>
             @endif
-            
-            <!-- Menu Engagements avec sous-menus -->
-            @if(auth()->user()->hasRole('admin') || auth()->user()->hasPermission('engagements.view'))
-            <div>
-                <a class="nav-link has-submenu {{ request()->routeIs('engagements.*') || request()->routeIs('engagement-tags.*') ? 'active' : '' }}" 
-                   data-bs-toggle="collapse" 
-                   href="#engagementsSubmenu" 
-                   role="button" 
-                   aria-expanded="{{ request()->routeIs('engagements.*') || request()->routeIs('engagement-tags.*') ? 'true' : 'false' }}" 
-                   aria-controls="engagementsSubmenu">
-                    <div style="display: flex; align-items: center; gap: 0.75rem;">
-                        <i class="bi bi-clipboard-check"></i>
-                        <span>Engagements</span>
-                    </div>
-                </a>
-                <div class="collapse {{ request()->routeIs('engagements.*') || request()->routeIs('engagement-tags.*') ? 'show' : '' }}" id="engagementsSubmenu">
-                    <ul class="sidebar-submenu">
-                        <li>
-                            <a href="{{ route('engagements.index') }}" class="nav-link {{ request()->routeIs('engagements.index') ? 'active' : '' }}">
-                                <i class="bi bi-list-ul"></i>
-                                <span>Liste des engagements</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{ route('engagement-tags.index') }}" class="nav-link {{ request()->routeIs('engagement-tags.*') ? 'active' : '' }}">
-                                <i class="bi bi-tags"></i>
-                                <span>Gestion des tags</span>
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
+
+              <!-- Menu Demandes d'adhésion -->
+            @if(auth()->user()->hasRole('admin'))
+            <a href="{{ route('cotisation-adhesions.index') }}" class="nav-link {{ request()->routeIs('cotisation-adhesions.*') ? 'active' : '' }}">
+                <i class="bi bi-people"></i>
+                <span>Demandes d'adhésion aux cagnottes privées</span>
+                @php
+                    $nbAdhesionsEnAttente = \App\Models\CotisationAdhesion::where('statut', 'en_attente')->whereHas('cotisation', fn($q) => $q->whereNull('created_by_membre_id'))->count();
+                @endphp
+                @if($nbAdhesionsEnAttente > 0)
+                    <span class="badge bg-danger ms-auto" style="font-size: 0.65rem;">{{ $nbAdhesionsEnAttente }}</span>
+                @endif
+            </a>
             @endif
 
             <!-- Menu Tontines avec sous-menus -->
@@ -1102,45 +1056,32 @@
                 </div>
             </div>
             
-            <!-- Menu Parrainage -->
-            @if(auth()->user()->hasRole('admin') || auth()->user()->hasPermission('parrainage.view'))
+            <!-- Menu Engagements avec sous-menus -->
+            @if(auth()->user()->hasRole('admin') || auth()->user()->hasPermission('engagements.view'))
             <div>
-                <a class="nav-link has-submenu {{ request()->is('parrainage*') ? 'active' : '' }}"
-                   data-bs-toggle="collapse"
-                   href="#parrainageSubmenu"
-                   role="button"
-                   aria-expanded="{{ request()->is('parrainage*') ? 'true' : 'false' }}"
-                   aria-controls="parrainageSubmenu">
+                <a class="nav-link has-submenu {{ request()->routeIs('engagements.*') || request()->routeIs('engagement-tags.*') ? 'active' : '' }}" 
+                   data-bs-toggle="collapse" 
+                   href="#engagementsSubmenu" 
+                   role="button" 
+                   aria-expanded="{{ request()->routeIs('engagements.*') || request()->routeIs('engagement-tags.*') ? 'true' : 'false' }}" 
+                   aria-controls="engagementsSubmenu">
                     <div style="display: flex; align-items: center; gap: 0.75rem;">
-                        <i class="bi bi-people"></i>
-                        <span>Parrainage</span>
-                        @php
-                            $nbReclamations = \App\Models\ParrainageCommission::where('statut', 'reclame')->count();
-                        @endphp
-                        @if($nbReclamations > 0)
-                            <span class="badge bg-warning text-dark ms-auto" style="font-size:0.65rem;">{{ $nbReclamations }}</span>
-                        @endif
+                        <i class="bi bi-clipboard-check"></i>
+                        <span>Engagements</span>
                     </div>
                 </a>
-                <div class="collapse {{ request()->is('parrainage*') ? 'show' : '' }}" id="parrainageSubmenu">
+                <div class="collapse {{ request()->routeIs('engagements.*') || request()->routeIs('engagement-tags.*') ? 'show' : '' }}" id="engagementsSubmenu">
                     <ul class="sidebar-submenu">
                         <li>
-                            <a href="{{ route('parrainage.admin.config') }}" class="nav-link {{ request()->routeIs('parrainage.admin.config') ? 'active' : '' }}">
-                                <i class="bi bi-gear"></i><span>Configuration</span>
+                            <a href="{{ route('engagements.index') }}" class="nav-link {{ request()->routeIs('engagements.index') ? 'active' : '' }}">
+                                <i class="bi bi-list-ul"></i>
+                                <span>Liste des engagements</span>
                             </a>
                         </li>
                         <li>
-                            <a href="{{ route('parrainage.admin.commissions') }}" class="nav-link {{ request()->routeIs('parrainage.admin.commissions*') ? 'active' : '' }}">
-                                <i class="bi bi-cash-coin"></i>
-                                <span>Commissions</span>
-                                @if($nbReclamations > 0)
-                                    <span class="badge bg-warning text-dark ms-auto" style="font-size:0.65rem;">{{ $nbReclamations }}</span>
-                                @endif
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{ route('parrainage.admin.parrains') }}" class="nav-link {{ request()->routeIs('parrainage.admin.parrains') ? 'active' : '' }}">
-                                <i class="bi bi-person-lines-fill"></i><span>Parrains</span>
+                            <a href="{{ route('engagement-tags.index') }}" class="nav-link {{ request()->routeIs('engagement-tags.*') ? 'active' : '' }}">
+                                <i class="bi bi-tags"></i>
+                                <span>Gestion des tags</span>
                             </a>
                         </li>
                     </ul>
@@ -1148,6 +1089,71 @@
             </div>
             @endif
 
+              <!-- Menu Paiements avec sous-menus -->
+            @if(auth()->user()->hasRole('admin') || auth()->user()->hasPermission('paiements.view'))
+            <div>
+                <a class="nav-link has-submenu {{ request()->routeIs('paiements.*') ? 'active' : '' }}" 
+                   data-bs-toggle="collapse" 
+                   href="#paiementsSubmenu" 
+                   role="button" 
+                   aria-expanded="{{ request()->routeIs('paiements.*') ? 'true' : 'false' }}" 
+                   aria-controls="paiementsSubmenu">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <i class="bi bi-cash-coin"></i>
+                        <span>Paiements</span>
+                    </div>
+                </a>
+                <div class="collapse {{ request()->routeIs('paiements.*') ? 'show' : '' }}" id="paiementsSubmenu">
+                    <ul class="sidebar-submenu">
+                        <li>
+                            <a href="{{ route('paiements.index') }}" class="nav-link {{ request()->routeIs('paiements.index') ? 'active' : '' }}">
+                                <i class="bi bi-list-ul"></i>
+                                <span>Paiements des cagnottes</span>
+                            </a>
+                        </li>
+                        @if(auth()->user()->hasRole('admin') || auth()->user()->hasPermission('paiements.engagement'))
+                        <li>
+                            <a href="{{ route('paiements.engagement.index') }}" class="nav-link {{ request()->routeIs('paiements.engagement.*') ? 'active' : '' }}">
+                                <i class="bi bi-clipboard-check"></i>
+                                <span>Paiement engagement</span>
+                            </a>
+                        </li>
+                        @endif
+                    </ul>
+                </div>
+            </div>
+            @endif
+            
+            <!-- Menu Remboursements -->
+            @if(auth()->user()->hasRole('admin') || auth()->user()->hasPermission('remboursements.view'))
+            <a href="{{ route('remboursements.index') }}" class="nav-link {{ request()->routeIs('remboursements.*') ? 'active' : '' }}">
+                <i class="bi bi-arrow-counterclockwise"></i>
+                <span>Remboursements</span>
+                @php
+                    $nbEnAttente = \App\Models\Remboursement::where('statut', 'en_attente')->count();
+                @endphp
+                @if($nbEnAttente > 0)
+                    <span class="badge bg-danger ms-auto" style="font-size: 0.65rem;">{{ $nbEnAttente }}</span>
+                @endif
+            </a>
+            @endif
+            
+          
+
+            <!-- Menu Demandes de versement -->
+            @if(auth()->user()->hasRole('admin'))
+            <a href="{{ route('cotisation-versement-demandes.index') }}" class="nav-link {{ request()->routeIs('cotisation-versement-demandes.*') ? 'active' : '' }}">
+                <i class="bi bi-cash-stack"></i>
+                <span>Demandes de versement</span>
+                @php
+                    $nbVersementEnAttente = \App\Models\CotisationVersementDemande::where('statut', 'en_attente')->count();
+                @endphp
+                @if($nbVersementEnAttente > 0)
+                    <span class="badge bg-warning text-dark ms-auto" style="font-size: 0.65rem;">{{ $nbVersementEnAttente }}</span>
+                @endif
+            </a>
+            @endif
+            
             <!-- Menu Annonces -->
             @if(auth()->user()->hasRole('admin') || auth()->user()->hasPermission('annonces.view'))
             <div>
@@ -1232,82 +1238,7 @@
             </div>
             @endif
             
-            <!-- Menu Paiements avec sous-menus -->
-            @if(auth()->user()->hasRole('admin') || auth()->user()->hasPermission('paiements.view'))
-            <div>
-                <a class="nav-link has-submenu {{ request()->routeIs('paiements.*') ? 'active' : '' }}" 
-                   data-bs-toggle="collapse" 
-                   href="#paiementsSubmenu" 
-                   role="button" 
-                   aria-expanded="{{ request()->routeIs('paiements.*') ? 'true' : 'false' }}" 
-                   aria-controls="paiementsSubmenu">
-                    <div style="display: flex; align-items: center; gap: 0.75rem;">
-                        <i class="bi bi-cash-coin"></i>
-                        <span>Paiements</span>
-                    </div>
-                </a>
-                <div class="collapse {{ request()->routeIs('paiements.*') ? 'show' : '' }}" id="paiementsSubmenu">
-                    <ul class="sidebar-submenu">
-                        <li>
-                            <a href="{{ route('paiements.index') }}" class="nav-link {{ request()->routeIs('paiements.index') ? 'active' : '' }}">
-                                <i class="bi bi-list-ul"></i>
-                                <span>Paiements des cagnottes</span>
-                            </a>
-                        </li>
-                        @if(auth()->user()->hasRole('admin') || auth()->user()->hasPermission('paiements.engagement'))
-                        <li>
-                            <a href="{{ route('paiements.engagement.index') }}" class="nav-link {{ request()->routeIs('paiements.engagement.*') ? 'active' : '' }}">
-                                <i class="bi bi-clipboard-check"></i>
-                                <span>Paiement engagement</span>
-                            </a>
-                        </li>
-                        @endif
-                    </ul>
-                </div>
-            </div>
-            @endif
-            
-            <!-- Menu Remboursements -->
-            @if(auth()->user()->hasRole('admin') || auth()->user()->hasPermission('remboursements.view'))
-            <a href="{{ route('remboursements.index') }}" class="nav-link {{ request()->routeIs('remboursements.*') ? 'active' : '' }}">
-                <i class="bi bi-arrow-counterclockwise"></i>
-                <span>Remboursements</span>
-                @php
-                    $nbEnAttente = \App\Models\Remboursement::where('statut', 'en_attente')->count();
-                @endphp
-                @if($nbEnAttente > 0)
-                    <span class="badge bg-danger ms-auto" style="font-size: 0.65rem;">{{ $nbEnAttente }}</span>
-                @endif
-            </a>
-            @endif
-            
-            <!-- Menu Demandes d'adhésion -->
-            @if(auth()->user()->hasRole('admin'))
-            <a href="{{ route('cotisation-adhesions.index') }}" class="nav-link {{ request()->routeIs('cotisation-adhesions.*') ? 'active' : '' }}">
-                <i class="bi bi-people"></i>
-                <span>Demandes d'adhésion</span>
-                @php
-                    $nbAdhesionsEnAttente = \App\Models\CotisationAdhesion::where('statut', 'en_attente')->whereHas('cotisation', fn($q) => $q->whereNull('created_by_membre_id'))->count();
-                @endphp
-                @if($nbAdhesionsEnAttente > 0)
-                    <span class="badge bg-danger ms-auto" style="font-size: 0.65rem;">{{ $nbAdhesionsEnAttente }}</span>
-                @endif
-            </a>
-            @endif
-
-            <!-- Menu Demandes de versement -->
-            @if(auth()->user()->hasRole('admin'))
-            <a href="{{ route('cotisation-versement-demandes.index') }}" class="nav-link {{ request()->routeIs('cotisation-versement-demandes.*') ? 'active' : '' }}">
-                <i class="bi bi-cash-stack"></i>
-                <span>Demandes de versement</span>
-                @php
-                    $nbVersementEnAttente = \App\Models\CotisationVersementDemande::where('statut', 'en_attente')->count();
-                @endphp
-                @if($nbVersementEnAttente > 0)
-                    <span class="badge bg-warning text-dark ms-auto" style="font-size: 0.65rem;">{{ $nbVersementEnAttente }}</span>
-                @endif
-            </a>
-            @endif
+          
             
             <!-- Menu Campagnes d'Emails -->
             @if(auth()->user()->hasRole('admin') || auth()->user()->hasPermission('campagnes.create'))
@@ -1325,6 +1256,82 @@
             </a>
             @endif
             
+
+
+            <!-- Menu Parrainage -->
+            @if(auth()->user()->hasRole('admin') || auth()->user()->hasPermission('parrainage.view'))
+            <div>
+                <a class="nav-link has-submenu {{ request()->is('parrainage*') ? 'active' : '' }}"
+                   data-bs-toggle="collapse"
+                   href="#parrainageSubmenu"
+                   role="button"
+                   aria-expanded="{{ request()->is('parrainage*') ? 'true' : 'false' }}"
+                   aria-controls="parrainageSubmenu">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <i class="bi bi-people"></i>
+                        <span>Parrainage</span>
+                        @php
+                            $nbReclamations = \App\Models\ParrainageCommission::where('statut', 'reclame')->count();
+                        @endphp
+                        @if($nbReclamations > 0)
+                            <span class="badge bg-warning text-dark ms-auto" style="font-size:0.65rem;">{{ $nbReclamations }}</span>
+                        @endif
+                    </div>
+                </a>
+                <div class="collapse {{ request()->is('parrainage*') ? 'show' : '' }}" id="parrainageSubmenu">
+                    <ul class="sidebar-submenu">
+                        <li>
+                            <a href="{{ route('parrainage.admin.config') }}" class="nav-link {{ request()->routeIs('parrainage.admin.config') ? 'active' : '' }}">
+                                <i class="bi bi-gear"></i><span>Configuration</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('parrainage.admin.commissions') }}" class="nav-link {{ request()->routeIs('parrainage.admin.commissions*') ? 'active' : '' }}">
+                                <i class="bi bi-cash-coin"></i>
+                                <span>Commissions</span>
+                                @if($nbReclamations > 0)
+                                    <span class="badge bg-warning text-dark ms-auto" style="font-size:0.65rem;">{{ $nbReclamations }}</span>
+                                @endif
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('parrainage.admin.parrains') }}" class="nav-link {{ request()->routeIs('parrainage.admin.parrains') ? 'active' : '' }}">
+                                <i class="bi bi-person-lines-fill"></i><span>Parrains</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            @endif
+
+
+            <!-- Menu Utilisateurs avec sous-menus -->
+            @if(auth()->user()->hasRole('admin') || auth()->user()->hasPermission('users.view'))
+            <div>
+                <a class="nav-link has-submenu {{ request()->routeIs('users.*') ? 'active' : '' }}" 
+                   data-bs-toggle="collapse" 
+                   href="#usersSubmenu" 
+                   role="button" 
+                   aria-expanded="{{ request()->routeIs('users.*') ? 'true' : 'false' }}" 
+                   aria-controls="usersSubmenu">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <i class="bi bi-person-badge"></i>
+                        <span>Utilisateurs</span>
+                    </div>
+                </a>
+                <div class="collapse {{ request()->routeIs('users.*') ? 'show' : '' }}" id="usersSubmenu">
+                    <ul class="sidebar-submenu">
+                        <li>
+                            <a href="{{ route('users.index') }}" class="nav-link {{ request()->routeIs('users.index') ? 'active' : '' }}">
+                                <i class="bi bi-list-ul"></i>
+                                <span>Liste des utilisateurs</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            @endif
+
             <!-- Menu Rôles et Permissions -->
             @if(auth()->user()->hasRole('admin') || auth()->user()->hasPermission('settings.roles'))
             <a href="{{ route('roles.index') }}" class="nav-link {{ request()->routeIs('roles.*') ? 'active' : '' }}">
