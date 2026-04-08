@@ -6,7 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
     @php
-        $appNomComplet = $appNom ?? \App\Models\AppSetting::get('app_nom', 'Gestion des Cagnottes');
+        $appNomComplet = $appNom ?? \App\Models\AppSetting::get('app_nom', 'Gestion des cagnottes');
         $logoPath = \App\Models\AppSetting::get('entreprise_logo');
         $faviconUrl = null;
         
@@ -29,7 +29,7 @@
         <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
     @endif
     
-    <title>{{ $appNomComplet }} - @yield('title')</title>
+    <title>Serenity - @yield('title')</title>
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">

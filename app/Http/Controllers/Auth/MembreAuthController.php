@@ -122,7 +122,7 @@ class MembreAuthController extends Controller
      */
     public function register(Request $request)
     {
-        $countryCode = $request->input('country_code', 'SN');
+        $countryCode = $request->input('country_code', 'BF');
         $dialCode = GeoHelper::getDialCodeForCountry($countryCode);
         $phoneNormalized = $this->normalizePhone($dialCode, $request->input('telephone', ''));
 

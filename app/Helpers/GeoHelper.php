@@ -27,7 +27,7 @@ class GeoHelper
     }
 
     /**
-     * Retourne l'indicatif téléphonique pour un code pays (ex: SN => 221).
+     * Retourne l'indicatif téléphonique pour un code pays (ex: BF => 226).
      */
     public static function getDialCodeForCountry(string $countryCode): string
     {
