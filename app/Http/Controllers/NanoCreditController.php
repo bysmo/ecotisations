@@ -87,7 +87,7 @@ class NanoCreditController extends Controller
     private function normalizePhoneForPayDunya(string $telephone): string
     {
         $digits = preg_replace('/\D/', '', $telephone);
-        $indicatifs = ['221', '229', '225', '228', '223', '226'];
+        $indicatifs = ['221','223', '225', '226', '227', '228', '229'];
         foreach ($indicatifs as $code) {
             if (str_starts_with($digits, $code) && strlen($digits) > strlen($code)) {
                 return substr($digits, strlen($code));

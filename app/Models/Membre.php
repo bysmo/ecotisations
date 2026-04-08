@@ -293,7 +293,7 @@ class Membre extends Authenticatable implements MustVerifyEmail
 
         // Si le numéro commence par +, 00 ou un indicatif connu
         // On considère qu'il est déjà internationalisé
-        $indicatifs = ['221', '229', '225', '228', '223', '226', '33', '1'];
+        $indicatifs = ['221','223', '225', '226', '227', '228', '229'];
         
         // Gérer le prefixe 00
         if (str_starts_with($telephone, '00')) {
