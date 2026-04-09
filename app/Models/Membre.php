@@ -45,11 +45,17 @@ class Membre extends Authenticatable implements MustVerifyEmail
         // Parrainage
         'code_parrainage',
         'parrain_id',
+        // Sécurité PIN
+        'code_pin',
+        'code_pin_created_at',
+        'pin_attempts',
+        'pin_locked_until',
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
+        'code_pin',
     ];
 
     protected function casts(): array
@@ -62,7 +68,78 @@ class Membre extends Authenticatable implements MustVerifyEmail
             'nano_credit_interdit'  => 'boolean',
             'interdit_le'           => 'datetime',
             'garant_solde'          => \App\Casts\EncryptedDecimal::class,
+            // PIN
+            'code_pin_created_at'   => 'datetime',
+            'pin_locked_until'      => 'datetime',
+            'pin_attempts'          => 'integer',
         ];
+    }
+
+    // ─── Sécurité PIN ─────────────────────────────────────────────────────────
+
+    /** Nombre maximum de tentatives PIN avant verrouillage */
+    public const PIN_MAX_ATTEMPTS  = 5;
+    /** Durée de verrouillage en minutes après échecs */
+    public const PIN_LOCK_MINUTES  = 30;
+
+    /**
+     * Vérifie si le membre a défini un code PIN
+     */
+    public function hasPin(): bool
+    {
+        return !empty($this->code_pin);
+    }
+
+    /**
+     * Vérifie si le PIN est temporairement verrouillé
+     */
+    public function isPinLocked(): bool
+    {
+        return $this->pin_locked_until && $this->pin_locked_until->isFuture();
+    }
+
+    /**
+     * Vérifie le PIN fourni. Gère les tentatives et le verrouillage automatique.
+     * Retourne true si correct, false sinon.
+     */
+    public function verifyPin(string $pin): bool
+    {
+        if ($this->isPinLocked()) {
+            return false;
+        }
+
+        $valid = \Illuminate\Support\Facades\Hash::check($pin, $this->code_pin);
+
+        if ($valid) {
+            // Réinitialiser le compteur en cas de succès
+            $this->update(['pin_attempts' => 0, 'pin_locked_until' => null]);
+            return true;
+        }
+
+        // Incrémenter les tentatives
+        $attempts = ($this->pin_attempts ?? 0) + 1;
+        $updateData = ['pin_attempts' => $attempts];
+
+        if ($attempts >= self::PIN_MAX_ATTEMPTS) {
+            $updateData['pin_locked_until'] = now()->addMinutes(self::PIN_LOCK_MINUTES);
+            $updateData['pin_attempts']     = 0;
+        }
+
+        $this->update($updateData);
+        return false;
+    }
+
+    /**
+     * Définit ou modifie le code PIN (hashé en base).
+     */
+    public function setPin(string $pin): void
+    {
+        $this->update([
+            'code_pin'            => \Illuminate\Support\Facades\Hash::make($pin),
+            'code_pin_created_at' => now(),
+            'pin_attempts'        => 0,
+            'pin_locked_until'    => null,
+        ]);
     }
 
     /**

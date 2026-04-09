@@ -159,11 +159,11 @@ class MembreAuthApiController extends Controller
     {
         $request->validate([
             'membre_id' => 'required|integer|exists:membres,id',
-            'otp' => 'required|string|size:6',
+            'otp'       => 'required|string|size:6',
         ]);
 
         $membre = Membre::findOrFail($request->input('membre_id'));
-        $phone = $membre->telephone;
+        $phone  = $membre->telephone;
 
         $otpService = app(OtpService::class);
         if (! $otpService->verify($phone, $request->input('otp'))) {
@@ -174,15 +174,19 @@ class MembreAuthApiController extends Controller
         $membre->tokens()->where('name', 'mobile')->delete();
         $token = $membre->createToken('mobile')->plainTextToken;
 
+        // Indiquer à l'app si le membre doit encore créer son PIN
+        $requirePinSetup = ! $membre->hasPin();
+
         return response()->json([
-            'token' => $token,
-            'token_type' => 'Bearer',
-            'membre' => $this->membreResource($membre),
+            'token'             => $token,
+            'token_type'        => 'Bearer',
+            'membre'            => $this->membreResource($membre),
+            'require_pin_setup' => $requirePinSetup,
         ]);
     }
 
     /**
-     * Renvoyer le code OTP (après inscription, pour l’app mobile)
+     * Renvoyer le code OTP (après inscription, pour l'app mobile)
      */
     public function resendOtp(Request $request): JsonResponse
     {
@@ -191,13 +195,25 @@ class MembreAuthApiController extends Controller
         ]);
 
         $membre = Membre::findOrFail($request->input('membre_id'));
-        $phone = $membre->telephone;
+        $phone  = $membre->telephone;
 
         $otpService = app(OtpService::class);
-        $code = $otpService->generateAndStore($phone);
+        $code       = $otpService->generateAndStore($phone);
+
+        // Envoi par SMS
         $otpService->sendOtp($phone, $code);
 
-        return response()->json(['message' => 'Un nouveau code a été envoyé par SMS.']);
+        // Envoi par email (en parallèle, silencieux si SMTP non configuré)
+        $emailSent = false;
+        if ($membre->email) {
+            $emailSent = app(EmailService::class)->sendOtpEmail($membre, $code);
+        }
+
+        $message = $emailSent
+            ? 'Un nouveau code de vérification a été envoyé par SMS et par email.'
+            : 'Un nouveau code de vérification a été envoyé par SMS.';
+
+        return response()->json(['message' => $message]);
     }
 
     /**

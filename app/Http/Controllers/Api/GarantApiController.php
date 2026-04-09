@@ -8,6 +8,7 @@ use App\Models\NanoCredit;
 use App\Models\NanoCreditGarant;
 use App\Notifications\GarantRefusNotification;
 use App\Services\NanoCreditService;
+use App\Services\PinService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -68,7 +69,7 @@ class GarantApiController extends Controller
     }
 
     /**
-     * Accepter ou refuser une sollicitation
+     * Accepter ou refuser une sollicitation (opération critique, PIN requis)
      */
     public function action(Request $request, $id): JsonResponse
     {
@@ -79,17 +80,21 @@ class GarantApiController extends Controller
             return response()->json(['message' => 'Cette sollicitation a déjà été traitée.'], 422);
         }
 
+        // Vérification du PIN (opération critique : acceptation/refus de garantie)
+        $pinError = app(PinService::class)->requirePin($request, $membre);
+        if ($pinError) return $pinError;
+
         $validated = $request->validate([
             'action' => 'required|in:accepter,refuser',
-            'motif' => 'required_if:action,refuser|string|max:255',
+            'motif'  => 'required_if:action,refuser|string|max:255',
         ]);
 
         DB::beginTransaction();
         try {
             if ($validated['action'] === 'accepter') {
                 $garant->update([
-                    'statut' => 'accepte',
-                    'accepte_le' => now(),
+                    'statut'       => 'accepte',
+                    'accepte_le'   => now(),
                     'gain_partage' => $this->calculerGainPotentiel($garant),
                 ]);
 
@@ -102,8 +107,8 @@ class GarantApiController extends Controller
                 }
             } else {
                 $garant->update([
-                    'statut' => 'refuse',
-                    'refuse_le' => now(),
+                    'statut'      => 'refuse',
+                    'refuse_le'   => now(),
                     'motif_refus' => $validated['motif'],
                 ]);
 
@@ -121,22 +126,26 @@ class GarantApiController extends Controller
     }
 
     /**
-     * Demande de retrait des gains
+     * Demande de retrait des gains (opération critique, PIN requis)
      */
     public function retirerGains(Request $request): JsonResponse
     {
-        $membre = $request->user();
+        $membre  = $request->user();
         $montant = (float) $request->input('montant');
 
         if ($montant <= 0 || $montant > (float) $membre->garant_solde) {
             return response()->json(['message' => 'Montant invalide ou solde insuffisant.'], 422);
         }
 
+        // Vérification du PIN (opération critique : retrait des gains garant)
+        $pinError = app(PinService::class)->requirePin($request, $membre);
+        if ($pinError) return $pinError;
+
         DB::beginTransaction();
         try {
             // Dans une vraie app, on initierait un transfert ici
             $membre->decrement('garant_solde', $montant);
-            
+
             DB::commit();
             return response()->json(['message' => 'Demande de retrait enregistrée.']);
         } catch (\Exception $e) {

@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\MembreAuthApiController;
 use App\Http\Controllers\Api\MembreApiController;
 use App\Http\Controllers\Api\GarantApiController;
+use App\Http\Controllers\Api\PinApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -24,6 +25,12 @@ Route::prefix('membre')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('logout', [MembreAuthApiController::class, 'logout']);
         Route::get('me', [MembreAuthApiController::class, 'me']);
+
+        // ── Code PIN de sécurité ──────────────────────────────────────────────
+        Route::get('pin/status', [PinApiController::class, 'status']);
+        Route::post('pin/setup', [PinApiController::class, 'setup']);
+        Route::post('pin/change', [PinApiController::class, 'change']);
+        Route::post('pin/verify', [PinApiController::class, 'verify']);
 
         // Notifications & Tokens
         Route::get('notifications', [MembreApiController::class, 'notifications']);
@@ -86,3 +93,4 @@ Route::prefix('membre')->group(function () {
         Route::get('annonces', [MembreApiController::class, 'annonces']);
     });
 });
+

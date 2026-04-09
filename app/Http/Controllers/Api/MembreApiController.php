@@ -13,6 +13,7 @@ use App\Models\EpargnePlan;
 use App\Models\EpargneSouscription;
 use App\Models\KycVerification;
 use App\Models\Tag;
+use App\Services\PinService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -152,18 +153,22 @@ class MembreApiController extends Controller
         $exist = CotisationAdhesion::where('membre_id', $membre->id)->where('cotisation_id', $cotisation->id)->first();
         if ($exist) {
             if ($exist->statut === 'accepte') {
-                return response()->json(['message' => 'Vous êtes déjà adhérent.', 'adhesion' => $this->formatAdhesion($exist)]);
+                return response()->json(['message' => 'Vous \u00eates d\u00e9j\u00e0 adh\u00e9rent.', 'adhesion' => $this->formatAdhesion($exist)]);
             }
             if ($exist->statut === 'en_attente') {
-                return response()->json(['message' => 'Demande déjà en attente.', 'adhesion' => $this->formatAdhesion($exist)]);
+                return response()->json(['message' => 'Demande d\u00e9j\u00e0 en attente.', 'adhesion' => $this->formatAdhesion($exist)]);
             }
         }
         if ($cotisation->isPublique()) {
             CotisationAdhesion::create(['membre_id' => $membre->id, 'cotisation_id' => $cotisation->id, 'statut' => 'accepte']);
-            return response()->json(['message' => 'Vous avez adhéré.', 'cotisation' => $this->formatCotisation($cotisation->fresh(), null)]);
+            return response()->json(['message' => 'Vous avez adh\u00e9r\u00e9.', 'cotisation' => $this->formatCotisation($cotisation->fresh(), null)]);
         }
+        // Cagnotte privée : PIN requis
+        $pinError = app(PinService::class)->requirePin($request, $membre);
+        if ($pinError) return $pinError;
+
         CotisationAdhesion::create(['membre_id' => $membre->id, 'cotisation_id' => $cotisation->id, 'statut' => 'en_attente']);
-        return response()->json(['message' => 'Votre demande d\'adhésion a été envoyée.', 'adhesion_statut' => 'en_attente']);
+        return response()->json(['message' => 'Votre demande d\'adh\u00e9sion a \u00e9t\u00e9 envoy\u00e9e.', 'adhesion_statut' => 'en_attente']);
     }
 
     public function showCotisation(Request $request, $id): JsonResponse
@@ -686,14 +691,18 @@ class MembreApiController extends Controller
         }
         $palier = $membre->nanoCreditPalier;
         if (!$palier) {
-            return response()->json(['message' => 'Aucun palier assigné.'], 403);
+            return response()->json(['message' => 'Aucun palier assign\u00e9.'], 403);
         }
         if ($membre->hasCreditEnCours()) {
-            return response()->json(['message' => 'Vous avez déjà un crédit en cours.'], 422);
+            return response()->json(['message' => 'Vous avez d\u00e9j\u00e0 un cr\u00e9dit en cours.'], 422);
         }
 
+        // Vérification du PIN (opération critique : demande de nano-crédit)
+        $pinError = app(PinService::class)->requirePin($request, $membre);
+        if ($pinError) return $pinError;
+
         $validated = $request->validate([
-            'montant' => 'required|numeric|min:1000|max:'.$palier->montant_plafond,
+            'montant'    => 'required|numeric|min:1000|max:'.$palier->montant_plafond,
             'garant_ids' => 'required|array|size:'.$palier->nombre_garants,
             'garant_ids.*' => 'required|exists:membres,id',
         ]);
@@ -701,22 +710,22 @@ class MembreApiController extends Controller
         \Illuminate\Support\Facades\DB::beginTransaction();
         try {
             $nanoCredit = \App\Models\NanoCredit::create([
-                'palier_id' => $palier->id,
-                'membre_id' => $membre->id,
-                'montant' => (int) round($validated['montant'], 0),
-                'statut' => 'demande_en_attente',
+                'palier_id'  => $palier->id,
+                'membre_id'  => $membre->id,
+                'montant'    => (int) round($validated['montant'], 0),
+                'statut'     => 'demande_en_attente',
             ]);
 
             foreach ($validated['garant_ids'] as $garantId) {
                 $garantMembre = \App\Models\Membre::findOrFail($garantId);
                 if (!\App\Models\NanoCreditGarant::membreEstEligibleGarant($garantMembre, $nanoCredit)) {
-                    throw new \Exception("Le membre {$garantMembre->nom_complet} n'est pas éligible comme garant.");
+                    throw new \Exception("Le membre {$garantMembre->nom_complet} n'est pas \u00e9ligible comme garant.");
                 }
 
                 $garantRecord = \App\Models\NanoCreditGarant::create([
                     'nano_credit_id' => $nanoCredit->id,
-                    'membre_id' => $garantId,
-                    'statut' => 'en_attente',
+                    'membre_id'      => $garantId,
+                    'statut'         => 'en_attente',
                 ]);
                 $garantMembre->notify(new \App\Notifications\GarantSollicitationNotification($garantRecord));
             }
@@ -730,7 +739,7 @@ class MembreApiController extends Controller
             }
 
             return response()->json([
-                'message' => 'Demande enregistrée. Vos garants ont été notifiés.',
+                'message'     => 'Demande enregistr\u00e9e. Vos garants ont \u00e9t\u00e9 notifi\u00e9s.',
                 'nano_credit' => ['id' => $nanoCredit->id, 'montant' => (float) $nanoCredit->montant, 'statut' => $nanoCredit->statut],
             ], 201);
         } catch (\Exception $e) {
@@ -989,7 +998,7 @@ class MembreApiController extends Controller
      */
     public function epargneStoreSouscription(Request $request, $planId): JsonResponse
     {
-        $plan = EpargnePlan::where('actif', true)->findOrFail($planId);
+        $plan   = EpargnePlan::where('actif', true)->findOrFail($planId);
         $membre = $request->user();
 
         $souscriptionEnCours = EpargneSouscription::where('membre_id', $membre->id)
@@ -1000,13 +1009,17 @@ class MembreApiController extends Controller
             })
             ->exists();
         if ($souscriptionEnCours) {
-            return response()->json(['message' => 'Vous avez déjà une souscription en cours à ce forfait.'], 422);
+            return response()->json(['message' => 'Vous avez d\u00e9j\u00e0 une souscription en cours \u00e0 ce forfait.'], 422);
         }
+
+        // Vérification du PIN (opération critique : souscription tontine)
+        $pinError = app(PinService::class)->requirePin($request, $membre);
+        if ($pinError) return $pinError;
 
         $montantMin = (float) $plan->montant_min;
         $montantMax = $plan->montant_max ? (float) $plan->montant_max : null;
         $rules = [
-            'montant' => 'required|numeric|min:'.$montantMin,
+            'montant'    => 'required|numeric|min:'.$montantMin,
             'date_debut' => 'required|date|after_or_equal:today',
         ];
         if ($montantMax) {
@@ -1019,16 +1032,16 @@ class MembreApiController extends Controller
 
         $dateDebut = Carbon::parse($validated['date_debut']);
         $dureeMois = (int) ($plan->duree_mois ?? 12);
-        $dateFin = $dateDebut->copy()->addMonths($dureeMois);
+        $dateFin   = $dateDebut->copy()->addMonths($dureeMois);
 
         $souscription = EpargneSouscription::create([
-            'membre_id' => $membre->id,
-            'plan_id' => $plan->id,
-            'montant' => $validated['montant'],
-            'date_debut' => $validated['date_debut'],
-            'date_fin' => $dateFin->format('Y-m-d'),
+            'membre_id'    => $membre->id,
+            'plan_id'      => $plan->id,
+            'montant'      => $validated['montant'],
+            'date_debut'   => $validated['date_debut'],
+            'date_fin'     => $dateFin->format('Y-m-d'),
             'jour_du_mois' => $plan->frequence === 'mensuel' ? (int) $validated['jour_du_mois'] : null,
-            'statut' => 'active',
+            'statut'       => 'active',
             'solde_courant' => 0,
         ]);
         $this->epargneGenererEcheances($souscription);
@@ -1036,8 +1049,8 @@ class MembreApiController extends Controller
         $calc = $plan->calculRemboursement((float) $souscription->montant);
 
         return response()->json([
-            'message' => 'Souscription enregistrée.',
-            'souscription' => $this->formatEpargneSouscription($souscription),
+            'message'              => 'Souscription enregistr\u00e9e.',
+            'souscription'         => $this->formatEpargneSouscription($souscription),
             'montant_total_reverse' => $calc['montant_total_reverse'],
         ]);
     }

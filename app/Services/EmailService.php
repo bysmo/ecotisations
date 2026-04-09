@@ -482,6 +482,107 @@ class EmailService
     }
 
     /**
+     * Envoyer le code OTP par email au membre (lors de l'inscription ou du renvoi OTP).
+     * Si aucun SMTP n'est configuré, retourne false silencieusement.
+     */
+    public function sendOtpEmail(Membre $membre, string $code): bool
+    {
+        if (!$membre->email) {
+            return false;
+        }
+
+        try {
+            $smtp = SMTPConfiguration::where('actif', true)->first();
+            if (!$smtp) {
+                Log::info('sendOtpEmail: Aucune config SMTP active, OTP email non envoyé.', [
+                    'membre_id' => $membre->id,
+                ]);
+                return false;
+            }
+
+            $this->configureSMTP();
+
+            $appNom = \App\Models\AppSetting::get('app_nom', 'Serenity');
+            $expireMinutes = (int) round(\App\Services\OtpService::TTL / 60);
+
+            // Template HTML soigné pour l'email OTP
+            $html = <<<HTML
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Code de vérification – {$appNom}</title>
+</head>
+<body style="margin:0;padding:0;background:#f4f6fa;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6fa;padding:40px 0;">
+    <tr>
+      <td align="center">
+        <table width="520" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+          <!-- En-tête -->
+          <tr>
+            <td style="background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%);padding:36px 40px;text-align:center;">
+              <h1 style="margin:0;color:#ffffff;font-size:26px;font-weight:700;letter-spacing:-0.5px;">{$appNom}</h1>
+              <p style="margin:8px 0 0;color:rgba(255,255,255,0.85);font-size:14px;">Vérification de votre compte</p>
+            </td>
+          </tr>
+          <!-- Corps -->
+          <tr>
+            <td style="padding:40px 40px 32px;">
+              <p style="margin:0 0 16px;color:#374151;font-size:16px;">Bonjour <strong>{$membre->prenom}</strong>,</p>
+              <p style="margin:0 0 28px;color:#6b7280;font-size:15px;line-height:1.6;">
+                Voici votre code de vérification. Ce code est valable <strong>{$expireMinutes} minutes</strong> et ne doit être partagé avec personne.
+              </p>
+              <!-- Code OTP -->
+              <div style="background:#f8f7ff;border:2px solid #4f46e5;border-radius:10px;padding:28px;text-align:center;margin:0 0 28px;">
+                <p style="margin:0 0 8px;color:#6b7280;font-size:13px;text-transform:uppercase;letter-spacing:1px;font-weight:600;">Votre code OTP</p>
+                <p style="margin:0;color:#4f46e5;font-size:42px;font-weight:800;letter-spacing:12px;font-family:monospace;">{$code}</p>
+              </div>
+              <p style="margin:0 0 8px;color:#9ca3af;font-size:13px;">
+                ⚠️ Si vous n'avez pas demandé ce code, vous pouvez ignorer cet email en toute sécurité.
+              </p>
+            </td>
+          </tr>
+          <!-- Pied de page -->
+          <tr>
+            <td style="background:#f9fafb;padding:20px 40px;border-top:1px solid #e5e7eb;text-align:center;">
+              <p style="margin:0;color:#9ca3af;font-size:12px;">
+                © {$appNom} — Ne jamais partager ce code.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+HTML;
+
+            $sujet = "[$appNom] Votre code de vérification : {$code}";
+
+            Mail::html($html, function ($message) use ($membre, $sujet) {
+                $message->to($membre->email)
+                        ->subject($sujet);
+            });
+
+            Log::info('OTP email envoyé au membre.', [
+                'membre_id' => $membre->id,
+                'email'     => $membre->email,
+            ]);
+
+            return true;
+        } catch (\Exception $e) {
+            // L'OTP SMS reste valide même si l'email échoue
+            Log::warning('sendOtpEmail: Erreur lors de l\'envoi de l\'email OTP.', [
+                'membre_id' => $membre->id,
+                'error'     => $e->getMessage(),
+            ]);
+            return false;
+        }
+    }
+
+    /**
      * Générer le PDF pour un engagement
      */
     private function generateEngagementPDF(Engagement $engagement)
