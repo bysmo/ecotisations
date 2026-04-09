@@ -65,24 +65,19 @@
                                         @endif
                                     </td>
                                     
-                                    <td class="align-middle" style="max-width: 400px;">
+                                    <td class="align-middle" style="max-width: 500px;">
                                         @if($log->is_valid)
                                             <span class="text-muted font-monospace" style="font-size: 0.75rem;">Aucune altération détectée. Le calcul concorde.</span>
                                         @else
-                                            <div class="alert alert-danger p-2 mb-0" style="font-size: 0.70rem; max-height: 100px; overflow-y: auto;">
-                                                @if(is_array($log->corrupted_data) && count($log->corrupted_data) > 0)
-                                                    <ul class="mb-0 ps-3">
-                                                        @foreach(array_slice($log->corrupted_data, 0, 10) as $err)
-                                                            <li><code>{{ $err['table'] }}</code> (ID: {{ $err['id'] }})</li>
-                                                        @endforeach
-                                                        
-                                                        @if(count($log->corrupted_data) > 10)
-                                                            <li><em class="text-danger opacity-75">+ {{ count($log->corrupted_data) - 10 }} autres entrées altérées...</em></li>
-                                                        @endif
-                                                    </ul>
-                                                @else
-                                                    Détails manquants.
-                                                @endif
+                                            <div class="p-2 mb-0 rounded text-center" style="background-color: #f8d7da; border: 1px solid #f5c2c7;">
+                                                <div class="mb-2 text-danger fw-bold">
+                                                    <i class="bi bi-exclamation-octagon-fill fs-5 align-middle"></i> 
+                                                    Plusieurs tables compromises
+                                                </div>
+                                                <a href="{{ route('logs.security.show', $log->id) }}" class="btn btn-danger btn-sm text-white fw-bold shadow-sm" style="text-decoration: none;">
+                                                    <i class="bi bi-list-columns-reverse"></i> 
+                                                    Traiter les {{ $log->corrupted_count }} altérations
+                                                </a>
                                             </div>
                                         @endif
                                     </td>

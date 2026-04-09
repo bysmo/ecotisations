@@ -198,6 +198,8 @@ Route::get('/caisses/{caisse}/mouvements', [CaisseController::class, 'mouvements
 
     // Tableau de bord de corruption (Scan Checksum)
     Route::get('/logs/security', [\App\Http\Controllers\SecurityLogController::class, 'index'])->name('logs.security');
+    Route::post('/logs/security/remediate', [\App\Http\Controllers\SecurityLogController::class, 'remediate'])->name('logs.security.remediate');
+    Route::get('/logs/security/{log}', [\App\Http\Controllers\SecurityLogController::class, 'show'])->name('logs.security.show');
 
     // Routes pour les paramètres généraux
     Route::get('/settings', [\App\Http\Controllers\SettingController::class, 'index'])->name('settings.index');

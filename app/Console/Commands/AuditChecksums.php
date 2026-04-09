@@ -58,29 +58,72 @@ class AuditChecksums extends Command
             $tableName = (new $modelClass)->getTable();
             $this->info("Audit de la table : {$tableName}...");
             
-            $modelClass::chunk(500, function ($records) use (&$errors, &$totalChecked, $tableName, &$corruptedDataDetails) {
+            $modelClass::chunk(500, function ($records) use (&$errors, &$totalChecked, $tableName, &$corruptedDataDetails, $modelClass) {
                 foreach ($records as $record) {
                     $totalChecked++;
                     
                     if (!$record->verifyChecksum()) {
                         $errors++;
-                        $message = "ALERTE SÉCURITÉ : Intégrité compromise dans {$tableName} (ID: {$record->id})";
                         
+                        // FORENSIC: Recherche du dernier log légitime d'Audit pour ce record
+                        $lastLog = \App\Models\AuditLog::where('model', $modelClass)
+                            ->where('model_id', $record->id)
+                            ->orderBy('created_at', 'desc')
+                            ->first();
+
+                        $impactedColumns = [];
+                        $origin = 'Inconnu (Manipulation SQL possible)';
+                        $userRef = null;
+                        
+                        $currentAttrs = $record->getAttributes();
+                        
+                        if ($lastLog && !empty($lastLog->new_values)) {
+                            $legitimateAttrs = $lastLog->new_values;
+                            
+                            // On compare chaque colonne, en ignorant les dates système et le checksum lui-même
+                            $ignoredKeys = ['checksum', 'created_at', 'updated_at', 'deleted_at'];
+                            
+                            foreach ($currentAttrs as $key => $currVal) {
+                                if (in_array($key, $ignoredKeys)) continue;
+                                
+                                $legitVal = $legitimateAttrs[$key] ?? null;
+                                // Cast simple pour éviter les faux positifs sur ints/strings
+                                if ((string)$currVal !== (string)$legitVal) {
+                                    $impactedColumns[] = [
+                                        'field' => $key,
+                                        'expected' => $legitVal,
+                                        'actual' => $currVal
+                                    ];
+                                }
+                            }
+                            
+                            $origin = "Bypass Applicatif ou Injection Récente";
+                            if ($lastLog->user_id) {
+                                $origin = "Modification par User ID: " . $lastLog->user_id;
+                                $userRef = $lastLog->user_id;
+                            }
+                        } else {
+                            $origin = "Aucune trace applicative (Manipulation SQL pure)";
+                        }
+
+                        $message = "ALERTE SÉCURITÉ : Intégrité compromise dans {$tableName} (ID: {$record->id})";
                         $this->error($message);
                         
                         Log::channel('security')->alert($message, [
                             'table' => $tableName,
                             'id' => $record->id,
-                            'expected' => $record->calculateChecksum(),
-                            'actual' => $record->checksum,
-                            'data' => $record->getAttributes()
+                            'impacted_columns' => $impactedColumns,
+                            'origin' => $origin
                         ]);
 
-                        // Enregistrer un résumé pour le gadget/log
+                        // Enregistrer un résumé détaillé pour le Forensic UI
                         $corruptedDataDetails[] = [
-                            'table' => $tableName,
-                            'id'    => $record->id,
-                            'error' => 'Checksum Mismatch',
+                            'model'  => $modelClass,
+                            'table'  => $tableName,
+                            'id'     => $record->id,
+                            'impacted_columns' => $impactedColumns,
+                            'origin' => $origin,
+                            'user_id'=> $userRef
                         ];
                     }
                 }
