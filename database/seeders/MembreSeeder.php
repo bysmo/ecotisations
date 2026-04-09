@@ -64,11 +64,13 @@ class MembreSeeder extends Seeder
             ];
         }
         
-        // Insertion en batch (beaucoup plus rapide)
-        foreach (array_chunk($membresData, 10) as $chunk) {
-            Membre::insert($chunk);
-            $created += count($chunk);
-            $this->command->info("Créé {$created}/{$nbMembres} membres...");
+        // Insertion un par un pour déclencher le trait HasChecksum
+        foreach ($membresData as $data) {
+            Membre::create($data);
+            $created++;
+            if ($created % 10 === 0) {
+                $this->command->info("Créé {$created}/{$nbMembres} membres...");
+            }
         }
         
         $this->command->info("{$created} membre(s) créé(s) avec succès.");

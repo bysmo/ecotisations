@@ -9,7 +9,12 @@
         <p class="text-muted mb-0" style="font-size: 0.8rem;">Historique des scans d'intégrité de la base de données (Calcul des Checksums et hachages récursistes).</p>
     </div>
     <div>
-        <!-- Le gadget sera déjà affiché dans la Navbar du Layout, mais on peut rajouter un bouton manuel ici si besoin -->
+        <form action="{{ route('logs.security.scan') }}" method="POST" class="d-inline">
+            @csrf
+            <button type="submit" class="btn btn-primary shadow-sm" onclick="return confirm('Êtes-vous sûr de vouloir lancer un scan manuel des checksums de toute la base de données ? Cela peut ralentir temporairement le système.');">
+                <i class="bi bi-play-circle-fill"></i> Lancer un Scan Manuel
+            </button>
+        </form>
     </div>
 </div>
 

@@ -51,21 +51,86 @@ class AuditChecksums extends Command
 
         $errors = 0;
         $totalChecked = 0;
-
         $corruptedDataDetails = [];
 
+        // ----------------------------------------------------
+        // PASSE 1 : Validation de l'intégrité de la chaîne Merkle
+        // ----------------------------------------------------
+        $this->info("Validation de l'intégrité globale de la chaîne Merkle (Ledger)...");
+        
+        $previousHash = null;
+        $ledgerIntegrityBroken = false;
+        $aliveRecordsPerTable = [];
+
+        if (\Illuminate\Support\Facades\Schema::hasTable('system_merkle_ledgers')) {
+            \App\Models\SystemMerkleLedger::orderBy('id')->chunk(2000, function ($ledgers) use (&$previousHash, &$ledgerIntegrityBroken, &$errors, &$corruptedDataDetails, &$aliveRecordsPerTable) {
+                if ($ledgerIntegrityBroken) return false;
+
+                foreach ($ledgers as $ledger) {
+                    $key = config('app.key');
+                    $payload = implode('|', [
+                        $ledger->table_name,
+                        $ledger->record_id,
+                        $ledger->action,
+                        $ledger->record_checksum ?? '',
+                        $previousHash ?? ''
+                    ]);
+                    $expectedHash = hash_hmac('sha256', $payload, $key);
+
+                    if ($expectedHash !== $ledger->hash_chain) {
+                        $errors++;
+                        $ledgerIntegrityBroken = true;
+                        
+                        $msg = "ALERTE CRITIQUE : La chaîne Merkle est corrompue à l'ID {$ledger->id} (Manipulation SQL du Ledger).";
+                        $this->error($msg);
+                        Log::channel('security')->alert($msg);
+
+                        $corruptedDataDetails[] = [
+                            'model'  => 'SystemMerkleLedger',
+                            'table'  => 'system_merkle_ledgers',
+                            'id'     => $ledger->id,
+                            'impacted_columns' => [['field' => 'hash_chain', 'expected' => $expectedHash, 'actual' => $ledger->hash_chain]],
+                            'origin' => 'Manipulation et destruction du Ledger cryptographique'
+                        ];
+                        return false; // Break chunking
+                    }
+                    $previousHash = $ledger->hash_chain;
+
+                    // Compute "alive" records
+                    $table = $ledger->table_name;
+                    $recordId = (int)$ledger->record_id;
+                    if (!isset($aliveRecordsPerTable[$table])) {
+                        $aliveRecordsPerTable[$table] = [];
+                    }
+                    
+                    if ($ledger->action === 'deleted') {
+                        unset($aliveRecordsPerTable[$table][$recordId]);
+                    } else {
+                        $aliveRecordsPerTable[$table][$recordId] = true;
+                    }
+                }
+            });
+        }
+
+        // ----------------------------------------------------
+        // PASSE 2 & 3 : Vérification de Consistance et Checksums
+        // ----------------------------------------------------
         foreach ($models as $modelClass) {
             $tableName = (new $modelClass)->getTable();
             $this->info("Audit de la table : {$tableName}...");
             
-            $modelClass::chunk(500, function ($records) use (&$errors, &$totalChecked, $tableName, &$corruptedDataDetails, $modelClass) {
+            $expectedIds = isset($aliveRecordsPerTable[$tableName]) ? array_keys($aliveRecordsPerTable[$tableName]) : [];
+            $actualIds = [];
+            
+            $modelClass::chunk(500, function ($records) use (&$errors, &$totalChecked, $tableName, &$corruptedDataDetails, $modelClass, &$actualIds) {
                 foreach ($records as $record) {
                     $totalChecked++;
+                    $actualIds[] = $record->id;
                     
+                    // Vérification de la signature statique intra-ligne
                     if (!$record->verifyChecksum()) {
                         $errors++;
                         
-                        // FORENSIC: Recherche du dernier log légitime d'Audit pour ce record
                         $lastLog = \App\Models\AuditLog::where('model', $modelClass)
                             ->where('model_id', $record->id)
                             ->orderBy('created_at', 'desc')
@@ -79,24 +144,15 @@ class AuditChecksums extends Command
                         
                         if ($lastLog && !empty($lastLog->new_values)) {
                             $legitimateAttrs = $lastLog->new_values;
-                            
-                            // On compare chaque colonne, en ignorant les dates système et le checksum lui-même
-                            $ignoredKeys = ['checksum', 'created_at', 'updated_at', 'deleted_at'];
+                            $ignoredKeys = ['id', 'checksum', 'created_at', 'updated_at', 'deleted_at'];
                             
                             foreach ($currentAttrs as $key => $currVal) {
                                 if (in_array($key, $ignoredKeys)) continue;
-                                
                                 $legitVal = $legitimateAttrs[$key] ?? null;
-                                // Cast simple pour éviter les faux positifs sur ints/strings
                                 if ((string)$currVal !== (string)$legitVal) {
-                                    $impactedColumns[] = [
-                                        'field' => $key,
-                                        'expected' => $legitVal,
-                                        'actual' => $currVal
-                                    ];
+                                    $impactedColumns[] = ['field' => $key, 'expected' => $legitVal, 'actual' => $currVal];
                                 }
                             }
-                            
                             $origin = "Bypass Applicatif ou Injection Récente";
                             if ($lastLog->user_id) {
                                 $origin = "Modification par User ID: " . $lastLog->user_id;
@@ -108,15 +164,8 @@ class AuditChecksums extends Command
 
                         $message = "ALERTE SÉCURITÉ : Intégrité compromise dans {$tableName} (ID: {$record->id})";
                         $this->error($message);
-                        
-                        Log::channel('security')->alert($message, [
-                            'table' => $tableName,
-                            'id' => $record->id,
-                            'impacted_columns' => $impactedColumns,
-                            'origin' => $origin
-                        ]);
+                        Log::channel('security')->alert($message, ['table' => $tableName, 'id' => $record->id, 'origin' => $origin]);
 
-                        // Enregistrer un résumé détaillé pour le Forensic UI
                         $corruptedDataDetails[] = [
                             'model'  => $modelClass,
                             'table'  => $tableName,
@@ -128,6 +177,39 @@ class AuditChecksums extends Command
                     }
                 }
             });
+
+            // Si le Ledger est intact, on audite les Insertions et Suppressions
+            if (!$ledgerIntegrityBroken && \Illuminate\Support\Facades\Schema::hasTable('system_merkle_ledgers')) {
+                // Fantômes (Insérés directement en SQL, contournent l'app)
+                $phantoms = array_diff($actualIds, $expectedIds);
+                foreach ($phantoms as $phantomId) {
+                    $errors++;
+                    $corruptedDataDetails[] = [
+                        'model'  => $modelClass,
+                        'table'  => $tableName,
+                        'id'     => $phantomId,
+                        'impacted_columns' => [['field' => 'ligne', 'expected' => 'absent (non tracé)', 'actual' => 'présent']],
+                        'origin' => 'Insertion SQL non autorisée (Fantôme)'
+                    ];
+                    $this->error("Fantôme détecté dans {$tableName} (ID: {$phantomId})");
+                    Log::channel('security')->alert("Insertion SQL détectée dans {$tableName} (ID: {$phantomId})");
+                }
+
+                // Disparus (Supprimés directement en SQL, contournent l'app)
+                $missing = array_diff($expectedIds, $actualIds);
+                foreach ($missing as $missingId) {
+                    $errors++;
+                    $corruptedDataDetails[] = [
+                        'model'  => $modelClass,
+                        'table'  => $tableName,
+                        'id'     => $missingId,
+                        'impacted_columns' => [['field' => 'ligne', 'expected' => 'présent (tracé)', 'actual' => 'absent']],
+                        'origin' => 'Suppression SQL non autorisée (Evaporation)'
+                    ];
+                    $this->error("Évaporation détectée dans {$tableName} (ID: {$missingId})");
+                    Log::channel('security')->alert("Suppression SQL détectée dans {$tableName} (ID: {$missingId})");
+                }
+            }
         }
 
         $this->info("Audit terminé.");

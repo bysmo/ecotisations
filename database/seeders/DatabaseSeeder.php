@@ -20,13 +20,13 @@ use App\Models\Remboursement;
 use App\Models\EmailCampaign;
 use App\Models\EmailLog;
 use App\Models\PaymentMethod;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
+
 
     /**
      * Seed the application's database.

@@ -250,7 +250,7 @@
     <div class="col-md-6">
         <div class="card">
             <div class="card-header">
-                <i class="bi bi-file-earmark-text"></i> Top 10 Cotisations
+                <i class="bi bi-file-earmark-text"></i> Top 10 Cagnottes
             </div>
             <div class="card-body" style="height: 350px; position: relative;">
                 @if($statistiquesCotisations->count() > 0)

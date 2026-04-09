@@ -19,6 +19,23 @@ class SecurityLogController extends Controller
     }
 
     /**
+     * Lance manuellement un scan de sécurité sur demande de l'administrateur
+     */
+    public function scan()
+    {
+        try {
+            \Illuminate\Support\Facades\Artisan::call('audit:checksums');
+            $output = \Illuminate\Support\Facades\Artisan::output();
+            
+            // On peut logger la sortie si besoin, mais le résultat est de toute façon enregistré en base
+            // par la commande elle-même.
+            return back()->with('success', 'Le scan manuel des checksums a été exécuté avec succès.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Erreur lors du lancement du scan manuel : ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Affiche le rapport détaillé d'un scan spécifique.
      */
     public function show($id)
@@ -67,7 +84,7 @@ class SecurityLogController extends Controller
                     }
 
                     // Restaurer les champs
-                    $ignoredKeys = ['checksum', 'created_at', 'updated_at', 'deleted_at'];
+                    $ignoredKeys = ['id', 'checksum', 'created_at', 'updated_at', 'deleted_at'];
                     foreach ($lastLog->new_values as $key => $value) {
                          if (!in_array($key, $ignoredKeys) && array_key_exists($key, $record->getAttributes())) {
                              $record->{$key} = $value;

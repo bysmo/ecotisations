@@ -48,6 +48,9 @@ class InitializeChecksums extends Command
             Membre::class,
         ];
 
+        $this->info("Réinitialisation du Ledger cryptographique (Hash Chain)...");
+        \App\Models\SystemMerkleLedger::truncate();
+
         foreach ($models as $modelClass) {
             $tableName = (new $modelClass)->getTable();
             $this->info("Initialisation de la table : {$tableName}...");
@@ -58,6 +61,12 @@ class InitializeChecksums extends Command
                     // En sauvegardant, le trait HasChecksum va générer le checksum
                     // et les cast EncryptedDecimal vont chiffrer les montants.
                     $record->save();
+                    
+                    // On force manuellement l'insertion dans le Ledger pour être certain que la 
+                    // chaine initiale contient bien chaque ligne.
+                    if (method_exists($record, 'appendToMerkleLedger')) {
+                        $record->appendToMerkleLedger('created');
+                    }
                     $count++;
                 }
             });
