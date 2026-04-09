@@ -283,7 +283,7 @@ Route::prefix('membre')->name('membre.')->group(function () {
         Route::get('/cotisations/publiques', [\App\Http\Controllers\MembreDashboardController::class, 'cotisationsPubliques'])->name('cotisations.publiques');
         Route::get('/cotisations/privees', [\App\Http\Controllers\MembreDashboardController::class, 'cotisationsPrivees'])->name('cotisations.privees');
         Route::get('/cotisations/rechercher', [\App\Http\Controllers\MembreCotisationController::class, 'rechercher'])->name('cotisations.rechercher');
-        Route::post('/cotisations/{cotisation}/adherer', [\App\Http\Controllers\MembreDashboardController::class, 'adhererCotisation'])->name('cotisations.adherer');
+        Route::post('/cotisations/{cotisation}/adherer', [\App\Http\Controllers\MembreDashboardController::class, 'adhererCotisation'])->name('cotisations.adherer')->middleware(\App\Http\Middleware\VerifyMembrePinWeb::class);
         Route::get('/cotisations/{id}', [\App\Http\Controllers\MembreDashboardController::class, 'showCotisation'])->name('cotisations.show');
         Route::get('/mes-cotisations/creer', [\App\Http\Controllers\MembreCotisationController::class, 'create'])->name('mes-cotisations.create');
         Route::post('/mes-cotisations/creer', [\App\Http\Controllers\MembreCotisationController::class, 'store'])->name('mes-cotisations.store');
@@ -307,7 +307,7 @@ Route::prefix('membre')->name('membre.')->group(function () {
         Route::get('/nano-credits', [\App\Http\Controllers\MembreNanoCreditController::class, 'index'])->name('nano-credits');
         Route::get('/nano-credits/mes', [\App\Http\Controllers\MembreNanoCreditController::class, 'mes'])->name('nano-credits.mes');
         Route::get('/nano-credits/demander', [\App\Http\Controllers\MembreNanoCreditController::class, 'demander'])->name('nano-credits.demander');
-        Route::post('/nano-credits/demander', [\App\Http\Controllers\MembreNanoCreditController::class, 'storeDemande'])->name('nano-credits.demander.store');
+        Route::post('/nano-credits/demander', [\App\Http\Controllers\MembreNanoCreditController::class, 'storeDemande'])->name('nano-credits.demander.store')->middleware(\App\Http\Middleware\VerifyMembrePinWeb::class);
         Route::get('/nano-credits/search-guarantors', [\App\Http\Controllers\MembreNanoCreditController::class, 'searchGuarantors'])->name('nano-credits.search-guarantors');
         Route::get('/nano-credits/{nanoCredit}/modifier-garants', [\App\Http\Controllers\MembreNanoCreditController::class, 'modifierGarants'])->name('nano-credits.modifier-garants');
         Route::post('/nano-credits/{nanoCredit}/modifier-garants', [\App\Http\Controllers\MembreNanoCreditController::class, 'updateGarants'])->name('nano-credits.update-garants');
@@ -315,7 +315,7 @@ Route::prefix('membre')->name('membre.')->group(function () {
         Route::get('/epargne', [\App\Http\Controllers\MembreEpargneController::class, 'index'])->name('epargne.index');
         Route::get('/epargne/mes-epargnes', [\App\Http\Controllers\MembreEpargneController::class, 'mesEpargnes'])->name('epargne.mes-epargnes');
         Route::get('/epargne/souscrire/{plan}', [\App\Http\Controllers\MembreEpargneController::class, 'souscrire'])->name('epargne.souscrire');
-        Route::post('/epargne/souscrire/{plan}', [\App\Http\Controllers\MembreEpargneController::class, 'storeSouscription'])->name('epargne.souscrire.store');
+        Route::post('/epargne/souscrire/{plan}', [\App\Http\Controllers\MembreEpargneController::class, 'storeSouscription'])->name('epargne.souscrire.store')->middleware(\App\Http\Middleware\VerifyMembrePinWeb::class);
         Route::get('/epargne/souscription/{souscription}', [\App\Http\Controllers\MembreEpargneController::class, 'showSouscription'])->name('epargne.souscription.show');
         Route::post('/epargne/echeance/{echeance}/paydunya', [\App\Http\Controllers\MembreEpargneController::class, 'initierPaiementEpargnePayDunya'])->name('epargne.echeance.paydunya');
         Route::get('/profil', [\App\Http\Controllers\MembreDashboardController::class, 'profil'])->name('profil');
@@ -325,10 +325,10 @@ Route::prefix('membre')->name('membre.')->group(function () {
         Route::prefix('garant')->name('garant.')->group(function () {
             Route::get('/', [\App\Http\Controllers\MembreGarantController::class, 'index'])->name('index');
             Route::get('/sollicitations', [\App\Http\Controllers\MembreGarantController::class, 'sollicitations'])->name('sollicitations');
-            Route::post('/sollicitations/{garant}/accepter', [\App\Http\Controllers\MembreGarantController::class, 'accepter'])->name('accepter');
-            Route::post('/sollicitations/{garant}/refuser', [\App\Http\Controllers\MembreGarantController::class, 'refuser'])->name('refuser');
+            Route::post('/sollicitations/{garant}/accepter', [\App\Http\Controllers\MembreGarantController::class, 'accepter'])->name('accepter')->middleware(\App\Http\Middleware\VerifyMembrePinWeb::class);
+            Route::post('/sollicitations/{garant}/refuser', [\App\Http\Controllers\MembreGarantController::class, 'refuser'])->name('refuser')->middleware(\App\Http\Middleware\VerifyMembrePinWeb::class);
             Route::get('/engagements', [\App\Http\Controllers\MembreGarantController::class, 'engagements'])->name('engagements');
-            Route::post('/retrait', [\App\Http\Controllers\MembreGarantController::class, 'withdraw'])->name('withdraw');
+            Route::post('/retrait', [\App\Http\Controllers\MembreGarantController::class, 'withdraw'])->name('withdraw')->middleware(\App\Http\Middleware\VerifyMembrePinWeb::class);
         });
 
         // Notifications (cloche top bar)
@@ -336,6 +336,16 @@ Route::prefix('membre')->name('membre.')->group(function () {
         Route::post('/notifications/{id}/read', [\App\Http\Controllers\MembreNotificationController::class, 'markAsRead'])->name('notifications.read');
         Route::post('/notifications/read-all', [\App\Http\Controllers\MembreNotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
         Route::get('/notifications', [\App\Http\Controllers\MembreNotificationController::class, 'index'])->name('notifications.index');
+        
+        // ─── Sécurité PIN (Web) ──────────────────────────────────────────────
+        Route::post('/pin/setup', [\App\Http\Controllers\MembrePinWebController::class, 'setup'])->name('pin.setup');
+        Route::post('/pin/enable', [\App\Http\Controllers\MembrePinWebController::class, 'enable'])->name('pin.enable');
+        Route::post('/pin/disable', [\App\Http\Controllers\MembrePinWebController::class, 'disable'])->name('pin.disable');
+        Route::post('/pin/change', [\App\Http\Controllers\MembrePinWebController::class, 'change'])->name('pin.change');
+        
+        // Interception PIN
+        Route::get('/pin/verify-action', [\App\Http\Controllers\MembrePinWebController::class, 'showVerifyActionForm'])->name('pin.verify-action');
+        Route::post('/pin/verify-action', [\App\Http\Controllers\MembrePinWebController::class, 'verifyAction'])->name('pin.verify-action.submit');
     });
 });
 

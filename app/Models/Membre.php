@@ -50,6 +50,8 @@ class Membre extends Authenticatable implements MustVerifyEmail
         'code_pin_created_at',
         'pin_attempts',
         'pin_locked_until',
+        'pin_enabled',
+        'pin_mode',
     ];
 
     protected $hidden = [
@@ -72,6 +74,7 @@ class Membre extends Authenticatable implements MustVerifyEmail
             'code_pin_created_at'   => 'datetime',
             'pin_locked_until'      => 'datetime',
             'pin_attempts'          => 'integer',
+            'pin_enabled'           => 'boolean',
         ];
     }
 
@@ -139,6 +142,56 @@ class Membre extends Authenticatable implements MustVerifyEmail
             'code_pin_created_at' => now(),
             'pin_attempts'        => 0,
             'pin_locked_until'    => null,
+        ]);
+    }
+
+    /**
+     * Indique si le membre a activé la protection PIN.
+     */
+    public function isPinEnabled(): bool
+    {
+        return (bool) ($this->pin_enabled ?? false);
+    }
+
+    /**
+     * Indique si le mode choisi est la session 5 minutes (option B).
+     */
+    public function isPinModeSession(): bool
+    {
+        return ($this->pin_mode ?? 'each_time') === 'session';
+    }
+
+    /**
+     * Active la protection PIN avec le mode spécifié.
+     * Nécessite que le PIN soit déjà défini.
+     *
+     * @param string $mode  'each_time' (option A) | 'session' (option B)
+     */
+    public function enablePin(string $mode = 'each_time'): void
+    {
+        $this->update([
+            'pin_enabled' => true,
+            'pin_mode'    => in_array($mode, ['each_time', 'session']) ? $mode : 'each_time',
+        ]);
+    }
+
+    /**
+     * Désactive la protection PIN (les opérations critiques ne demandent plus le PIN).
+     */
+    public function disablePin(): void
+    {
+        $this->update(['pin_enabled' => false]);
+    }
+
+    /**
+     * Change le mode PIN sans activer/désactiver.
+     *
+     * @param string $mode  'each_time' | 'session'
+     */
+    public function setPinMode(string $mode): void
+    {
+        $this->update([
+            'pin_mode' => in_array($mode, ['each_time', 'session']) ? $mode : 'each_time',
         ]);
     }
 

@@ -126,6 +126,8 @@
                         </button>
                     </div>
                 </form>
+
+                @include('membres.pin.settings')
             </div>
         </div>
     </div>

@@ -29,8 +29,12 @@ Route::prefix('membre')->group(function () {
         // ── Code PIN de sécurité ──────────────────────────────────────────────
         Route::get('pin/status', [PinApiController::class, 'status']);
         Route::post('pin/setup', [PinApiController::class, 'setup']);
+        Route::post('pin/enable', [PinApiController::class, 'enable']);
+        Route::post('pin/disable', [PinApiController::class, 'disable']);
+        Route::post('pin/mode', [PinApiController::class, 'changeMode']);
         Route::post('pin/change', [PinApiController::class, 'change']);
         Route::post('pin/verify', [PinApiController::class, 'verify']);
+
 
         // Notifications & Tokens
         Route::get('notifications', [MembreApiController::class, 'notifications']);
