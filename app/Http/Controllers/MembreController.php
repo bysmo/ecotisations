@@ -102,15 +102,14 @@ class MembreController extends Controller
             'telephone' => 'nullable|string|max:20',
             'adresse' => 'nullable|string',
             'date_adhesion' => 'required|date',
-            'statut' => 'required|in:actif,inactif,suspendu',
-            'password' => 'required|string|min:6',
+            'statut' => 'required|in:actif,inactif,suspendu,en_attente',
         ]);
 
         // Générer un numéro de membre unique
         $validated['numero'] = $this->generateNumeroMembre();
 
-        // Hasher le mot de passe
-        $validated['password'] = Hash::make($validated['password']);
+        // Générer un mot de passe aléatoire (le membre devra le réinitialiser via "mot de passe oublié")
+        $validated['password'] = Hash::make(Str::random(16));
 
         // Normaliser le téléphone
         if (!empty($validated['telephone'])) {
@@ -206,16 +205,9 @@ class MembreController extends Controller
             'telephone' => 'nullable|string|max:20',
             'adresse' => 'nullable|string',
             'date_adhesion' => 'required|date',
-            'statut' => 'required|in:actif,inactif,suspendu',
-            'password' => 'nullable|string|min:6',
+            'statut' => 'required|in:actif,inactif,suspendu,en_attente',
         ]);
 
-        // Si le mot de passe est fourni, le hasher
-        if (!empty($validated['password'])) {
-            $validated['password'] = Hash::make($validated['password']);
-        } else {
-            unset($validated['password']);
-        }
 
         // Normaliser le téléphone
         if (!empty($validated['telephone'])) {

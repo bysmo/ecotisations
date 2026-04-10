@@ -124,6 +124,7 @@
                             name="statut" 
                             required>
                         <option value="actif" {{ old('statut', $membre->statut) === 'actif' ? 'selected' : '' }}>Actif</option>
+                        <option value="en_attente" {{ old('statut', $membre->statut) === 'en_attente' ? 'selected' : '' }}>En attente</option>
                         <option value="inactif" {{ old('statut', $membre->statut) === 'inactif' ? 'selected' : '' }}>Inactif</option>
                         <option value="suspendu" {{ old('statut', $membre->statut) === 'suspendu' ? 'selected' : '' }}>Suspendu</option>
                     </select>
@@ -133,17 +134,6 @@
                 </div>
             </div>
             
-            <div class="mb-3">
-                <label for="password" class="form-label">Nouveau mot de passe</label>
-                <input type="password" 
-                       class="form-control @error('password') is-invalid @enderror" 
-                       id="password" 
-                       name="password">
-                @error('password')
-                    <div class="invalid-feedback">{{ $message }}</div>
-                @enderror
-                <small class="form-text text-muted" style="font-size: 0.7rem;">Laisser vide pour ne pas modifier</small>
-            </div>
             
             <div class="d-flex justify-content-between">
                 <a href="{{ route('membres.index') }}" class="btn btn-secondary">

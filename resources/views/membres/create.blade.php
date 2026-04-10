@@ -125,6 +125,7 @@
                             name="statut" 
                             required>
                         <option value="actif" {{ old('statut') === 'actif' ? 'selected' : '' }}>Actif</option>
+                        <option value="en_attente" {{ old('statut') === 'en_attente' ? 'selected' : '' }}>En attente</option>
                         <option value="inactif" {{ old('statut') === 'inactif' ? 'selected' : '' }}>Inactif</option>
                         <option value="suspendu" {{ old('statut') === 'suspendu' ? 'selected' : '' }}>Suspendu</option>
                     </select>
@@ -134,20 +135,6 @@
                 </div>
             </div>
             
-            <div class="mb-3">
-                <label for="password" class="form-label">
-                    Mot de passe <span class="text-danger">*</span>
-                </label>
-                <input type="password" 
-                       class="form-control @error('password') is-invalid @enderror" 
-                       id="password" 
-                       name="password" 
-                       required>
-                @error('password')
-                    <div class="invalid-feedback">{{ $message }}</div>
-                @enderror
-                <small class="form-text text-muted" style="font-size: 0.7rem;">Minimum 6 caractères</small>
-            </div>
             
             <div class="d-flex justify-content-between">
                 <a href="{{ route('membres.index') }}" class="btn btn-secondary">
@@ -175,14 +162,11 @@
                     Un membre est une personne inscrite dans votre organisation qui peut effectuer des paiements de cotisations. Chaque membre reçoit un numéro unique et peut se connecter pour consulter ses paiements.
                 </p>
                 
-                <h6 class="mt-4 mb-3" style="font-weight: 300; font-family: 'Ubuntu', sans-serif; color: var(--primary-dark-blue);">
-                    <i class="bi bi-shield-check"></i> Informations requises
-                </h6>
                 <ul style="font-size: 0.75rem; line-height: 1.8; font-weight: 300; font-family: 'Ubuntu', sans-serif; color: #666; padding-left: 1.2rem;">
                     <li><strong>Nom et prénom :</strong> Identité complète</li>
                     <li><strong>Email :</strong> Pour les notifications et connexion</li>
                     <li><strong>Date d'adhésion :</strong> Date d'inscription</li>
-                    <li><strong>Mot de passe :</strong> Minimum 6 caractères</li>
+                    <li><strong>Mot de passe :</strong> Géré par le membre (Lien de reset)</li>
                 </ul>
                 
                 <h6 class="mt-4 mb-3" style="font-weight: 300; font-family: 'Ubuntu', sans-serif; color: var(--primary-dark-blue);">
@@ -190,6 +174,7 @@
                 </h6>
                 <p style="font-size: 0.75rem; line-height: 1.5; font-weight: 300; font-family: 'Ubuntu', sans-serif; color: #666;">
                     <strong>Actif :</strong> Membre pouvant effectuer des paiements<br>
+                    <strong>En attente :</strong> Membre en attente de validation OTP<br>
                     <strong>Inactif :</strong> Membre temporairement désactivé<br>
                     <strong>Suspendu :</strong> Membre suspendu par décision administrative
                 </p>
