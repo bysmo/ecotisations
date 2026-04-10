@@ -26,7 +26,7 @@ return new class extends Migration
 
             // Ajouter les nouvelles colonnes polymorphiques
             $table->nullableMorphs('actor'); // Crée actor_id et actor_type
-        });
+        }); 
     }
 
     /**
