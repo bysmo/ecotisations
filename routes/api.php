@@ -46,6 +46,7 @@ Route::prefix('membre')->group(function () {
         Route::get('dashboard', [MembreApiController::class, 'dashboard']);
         Route::get('profil', [MembreApiController::class, 'profil']);
         Route::put('profil', [MembreApiController::class, 'updateProfil']);
+        Route::get('segments', [MembreApiController::class, 'segments']);
         Route::get('kyc', [MembreApiController::class, 'kyc']);
         Route::post('kyc', [MembreApiController::class, 'kycStore']);
 

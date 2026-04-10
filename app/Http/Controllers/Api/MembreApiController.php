@@ -13,10 +13,12 @@ use App\Models\EpargnePlan;
 use App\Models\EpargneSouscription;
 use App\Models\KycVerification;
 use App\Models\Tag;
+use App\Models\Segment;
 use App\Services\PinService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 class MembreApiController extends Controller
@@ -920,6 +922,23 @@ class MembreApiController extends Controller
         ]);
     }
 
+    public function segments(Request $request): JsonResponse
+    {
+        $segments = Segment::where('actif', true)
+            ->orderByRaw('is_default DESC')
+            ->orderBy('nom', 'asc')
+            ->get()
+            ->map(fn($s) => [
+                'id' => $s->id,
+                'nom' => $s->nom,
+                'icone' => $s->icone,
+                'couleur' => $s->couleur,
+                'description' => $s->description,
+            ]);
+
+        return response()->json(['segments' => $segments]);
+    }
+
     public function updateProfil(Request $request): JsonResponse
     {
         $membre = $request->user();
@@ -928,9 +947,30 @@ class MembreApiController extends Controller
             'prenom' => 'sometimes|string|max:255',
             'email' => 'sometimes|email|max:255|unique:membres,email,' . $membre->id,
             'adresse' => 'nullable|string',
+            'segment_id' => 'sometimes|nullable|exists:segments,id',
+            'old_password' => 'required_with:password|string',
+            'password' => 'sometimes|nullable|string|min:6|confirmed',
         ]);
+
+        // Check password change security
+        if ($request->filled('password')) {
+            if (!Hash::check($request->old_password, $membre->password)) {
+                return response()->json([
+                    'message' => 'L\'opération a échoué.',
+                    'errors' => ['old_password' => ['L\'ancien mot de passe est incorrect.']]
+                ], 422);
+            }
+            $validated['password'] = Hash::make($request->password);
+            unset($validated['old_password']);
+            unset($validated['password_confirmation']);
+        }
+
         $membre->update($validated);
-        return response()->json(['membre' => $this->membreResource($membre->fresh())]);
+
+        return response()->json([
+            'message' => 'Profil mis à jour avec succès.',
+            'membre' => $this->membreResource($membre->fresh())
+        ]);
     }
 
     public function notifications(Request $request): JsonResponse
@@ -1247,6 +1287,7 @@ class MembreApiController extends Controller
     // --- Helpers
     private function membreResource($membre): array
     {
+        $membre->loadMissing('segment');
         return [
             'id' => $membre->id,
             'numero' => $membre->numero,
@@ -1259,6 +1300,13 @@ class MembreApiController extends Controller
             'photo_url' => $membre->photo_url,
             'date_adhesion' => $membre->date_adhesion?->format('Y-m-d'),
             'statut' => $membre->statut,
+            'segment_id' => $membre->segment_id,
+            'segment' => $membre->segment ? [
+                'id' => $membre->segment->id,
+                'nom' => $membre->segment->nom,
+                'icone' => $membre->segment->icone,
+                'couleur' => $membre->segment->couleur,
+            ] : null,
         ];
     }
 
