@@ -22,8 +22,16 @@
 </head>
 <body>
     <div class="verify-card">
-        <h2><i class="bi bi-shield-lock"></i> Vérification du numéro</h2>
-        <p class="text-muted small mb-3">Un code à 6 chiffres a été envoyé au numéro se terminant par <strong>{{ $phone_masked ?? '****' }}</strong>.</p>
+        <h2><i class="bi bi-shield-lock"></i> Vérification de votre compte</h2>
+        <p class="text-muted small mb-3">
+            Un code à 6 chiffres a été envoyé par <strong>SMS</strong> au numéro se terminant par <strong>{{ $phone_masked ?? '****' }}</strong>
+            @if(session('email_sent'))
+                et par <strong>email</strong>
+            @else
+                {{-- et par email (si la configuration SMTP est active) --}}
+            @endif.
+            Saisissez-le ci-dessous pour activer votre compte.
+        </p>
         @if(session('success'))
             <div class="alert alert-success small">{{ session('success') }}</div>
         @endif

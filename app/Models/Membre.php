@@ -31,7 +31,7 @@ class Membre extends Authenticatable implements MustVerifyEmail
         'longitude',
         'date_adhesion',
         'statut',
-        'segment',
+        'segment_id',   // FK → segments.id (segmentation clientèle)
         'password',
         'nano_credit_palier_id',
         'nano_credit_interdit',
@@ -226,6 +226,22 @@ class Membre extends Authenticatable implements MustVerifyEmail
     public function getGuardName()
     {
         return 'membre';
+    }
+
+    /**
+     * Segment de segmentation clientèle du membre.
+     */
+    public function segment()
+    {
+        return $this->belongsTo(\App\Models\Segment::class, 'segment_id');
+    }
+
+    /**
+     * Libellé du segment (ou "NON CLASSÉ" si non défini).
+     */
+    public function getSegmentLabelAttribute(): string
+    {
+        return $this->segment?->nom ?? 'NON CLASSÉ';
     }
 
     /**

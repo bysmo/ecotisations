@@ -1129,9 +1129,16 @@ class MembreDashboardController extends Controller
         $commissionsDisponibles = $membre->commissionsParrainage()->where('statut', 'disponible')->sum('montant');
         $commissionsTotales    = $membre->commissionsParrainage()->whereIn('statut', ['disponible', 'reclame', 'paye'])->sum('montant');
 
+        // Segments actifs pour le sélecteur de profil (NON CLASSÉ en premier, puis alphabétique)
+        $segments = \App\Models\Segment::where('actif', true)
+            ->orderByRaw('is_default DESC')
+            ->orderBy('nom', 'asc')
+            ->get();
+
         return view('membres.profil', compact(
             'membre', 'parrainageActif', 'codeParrainage',
-            'nbFilleuls', 'commissionsDisponibles', 'commissionsTotales', 'parrainageConfig'
+            'nbFilleuls', 'commissionsDisponibles', 'commissionsTotales', 'parrainageConfig',
+            'segments'
         ));
     }
     
@@ -1143,10 +1150,11 @@ class MembreDashboardController extends Controller
         $membre = Auth::guard('membre')->user();
         
         $validated = $request->validate([
-            'email' => 'required|email|unique:membres,email,' . $membre->id,
-            'telephone' => 'nullable|string|max:20',
-            'adresse' => 'nullable|string',
-            'password' => 'nullable|string|min:6|confirmed',
+            'email'      => 'required|email|unique:membres,email,' . $membre->id,
+            'telephone'  => 'nullable|string|max:20',
+            'adresse'    => 'nullable|string',
+            'password'   => 'nullable|string|min:6|confirmed',
+            'segment_id' => 'nullable|integer|exists:segments,id',
         ]);
         
         // Si le mot de passe est fourni, le hasher
@@ -1161,6 +1169,7 @@ class MembreDashboardController extends Controller
             $validated['telephone'] = \App\Models\Membre::normalizePhoneNumber($validated['telephone']);
         }
         
+        // segment_id : null = NON CLASSÉ (on garde null plutôt que forcer le défaut)
         $membre->update($validated);
         
         return redirect()->route('membre.profil')

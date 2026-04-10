@@ -5,11 +5,13 @@ namespace App\Http\Controllers\Auth;
 use App\Helpers\GeoHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Membre;
+use App\Services\EmailService;
 use App\Services\OtpService;
 use App\Services\ParrainageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class MembreAuthController extends Controller
@@ -81,7 +83,7 @@ class MembreAuthController extends Controller
         if (!$membre->hasVerifiedEmail()) {
             $request->session()->flash('unverified_phone', $membre->telephone);
             throw ValidationException::withMessages([
-                'telephone' => ['Vous devez vérifier votre numéro de téléphone avant de vous connecter. Un code OTP vous a été envoyé par SMS.'],
+                'telephone' => ['Vous devez vérifier votre compte avant de vous connecter. Un code OTP vous a été envoyé par SMS et par email.'],
             ]);
         }
 
@@ -191,11 +193,24 @@ class MembreAuthController extends Controller
         $code = $otpService->generateAndStore($phoneNormalized);
         $otpService->sendOtp($phoneNormalized, $code);
 
+        // Envoi de l'OTP également par email (canal secondaire de sécurité)
+        $emailSent = false;
+        if ($membre->email) {
+            try {
+                $emailSent = app(EmailService::class)->sendOtpEmail($membre, $code);
+            } catch (\Throwable $e) {
+                Log::warning('OTP email (inscription web) non envoyé : ' . $e->getMessage());
+            }
+        }
+
         $request->session()->put('membre_otp_phone', $phoneNormalized);
         $request->session()->put('membre_otp_membre_id', $membre->id);
 
-        return redirect()->route('membre.verify-otp')
-            ->with('success', 'Un code de vérification a été envoyé par SMS au ' . $dialCode . ' ' . $request->input('telephone') . '. Entrez-le ci-dessous.');
+        $msg = $emailSent
+            ? 'Un code de vérification a été envoyé par SMS au ' . $dialCode . ' ' . $request->input('telephone') . ' et par email. Entrez-le ci-dessous.'
+            : 'Un code de vérification a été envoyé par SMS au ' . $dialCode . ' ' . $request->input('telephone') . '. Entrez-le ci-dessous.';
+
+        return redirect()->route('membre.verify-otp')->with('success', $msg);
     }
 
     /**
@@ -259,7 +274,25 @@ class MembreAuthController extends Controller
         $code = $otpService->generateAndStore($phone);
         $otpService->sendOtp($phone, $code);
 
-        return back()->with('success', 'Un nouveau code a été envoyé par SMS.');
+        // Renvoyer aussi par email
+        $emailSent = false;
+        $membreId  = $request->session()->get('membre_otp_membre_id');
+        if ($membreId) {
+            $membre = \App\Models\Membre::find($membreId);
+            if ($membre?->email) {
+                try {
+                    $emailSent = app(EmailService::class)->sendOtpEmail($membre, $code);
+                } catch (\Throwable $e) {
+                    Log::warning('OTP email (renvoi web) non envoyé : ' . $e->getMessage());
+                }
+            }
+        }
+
+        $msg = $emailSent
+            ? 'Un nouveau code a été envoyé par SMS et par email.'
+            : 'Un nouveau code a été envoyé par SMS.';
+
+        return back()->with('success', $msg);
     }
 
     /**

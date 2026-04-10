@@ -74,26 +74,69 @@
                         @enderror
                     </div>
                     
+                    {{-- Adresse --}}
                     <div class="mb-3">
                         <label for="adresse" class="form-label">Adresse</label>
-                        <textarea class="form-control @error('adresse') is-invalid @enderror" 
-                                  id="adresse" 
-                                  name="adresse" 
+                        <textarea class="form-control @error('adresse') is-invalid @enderror"
+                                  id="adresse"
+                                  name="adresse"
                                   rows="2">{{ old('adresse', $membre->adresse) }}</textarea>
-                        @error('adresse')
+                        @error('adresse')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+
+                    {{-- ─── Segment clientèle ───────────────────────────────── --}}
+                    <div class="mb-3">
+                        <label for="segment_id" class="form-label">
+                            <i class="bi bi-tags"></i> Ma catégorie de membre
+                        </label>
+                        <select name="segment_id"
+                                id="segment_id"
+                                class="form-select @error('segment_id') is-invalid @enderror">
+                            <option value="">— NON CLASSÉ (par défaut) —</option>
+                            @foreach($segments ?? [] as $seg)
+                                <option value="{{ $seg->id }}"
+                                    {{ old('segment_id', $membre->segment_id) == $seg->id ? 'selected' : '' }}
+                                    @if(!$seg->is_default)
+                                        data-couleur="{{ $seg->couleur ?? '#6b7280' }}"
+                                    @endif>
+                                    {{ $seg->nom }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('segment_id')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
+                        <small class="text-muted">
+                            Indiquez votre situation professionnelle ou sociale pour personnaliser votre expérience.
+                        </small>
+                        @if($membre->segment)
+                            <div class="mt-1">
+                                <span class="badge"
+                                      style="background-color: {{ $membre->segment->couleur ?? '#6b7280' }}; font-size:0.75rem;">
+                                    <i class="{{ $membre->segment->icone ?? 'bi bi-person' }}"></i>
+                                    Actuel : {{ $membre->segment->nom }}
+                                </span>
+                            </div>
+                        @else
+                            <div class="mt-1">
+                                <span class="badge bg-secondary" style="font-size:0.75rem;">
+                                    <i class="bi bi-person-dash"></i> NON CLASSÉ
+                                </span>
+                            </div>
+                        @endif
                     </div>
-                    
+                    {{-- ─── Fin Segment ─────────────────────────────────────── --}}
+
                     <div class="mb-3">
                         <label for="date_adhesion" class="form-label">Date d'adhésion</label>
-                        <input type="text" 
-                               class="form-control" 
-                               id="date_adhesion" 
-                               value="{{ $membre->date_adhesion->format('d/m/Y') }}" 
+                        <input type="text"
+                               class="form-control"
+                               id="date_adhesion"
+                               value="{{ $membre->date_adhesion->format('d/m/Y') }}"
                                disabled>
                         <small class="text-muted">La date d'adhésion ne peut pas être modifiée</small>
                     </div>
+
                     
                     <hr class="my-4">
                     

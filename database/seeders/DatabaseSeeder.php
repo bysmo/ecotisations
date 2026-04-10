@@ -14,6 +14,7 @@ use App\Models\Annonce;
 use App\Models\Membre;
 use App\Models\Caisse;
 use App\Models\Tag;
+use App\Models\Segment;
 use App\Models\EmailTemplate;
 use App\Models\SMTPConfiguration;
 use App\Models\Remboursement;
@@ -52,6 +53,7 @@ class DatabaseSeeder extends Seeder
         Annonce::truncate();
         Membre::truncate();
         Tag::truncate();
+        Segment::truncate();
         Caisse::truncate();
         EmailCampaign::truncate();
         EmailTemplate::truncate();
@@ -84,6 +86,7 @@ class DatabaseSeeder extends Seeder
             TransfertSeeder::class,
             SortieSeeder::class,
             TagSeeder::class,
+            SegmentSeeder::class,    // Doit être avant MembreSeeder (FK segment_id)
             MembreSeeder::class,
             CotisationSeeder::class,
             EngagementSeeder::class,
