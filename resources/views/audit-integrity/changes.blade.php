@@ -135,9 +135,9 @@
                             <code style="font-size: 0.7rem; color: #1e3a5f;">{{ $modelBasename }}</code>
                             <span class="text-muted" style="font-size: 0.7rem;">ID: {{ $log->model_id }}</span>
                             <span class="ms-auto d-flex gap-2 align-items-center">
-                                @if($log->user)
+                                @if($log->actor_id)
                                     <span class="badge bg-light text-dark border" style="font-size: 0.65rem;">
-                                        <i class="bi bi-person"></i> {{ $log->user->name }}
+                                        <i class="bi bi-person"></i> {{ $log->actor_name }}
                                     </span>
                                 @else
                                     <span class="badge bg-secondary" style="font-size: 0.65rem;"><i class="bi bi-terminal"></i> Système</span>

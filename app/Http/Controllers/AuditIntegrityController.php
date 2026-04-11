@@ -78,10 +78,10 @@ class AuditIntegrityController extends Controller
     {
         $filterModel = $request->input('model');
         $filterAction = $request->input('action');
-        $filterUser = $request->input('user_id');
+        $filterUser = $request->input('user_id'); // Reste user_id en input pour compatibilité vue
         $search = $request->input('search');
 
-        $query = AuditLog::with('user')->orderBy('created_at', 'desc');
+        $query = AuditLog::with('actor')->orderBy('created_at', 'desc');
 
         if ($filterModel) {
             $query->where('model', 'like', "%{$filterModel}%");
@@ -90,7 +90,7 @@ class AuditIntegrityController extends Controller
             $query->where('action', $filterAction);
         }
         if ($filterUser) {
-            $query->where('user_id', $filterUser);
+            $query->where('actor_id', $filterUser)->where('actor_type', \App\Models\User::class);
         }
 
         $logs = $query->paginate(30);
@@ -102,8 +102,8 @@ class AuditIntegrityController extends Controller
 
         $availableActions = ['created', 'updated', 'deleted'];
 
-        // Utilisateurs ayant généré des actions
-        $activeUsers = \App\Models\User::whereIn('id', AuditLog::distinct()->pluck('user_id')->filter())
+        // Utilisateurs (Admin) ayant généré des actions
+        $activeUsers = \App\Models\User::whereIn('id', AuditLog::where('actor_type', \App\Models\User::class)->distinct()->pluck('actor_id')->filter())
             ->orderBy('name')->get();
 
         // Stats globales
