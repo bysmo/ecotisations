@@ -14,66 +14,72 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        // Vérifier si l'utilisateur admin existe déjà
-        $admin = User::where('email', 'admin@serenity.com')->first();
-        
-        if (!$admin) {
-            // Créer l'utilisateur admin
-            $admin = User::create([
+        $password = Hash::make('password');
+
+        $users = [
+            [
                 'name' => 'Administrateur',
                 'email' => 'admin@serenity.com',
-                'password' => Hash::make('password'), // Mot de passe par défaut: password
-            ]);
-            
-            // Attribuer le rôle Administrateur si disponible
-            $adminRole = Role::where('slug', 'admin')->first();
-            if ($adminRole && !$admin->roles()->where('roles.id', $adminRole->id)->exists()) {
-                $admin->roles()->attach($adminRole->id);
-            }
-            
-            $this->command->info('Utilisateur admin créé :');
-            $this->command->info('Email: admin@serenity.com');
-            $this->command->info('Mot de passe: password');
-        } else {
-            // Vérifier et attribuer le rôle si nécessaire
-            $adminRole = Role::where('slug', 'admin')->first();
-            if ($adminRole && !$admin->roles()->where('roles.id', $adminRole->id)->exists()) {
-                $admin->roles()->attach($adminRole->id);
-                $this->command->info('Rôle administrateur attribué à l\'utilisateur admin existant.');
-            } else {
-                $this->command->info('L\'utilisateur admin existe déjà.');
-            }
-        }
-        
-        // Vérifier si l'utilisateur trésorier existe déjà
-        $tresorier = User::where('email', 'tresorier@serenity.com')->first();
-        
-        if (!$tresorier) {
-            // Créer l'utilisateur trésorier
-            $tresorier = User::create([
+                'role' => 'admin'
+            ],
+            [
+                'name' => 'Directeur Agence',
+                'email' => 'directeur@serenity.com',
+                'role' => 'directeur_agence'
+            ],
+            [
+                'name' => 'Resp. Crédits',
+                'email' => 'credits@serenity.com',
+                'role' => 'resp_credits'
+            ],
+            [
+                'name' => 'Resp. Tontines',
+                'email' => 'tontines@serenity.com',
+                'role' => 'resp_tontines'
+            ],
+            [
+                'name' => 'Resp. Cagnottes',
+                'email' => 'cagnottes@serenity.com',
+                'role' => 'resp_cagnottes'
+            ],
+            [
+                'name' => 'Resp. Technique',
+                'email' => 'technique@serenity.com',
+                'role' => 'resp_technique'
+            ],
+            [
+                'name' => 'Resp. Membres',
+                'email' => 'membres@serenity.com',
+                'role' => 'resp_membres'
+            ],
+            [
+                'name' => 'Resp. Marketing',
+                'email' => 'marketing@serenity.com',
+                'role' => 'resp_marketing'
+            ],
+            [
                 'name' => 'Trésorier',
                 'email' => 'tresorier@serenity.com',
-                'password' => Hash::make('password'), // Mot de passe par défaut: password
-            ]);
-            
-            // Attribuer le rôle Trésorier si disponible
-            $tresorierRole = Role::where('slug', 'tresorier')->first();
-            if ($tresorierRole && !$tresorier->roles()->where('roles.id', $tresorierRole->id)->exists()) {
-                $tresorier->roles()->attach($tresorierRole->id);
+                'role' => 'tresorier'
+            ],
+        ];
+
+        foreach ($users as $userData) {
+            $user = User::updateOrCreate(
+                ['email' => $userData['email']],
+                [
+                    'name' => $userData['name'],
+                    'password' => $password,
+                ]
+            );
+
+            // Attribuer le rôle
+            $role = Role::where('slug', $userData['role'])->first();
+            if ($role) {
+                $user->roles()->sync([$role->id]);
             }
-            
-            $this->command->info('Utilisateur trésorier créé :');
-            $this->command->info('Email: tresorier@serenity.com');
-            $this->command->info('Mot de passe: password');
-        } else {
-            // Vérifier et attribuer le rôle si nécessaire
-            $tresorierRole = Role::where('slug', 'tresorier')->first();
-            if ($tresorierRole && !$tresorier->roles()->where('roles.id', $tresorierRole->id)->exists()) {
-                $tresorier->roles()->attach($tresorierRole->id);
-                $this->command->info('Rôle trésorier attribué à l\'utilisateur trésorier existant.');
-            } else {
-                $this->command->info('L\'utilisateur trésorier existe déjà.');
-            }
+
+            $this->command->info("Utilisateur créé : {$userData['email']} (Rôle: {$userData['role']})");
         }
     }
 }

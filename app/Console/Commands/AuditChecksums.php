@@ -160,9 +160,9 @@ class AuditChecksums extends Command
                                 }
                             }
                             $origin = "Bypass Applicatif ou Injection Récente";
-                            if ($lastLog->user_id) {
-                                $origin = "Modification par User ID: " . $lastLog->user_id;
-                                $userRef = $lastLog->user_id;
+                            if ($lastLog->actor_id) {
+                                $origin = "Modification par " . ($lastLog->actor_name ?? "Actor ID: " . $lastLog->actor_id);
+                                $userRef = $lastLog->actor_id;
                             }
                         } else {
                             $origin = "Aucune trace applicative (Manipulation SQL pure)";

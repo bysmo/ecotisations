@@ -29,12 +29,13 @@ class PermissionSeeder extends Seeder
             ['nom' => 'Créer un membre', 'slug' => 'membres.create', 'categorie' => 'Membres', 'description' => 'Créer un nouveau membre'],
             ['nom' => 'Modifier un membre', 'slug' => 'membres.update', 'categorie' => 'Membres', 'description' => 'Modifier un membre existant'],
             ['nom' => 'Supprimer un membre', 'slug' => 'membres.delete', 'categorie' => 'Membres', 'description' => 'Supprimer un membre'],
+            ['nom' => 'Gérer KYC', 'slug' => 'membres.kyc', 'categorie' => 'Membres', 'description' => 'Valider les documents KYC des membres'],
             
-            // Cotisations
-            ['nom' => 'Voir les cagnottes', 'slug' => 'cotisations.view', 'categorie' => 'Cotisations', 'description' => 'Afficher la liste des cagnottes'],
-            ['nom' => 'Créer une cagnotte', 'slug' => 'cotisations.create', 'categorie' => 'Cotisations', 'description' => 'Créer une nouvelle cagnotte'],
-            ['nom' => 'Modifier une cagnotte', 'slug' => 'cotisations.update', 'categorie' => 'Cotisations', 'description' => 'Modifier une cagnotte existante'],
-            ['nom' => 'Supprimer une cagnotte', 'slug' => 'cotisations.delete', 'categorie' => 'Cotisations', 'description' => 'Supprimer une cagnotte'],
+            // Cotisations (Cagnottes)
+            ['nom' => 'Voir les cagnottes', 'slug' => 'cotisations.view', 'categorie' => 'Cagnottes', 'description' => 'Afficher la liste des cagnottes'],
+            ['nom' => 'Créer une cagnotte', 'slug' => 'cotisations.create', 'categorie' => 'Cagnottes', 'description' => 'Créer une nouvelle cagnotte'],
+            ['nom' => 'Modifier une cagnotte', 'slug' => 'cotisations.update', 'categorie' => 'Cagnottes', 'description' => 'Modifier une cagnotte existante'],
+            ['nom' => 'Supprimer une cagnotte', 'slug' => 'cotisations.delete', 'categorie' => 'Cagnottes', 'description' => 'Supprimer une cagnotte'],
             
             // Paiements
             ['nom' => 'Voir les paiements', 'slug' => 'paiements.view', 'categorie' => 'Paiements', 'description' => 'Afficher la liste des paiements'],
@@ -43,12 +44,24 @@ class PermissionSeeder extends Seeder
             ['nom' => 'Supprimer un paiement', 'slug' => 'paiements.delete', 'categorie' => 'Paiements', 'description' => 'Supprimer un paiement'],
             ['nom' => 'Payer un engagement', 'slug' => 'paiements.engagement', 'categorie' => 'Paiements', 'description' => 'Enregistrer un paiement d\'engagement'],
             
-            // Engagements
-            ['nom' => 'Voir les engagements', 'slug' => 'engagements.view', 'categorie' => 'Engagements', 'description' => 'Afficher la liste des engagements'],
-            ['nom' => 'Créer un engagement', 'slug' => 'engagements.create', 'categorie' => 'Engagements', 'description' => 'Créer un nouvel engagement'],
-            ['nom' => 'Modifier un engagement', 'slug' => 'engagements.update', 'categorie' => 'Engagements', 'description' => 'Modifier un engagement existant'],
-            ['nom' => 'Supprimer un engagement', 'slug' => 'engagements.delete', 'categorie' => 'Engagements', 'description' => 'Supprimer un engagement'],
+            // Engagements (Tontines / Épargne)
+            ['nom' => 'Voir les engagements', 'slug' => 'engagements.view', 'categorie' => 'Tontines', 'description' => 'Afficher la liste des engagements'],
+            ['nom' => 'Créer un engagement', 'slug' => 'engagements.create', 'categorie' => 'Tontines', 'description' => 'Créer un nouvel engagement'],
+            ['nom' => 'Modifier un engagement', 'slug' => 'engagements.update', 'categorie' => 'Tontines', 'description' => 'Modifier un engagement existant'],
+            ['nom' => 'Supprimer un engagement', 'slug' => 'engagements.delete', 'categorie' => 'Tontines', 'description' => 'Supprimer un engagement'],
+            ['nom' => 'Gérer les plans d\'épargne', 'slug' => 'epargne.plans', 'categorie' => 'Tontines', 'description' => 'Configurer les plans de tontine/épargne'],
             
+            // Nano-Crédits
+            ['nom' => 'Voir les nano-crédits', 'slug' => 'nano_credits.view', 'categorie' => 'Nano-Crédits', 'description' => 'Afficher la liste des crédits'],
+            ['nom' => 'Gérer les demandes', 'slug' => 'nano_credits.manage', 'categorie' => 'Nano-Crédits', 'description' => 'Approuver ou rejeter des demandes de crédit'],
+            ['nom' => 'Gérer les paliers', 'slug' => 'nano_credits.paliers', 'categorie' => 'Nano-Crédits', 'description' => 'Configurer les paliers et conditions de crédit'],
+            ['nom' => 'Gérer les garants', 'slug' => 'nano_credits.garants', 'categorie' => 'Nano-Crédits', 'description' => 'Suivre et agir sur les garanties'],
+            
+            // Parrainages
+            ['nom' => 'Voir les parrainages', 'slug' => 'parrainages.view', 'categorie' => 'Parrainages', 'description' => 'Consulter l\'arbre de parrainage et stats'],
+            ['nom' => 'Gérer la config parrainage', 'slug' => 'parrainages.config', 'categorie' => 'Parrainages', 'description' => 'Modifier les règles de rémunération'],
+            ['nom' => 'Gérer les commissions', 'slug' => 'parrainages.commissions', 'categorie' => 'Parrainages', 'description' => 'Valider et payer les commissions'],
+
             // Annonces
             ['nom' => 'Voir les annonces', 'slug' => 'annonces.view', 'categorie' => 'Annonces', 'description' => 'Afficher la liste des annonces'],
             ['nom' => 'Créer une annonce', 'slug' => 'annonces.create', 'categorie' => 'Annonces', 'description' => 'Créer une nouvelle annonce'],
@@ -68,14 +81,16 @@ class PermissionSeeder extends Seeder
             ['nom' => 'Modifier un utilisateur', 'slug' => 'users.update', 'categorie' => 'Utilisateurs', 'description' => 'Modifier un utilisateur existant'],
             ['nom' => 'Supprimer un utilisateur', 'slug' => 'users.delete', 'categorie' => 'Utilisateurs', 'description' => 'Supprimer un utilisateur'],
             
-            // Notifications
-            ['nom' => 'Voir les notifications', 'slug' => 'notifications.view', 'categorie' => 'Notifications', 'description' => 'Consulter les notifications'],
-            
+            // Sécurité & Intégrité
+            ['nom' => 'Voir tableau de bord sécurité', 'slug' => 'security.dashboard', 'categorie' => 'Sécurité & Intégrité', 'description' => 'Accéder au monitoring anti-fraude'],
+            ['nom' => 'Lancer scans d\'intégrité', 'slug' => 'security.scans', 'categorie' => 'Sécurité & Intégrité', 'description' => 'Lancer manuellement les calculs de checksums'],
+            ['nom' => 'Gérer l\'intégrité des données', 'slug' => 'security.integrity', 'categorie' => 'Sécurité & Intégrité', 'description' => 'Réparer ou gérer les données corrompues'],
+            ['nom' => 'Voir logs d\'audit profonds', 'slug' => 'security.audit', 'categorie' => 'Sécurité & Intégrité', 'description' => 'Voir les modifications tracées et chaine Merkle'],
+
             // Paramètres
             ['nom' => 'Gérer SMTP', 'slug' => 'settings.smtp', 'categorie' => 'Paramètres', 'description' => 'Configurer les paramètres SMTP'],
             ['nom' => 'Gérer les templates', 'slug' => 'settings.templates', 'categorie' => 'Paramètres', 'description' => 'Gérer les templates d\'email'],
             ['nom' => 'Gérer les rôles', 'slug' => 'settings.roles', 'categorie' => 'Paramètres', 'description' => 'Gérer les rôles et permissions'],
-            ['nom' => 'Voir les logs d\'audit', 'slug' => 'settings.audit', 'categorie' => 'Paramètres', 'description' => 'Consulter le journal d\'audit'],
             ['nom' => 'Gérer les backups', 'slug' => 'settings.backup', 'categorie' => 'Paramètres', 'description' => 'Créer et restaurer des backups'],
             ['nom' => 'Gérer les paramètres', 'slug' => 'settings.general', 'categorie' => 'Paramètres', 'description' => 'Modifier les paramètres généraux'],
         ];
@@ -87,61 +102,97 @@ class PermissionSeeder extends Seeder
             );
         }
 
-        // Créer les rôles de base
-        $adminRole = Role::updateOrCreate(
-            ['slug' => 'admin'],
-            [
+        // ─── DÉFINITION DES RÔLES ──────────────────────────────────────────────
+
+        $rolesData = [
+            'admin' => [
                 'nom' => 'Administrateur',
                 'description' => 'Accès complet à toutes les fonctionnalités',
-                'actif' => true,
-            ]
-        );
-
-        $tresorierRole = Role::updateOrCreate(
-            ['slug' => 'tresorier'],
-            [
+                'permissions' => '*' // Signal pour tout donner
+            ],
+            'directeur_agence' => [
+                'nom' => 'Directeur de l\'agence digitale',
+                'description' => 'Supervision complète de l\'activité métier',
+                'permissions' => [
+                    'caisses.view', 'caisses.journal', 'membres.view', 'cotisations.view', 'paiements.view', 
+                    'engagements.view', 'nano_credits.view', 'parrainages.view', 'annonces.view', 
+                    'rapports.view', 'fin-mois.journal', 'security.dashboard', 'security.audit'
+                ]
+            ],
+            'resp_credits' => [
+                'nom' => 'Responsable des crédits',
+                'description' => 'Gestion et approbation des nano-crédits',
+                'permissions' => [
+                    'nano_credits.view', 'nano_credits.manage', 'nano_credits.paliers', 'nano_credits.garants',
+                    'membres.view', 'paiements.view', 'rapports.view'
+                ]
+            ],
+            'resp_tontines' => [
+                'nom' => 'Responsable des tontines',
+                'description' => 'Gestion de l\'épargne et des engagements',
+                'permissions' => [
+                    'engagements.view', 'engagements.create', 'engagements.update', 'epargne.plans',
+                    'paiements.view', 'paiements.create', 'rapports.view', 'caisses.view'
+                ]
+            ],
+            'resp_cagnottes' => [
+                'nom' => 'Responsable des cagnottes',
+                'description' => 'Gestion des cagnottes communes',
+                'permissions' => [
+                    'cotisations.view', 'cotisations.create', 'cotisations.update', 'cotisations.delete',
+                    'paiements.view', 'paiements.create', 'rapports.view'
+                ]
+            ],
+            'resp_technique' => [
+                'nom' => 'Responsable technique',
+                'description' => 'Maintenance, sécurité et intégrité du système',
+                'permissions' => [
+                    'security.dashboard', 'security.scans', 'security.integrity', 'security.audit',
+                    'settings.smtp', 'settings.templates', 'settings.roles', 'settings.backup', 'settings.general',
+                    'users.view', 'users.create', 'users.update'
+                ]
+            ],
+            'resp_membres' => [
+                'nom' => 'Responsable des membres',
+                'description' => 'Onboarding, support et validation KYC',
+                'permissions' => [
+                    'membres.view', 'membres.create', 'membres.update', 'membres.kyc',
+                    'parrainages.view', 'annonces.view', 'rapports.view'
+                ]
+            ],
+            'resp_marketing' => [
+                'nom' => 'Responsable communication et marketing',
+                'description' => 'Gestion des annonces et programme de parrainage',
+                'permissions' => [
+                    'annonces.view', 'annonces.create', 'annonces.update', 'annonces.delete',
+                    'parrainages.view', 'parrainages.config', 'parrainages.commissions',
+                    'rapports.view'
+                ]
+            ],
+            'tresorier' => [
                 'nom' => 'Trésorier',
-                'description' => 'Gestion des caisses, paiements et cotisations',
-                'actif' => true,
-            ]
-        );
+                'description' => 'Opérations de caisse et paiements courants',
+                'permissions' => [
+                    'caisses.view', 'caisses.journal', 'caisses.approvisionner', 'caisses.sortie', 'caisses.transfert',
+                    'paiements.view', 'paiements.create', 'paiements.update', 'paiements.engagement',
+                    'fin-mois.process', 'fin-mois.journal'
+                ]
+            ],
+        ];
 
-        $membreRole = Role::updateOrCreate(
-            ['slug' => 'membre'],
-            [
-                'nom' => 'Membre',
-                'description' => 'Consultation des paiements et engagements',
+        foreach ($rolesData as $slug => $data) {
+            $role = Role::updateOrCreate(['slug' => $slug], [
+                'nom' => $data['nom'],
+                'description' => $data['description'],
                 'actif' => true,
-            ]
-        );
+            ]);
 
-        // Attribuer toutes les permissions à l'administrateur
-        // S'assurer que toutes les permissions existantes sont attribuées
-        $allPermissions = Permission::all();
-        if ($allPermissions->isNotEmpty()) {
-            $adminRole->permissions()->sync($allPermissions->pluck('id'));
+            if ($data['permissions'] === '*') {
+                $role->permissions()->sync(Permission::all());
+            } else {
+                $perms = Permission::whereIn('slug', $data['permissions'])->pluck('id');
+                $role->permissions()->sync($perms);
+            }
         }
-
-        // Permissions pour le trésorier
-        $tresorierPermissions = Permission::whereIn('slug', [
-            'caisses.view', 'caisses.create', 'caisses.update', 'caisses.transfert',
-            'caisses.approvisionner', 'caisses.sortie', 'caisses.journal',
-            'membres.view', 'membres.create', 'membres.update',
-            'cotisations.view', 'cotisations.create', 'cotisations.update',
-            'paiements.view', 'paiements.create', 'paiements.update', 'paiements.engagement',
-            'engagements.view', 'engagements.create', 'engagements.update',
-            'rapports.view',
-            'fin-mois.process', 'fin-mois.journal',
-            'notifications.view',
-        ])->pluck('id');
-        $tresorierRole->permissions()->sync($tresorierPermissions);
-
-        // Permissions pour le membre
-        $membrePermissions = Permission::whereIn('slug', [
-            'membres.view',
-            'paiements.view',
-            'engagements.view',
-        ])->pluck('id');
-        $membreRole->permissions()->sync($membrePermissions);
     }
 }
