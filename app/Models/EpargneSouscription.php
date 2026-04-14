@@ -22,6 +22,7 @@ class EpargneSouscription extends Model
         'jour_du_mois',
         'statut',
         'solde_courant',
+        'caisse_id',
         'checksum',
     ];
 
@@ -50,6 +51,14 @@ class EpargneSouscription extends Model
     public function versements()
     {
         return $this->hasMany(EpargneVersement::class, 'souscription_id');
+    }
+
+    /**
+     * Compte financier lié à cette tontine
+     */
+    public function compte()
+    {
+        return $this->belongsTo(Caisse::class, 'caisse_id');
     }
 
     /**

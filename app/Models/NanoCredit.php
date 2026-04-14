@@ -32,6 +32,9 @@ class NanoCredit extends Model
         'date_octroi',
         'date_fin_remboursement',
         'created_by',
+        'compte_remboursement_id',
+        'compte_credit_id',
+        'compte_impaye_id',
         'checksum',
     ];
 
@@ -74,6 +77,30 @@ class NanoCredit extends Model
     public function garants(): HasMany
     {
         return $this->hasMany(NanoCreditGarant::class);
+    }
+
+    /**
+     * Compte de remboursement (Compte Courant du client)
+     */
+    public function compteRemboursement()
+    {
+        return $this->belongsTo(Caisse::class, 'compte_remboursement_id');
+    }
+
+    /**
+     * Compte de crédit (Dette principale)
+     */
+    public function compteCredit()
+    {
+        return $this->belongsTo(Caisse::class, 'compte_credit_id');
+    }
+
+    /**
+     * Compte des impayés
+     */
+    public function compteImpaye()
+    {
+        return $this->belongsTo(Caisse::class, 'compte_impaye_id');
     }
 
     /**

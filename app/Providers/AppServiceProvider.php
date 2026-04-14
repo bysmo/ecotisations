@@ -9,7 +9,11 @@ use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\View;
 use App\Models\AppSetting;
 use App\Models\MouvementCaisse;
+use App\Models\Membre;
+use App\Models\EpargneSouscription;
 use App\Observers\MouvementCaisseAuditObserver;
+use App\Observers\MembreObserver;
+use App\Observers\EpargneSouscriptionObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -50,6 +54,10 @@ class AppServiceProvider extends ServiceProvider
         } catch (\Throwable $e) {
             // Ignorer si DB non dispo (ex: php artisan config:clear avant migrate)
         }
+
+        // Automatisation des comptes
+        Membre::observe(MembreObserver::class);
+        EpargneSouscription::observe(EpargneSouscriptionObserver::class);
 
         // Partager les paramètres de l'application avec toutes les vues
         View::composer('layouts.app', function ($view) {

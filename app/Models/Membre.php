@@ -316,6 +316,22 @@ class Membre extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Premier compte courant (compte par défaut)
+     */
+    public function compteCourant()
+    {
+        return $this->hasOne(\App\Models\Caisse::class, 'membre_id')->where('type', 'courant')->oldest();
+    }
+
+    /**
+     * Premier compte épargne
+     */
+    public function compteEpargne()
+    {
+        return $this->hasOne(\App\Models\Caisse::class, 'membre_id')->where('type', 'epargne')->oldest();
+    }
+
+    /**
      * Relation KYC (une vérification par membre)
      */
     public function kycVerification()

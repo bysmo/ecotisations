@@ -6,8 +6,10 @@ use App\Models\NanoCredit;
 use App\Models\NanoCreditEcheance;
 use App\Models\NanoCreditPalier;
 use App\Notifications\NanoCreditOctroyeNotification;
+use App\Models\Caisse;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class NanoCreditService
 {
@@ -75,6 +77,9 @@ class NanoCreditService
             'error_message' => null,
         ]);
 
+        // 4.5. Automatisation des comptes liés au crédit
+        $this->associerComptesFinanciers($nanoCredit);
+
         // 5. Générer les échéances
         if ($palier) {
             $this->genererEcheances($nanoCredit);
@@ -123,5 +128,59 @@ class NanoCreditService
                 'statut' => 'a_venir',
             ]);
         }
+    }
+
+    /**
+     * Crée et associe les comptes de gestion (Crédit, Impayés) et lie le compte courant de remboursement.
+     */
+    private function associerComptesFinanciers(NanoCredit $nanoCredit): void
+    {
+        $membre = $nanoCredit->membre;
+
+        // A. Compte de remboursement (Premier compte Courant du client)
+        $compteCourant = $membre->compteCourant;
+        
+        // B. Création du compte de Crédit (Dette principale)
+        $compteCredit = Caisse::create([
+            'membre_id'    => $membre->id,
+            'nom'          => 'Compte Crédit (#' . $nanoCredit->id . ') - ' . $membre->nom_complet,
+            'numero'       => $this->generateNumeroCaisse(),
+            'solde_init'   => 0,
+            'solde_actuel' => (float) $nanoCredit->montant, // On commence avec le montant dû
+            'type'         => 'credit',
+            'actif'        => true,
+        ]);
+
+        // C. Création du compte des Impayés
+        $compteImpaye = Caisse::create([
+            'membre_id'    => $membre->id,
+            'nom'          => 'Compte Impayés (#' . $nanoCredit->id . ') - ' . $membre->nom_complet,
+            'numero'       => $this->generateNumeroCaisse(),
+            'solde_init'   => 0,
+            'solde_actuel' => 0,
+            'type'         => 'impayes',
+            'actif'        => true,
+        ]);
+
+        // D. Liaison finale au dossier nano-crédit
+        $nanoCredit->update([
+            'compte_remboursement_id' => $compteCourant?->id,
+            'compte_credit_id'        => $compteCredit->id,
+            'compte_impaye_id'        => $compteImpaye->id,
+        ]);
+    }
+
+    /**
+     * Générer un numéro de compte unique
+     */
+    private function generateNumeroCaisse(): string
+    {
+        do {
+            $part1 = strtoupper(Str::random(4));
+            $part2 = strtoupper(Str::random(4));
+            $numero = $part1 . '-' . $part2;
+        } while (Caisse::where('numero', $numero)->exists());
+
+        return $numero;
     }
 }
