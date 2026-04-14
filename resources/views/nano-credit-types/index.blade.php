@@ -108,7 +108,7 @@
                 </table>
             </div>
         @else
-            <p class="text-muted mb-0">Aucun type de nano crédit. Créez-en un pour que les membres puissent souscrire.</p>
+            <p class="text-muted mb-0">Aucun type de nano crédit. Créez-en un pour que les clients puissent souscrire.</p>
         @endif
     </div>
 </div>

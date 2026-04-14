@@ -67,7 +67,7 @@ class AppSettingSeeder extends Seeder
                 'cle' => 'seuil_solde_alerte',
                 'valeur' => '50000',
                 'type' => 'integer',
-                'description' => 'Seuil d\'alerte pour les soldes de caisses (en XOF)',
+                'description' => 'Seuil d\'alerte pour les soldes de comptes (en XOF)',
                 'groupe' => 'notifications',
             ],
             [

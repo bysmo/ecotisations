@@ -17,7 +17,7 @@
             <div class="card-body text-center d-flex flex-column justify-content-center">
                 <h1 class="display-3 text-{{$couleurRisque}} mb-0" style="font-family: 'Ubuntu', sans-serif;">{{ $riskScore }}<small>%</small></h1>
                 <p class="fs-5 mt-2 fw-medium mb-1">Niveau : {{ $niveauRisque }}</p>
-                <small class="text-muted">Basé sur le total des encours en retard ({{ number_format($totalImpaye, 0, ',', ' ') }} FCFA) et le comportement de récidive des membres.</small>
+                <small class="text-muted">Basé sur le total des encours en retard ({{ number_format($totalImpaye, 0, ',', ' ') }} FCFA) et le comportement de récidive des clients.</small>
             </div>
         </div>
     </div>

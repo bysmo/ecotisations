@@ -31,7 +31,7 @@
                         @endif
                     </dd>
                     
-                    <dt class="col-sm-4" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">Membre</dt>
+                    <dt class="col-sm-4" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">Client</dt>
                     <dd class="col-sm-8" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">
                         {{ $remboursement->membre->nom }} {{ $remboursement->membre->prenom }} ({{ $remboursement->membre->numero ?? '-' }})
                     </dd>

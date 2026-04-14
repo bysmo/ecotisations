@@ -94,7 +94,7 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="caisse_id" class="form-label">Caisse associée</label>
+                        <label for="caisse_id" class="form-label">Compte associé</label>
                         <select class="form-select @error('caisse_id') is-invalid @enderror" id="caisse_id" name="caisse_id">
                             <option value="">— Aucune —</option>
                             @foreach($caisses as $caisse)

@@ -44,10 +44,10 @@
     </table>
     
     <div style="background-color: #f8f9fa; padding: 12px; margin-bottom: 20px;">
-        <div style="font-size: 9pt; color: #1e3a5f; margin-bottom: 8px; font-weight: bold; font-family: Arial, Helvetica, sans-serif;">Informations Membre</div>
+        <div style="font-size: 9pt; color: #1e3a5f; margin-bottom: 8px; font-weight: bold; font-family: Arial, Helvetica, sans-serif;">Informations Client</div>
         <table style="width: 100%; border-collapse: collapse;" cellpadding="0" cellspacing="0">
             <tr>
-                <td style="padding: 4px 10px 4px 0; width: 30%; font-size: 7pt; color: #666; font-family: Arial, Helvetica, sans-serif; text-align: left;">Numéro Membre :</td>
+                <td style="padding: 4px 10px 4px 0; width: 30%; font-size: 7pt; color: #666; font-family: Arial, Helvetica, sans-serif; text-align: left;">Numéro Client :</td>
                 <td style="padding: 4px 10px 4px 0; width: 20%; font-size: 7pt; color: #333; font-family: Arial, Helvetica, sans-serif; text-align: left;">{{ $paiement->membre->numero ?? '-' }}</td>
                 <td style="padding: 4px 10px 4px 0; width: 20%; font-size: 7pt; color: #666; font-family: Arial, Helvetica, sans-serif; text-align: left;">Email :</td>
                 <td style="padding: 4px 0; width: 30%; font-size: 7pt; color: #333; font-family: Arial, Helvetica, sans-serif; text-align: left;">{{ $paiement->membre->email ?? '-' }}</td>

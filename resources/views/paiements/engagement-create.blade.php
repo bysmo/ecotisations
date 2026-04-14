@@ -20,7 +20,7 @@
                         <strong>{{ $engagement->numero ?? '-' }}</strong>
                     </dd>
                     
-                    <dt class="col-sm-4" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">Membre</dt>
+                    <dt class="col-sm-4" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">Client</dt>
                     <dd class="col-sm-8" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">
                         {{ $engagement->membre->nom_complet ?? '-' }} ({{ $engagement->membre->numero ?? '-' }})
                     </dd>
@@ -28,7 +28,7 @@
                     <dt class="col-sm-4" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">Cagnotte</dt>
                     <dd class="col-sm-8" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">{{ $engagement->cotisation->nom ?? '-' }}</dd>
                     
-                    <dt class="col-sm-4" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">Caisse</dt>
+                    <dt class="col-sm-4" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">Compte</dt>
                     <dd class="col-sm-8" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">{{ $engagement->cotisation->caisse->nom ?? '-' }}</dd>
                     
                     <dt class="col-sm-4" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">Montant par période</dt>
@@ -140,7 +140,7 @@
                         </div>
                         
                         <div class="col-md-6 mb-3">
-                            <label for="caisse_info" class="form-label">Caisse</label>
+                            <label for="caisse_info" class="form-label">Compte</label>
                             <input type="text" 
                                    class="form-control" 
                                    id="caisse_info" 
@@ -184,7 +184,7 @@
                     <i class="bi bi-clipboard-check"></i> Qu'est-ce qu'un paiement d'engagement ?
                 </h6>
                 <p style="font-size: 0.75rem; line-height: 1.5; font-weight: 300; font-family: 'Ubuntu', sans-serif; color: #666;">
-                    Un paiement d'engagement permet de régler partiellement ou totalement un engagement pris par un membre. Le montant ne peut pas dépasser le reste à payer.
+                    Un paiement d'engagement permet de régler partiellement ou totalement un engagement pris par un client. Le montant ne peut pas dépasser le reste à payer.
                 </p>
                 
                 <h6 class="mt-4 mb-3" style="font-weight: 300; font-family: 'Ubuntu', sans-serif; color: var(--primary-dark-blue);">
@@ -198,7 +198,7 @@
                     <i class="bi bi-lightbulb"></i> Suivi
                 </h6>
                 <p style="font-size: 0.75rem; line-height: 1.5; font-weight: 300; font-family: 'Ubuntu', sans-serif; color: #666;">
-                    Chaque paiement réduit le reste à payer et crédite la caisse associée à la cagnotte de l'engagement. Vous pouvez effectuer plusieurs paiements pour régler un engagement.
+                    Chaque paiement réduit le reste à payer et crédite le compte associé à la cagnotte de l'engagement. Vous pouvez effectuer plusieurs paiements pour régler un engagement.
                 </p>
             </div>
         </div>

@@ -21,7 +21,7 @@
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label for="membre_id" class="form-label">
-                        Membre <span class="text-danger">*</span>
+                        Client <span class="text-danger">*</span>
                     </label>
                     <select class="form-select @error('membre_id') is-invalid @enderror" 
                             id="membre_id" 
@@ -66,15 +66,15 @@
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label for="caisse_info" class="form-label">
-                        Caisse associée
+                        Compte associé
                     </label>
                     <input type="text" 
                            class="form-control" 
                            id="caisse_info" 
                            readonly
                            style="background-color: #e9ecef; cursor: not-allowed;"
-                           value="{{ $engagement->cotisation->caisse->nom ?? 'Aucune caisse associée' }}">
-                    <small class="form-text text-muted" style="font-size: 0.7rem;">Caisse liée à la cotisation sélectionnée</small>
+                           value="{{ $engagement->cotisation->caisse->nom ?? 'Aucun compte associé' }}">
+                    <small class="form-text text-muted" style="font-size: 0.7rem;">Compte lié à la cotisation sélectionnée</small>
                 </div>
                 
                 <div class="col-md-6 mb-3">
@@ -235,14 +235,14 @@
                     <i class="bi bi-pencil-square"></i> Modification d'un engagement
                 </h6>
                 <p style="font-size: 0.75rem; line-height: 1.5; font-weight: 300; font-family: 'Ubuntu', sans-serif; color: #666;">
-                    Vous pouvez modifier le tag d'un engagement, mais les autres informations (membre, cotisation, montant, périodes, etc.) ne peuvent pas être modifiées après la création pour garantir l'intégrité des données financières.
+                    Vous pouvez modifier le tag d'un engagement, mais les autres informations (client, cotisation, montant, périodes, etc.) ne peuvent pas être modifiées après la création pour garantir l'intégrité des données financières.
                 </p>
                 
                 <h6 class="mt-4 mb-3" style="font-weight: 300; font-family: 'Ubuntu', sans-serif; color: var(--primary-dark-blue);">
                     <i class="bi bi-lock"></i> Champs verrouillés
                 </h6>
                 <ul style="font-size: 0.75rem; line-height: 1.8; font-weight: 300; font-family: 'Ubuntu', sans-serif; color: #666; padding-left: 1.2rem;">
-                    <li><strong>Membre :</strong> Ne peut pas être modifié car lié aux paiements existants</li>
+                    <li><strong>Client :</strong> Ne peut pas être modifié car lié aux paiements existants</li>
                     <li><strong>Cotisation :</strong> Ne peut pas être modifiée pour préserver la cohérence</li>
                     <li><strong>Montant :</strong> Ne peut pas être modifié après la création</li>
                     <li><strong>Périodes :</strong> Ne peuvent pas être modifiées après la création</li>

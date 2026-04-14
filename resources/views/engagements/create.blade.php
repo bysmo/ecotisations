@@ -20,13 +20,13 @@
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label for="membre_id" class="form-label">
-                        Membre <span class="text-danger">*</span>
+                        Client <span class="text-danger">*</span>
                     </label>
                     <select class="form-select @error('membre_id') is-invalid @enderror" 
                             id="membre_id" 
                             name="membre_id" 
                             required>
-                        <option value="">Sélectionner un membre</option>
+                        <option value="">Sélectionner un client</option>
                         @foreach($membres as $membre)
                             <option value="{{ $membre->id }}" {{ old('membre_id') == $membre->id ? 'selected' : '' }}>
                                 {{ $membre->nom_complet }} ({{ $membre->numero }})
@@ -70,14 +70,14 @@
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label for="caisse_info" class="form-label">
-                        Caisse associée
+                        Compte associé
                     </label>
                     <input type="text" 
                            class="form-control" 
                            id="caisse_info" 
                            readonly
                            style="background-color: #f8f9fa; cursor: not-allowed;">
-                    <small class="form-text text-muted" style="font-size: 0.7rem;">Caisse liée à la cotisation sélectionnée</small>
+                    <small class="form-text text-muted" style="font-size: 0.7rem;">Compte lié à la cotisation sélectionnée</small>
                 </div>
                 
                 <div class="col-md-6 mb-3">
@@ -116,7 +116,7 @@
                     @error('montant_engage')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
-                    <small class="form-text text-muted" style="font-size: 0.7rem;">Montant total que le membre s'engage à payer</small>
+                    <small class="form-text text-muted" style="font-size: 0.7rem;">Montant total que le client s'engage à payer</small>
                 </div>
                 
                 <div class="col-md-6 mb-3">
@@ -233,7 +233,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (caisse && caisse !== '-') {
             caisseInfoInput.value = caisse;
         } else {
-            caisseInfoInput.value = 'Aucune caisse associée';
+            caisseInfoInput.value = 'Aucun compte associé';
         }
     });
     
@@ -255,7 +255,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <i class="bi bi-clipboard-check"></i> Qu'est-ce qu'un engagement ?
                 </h6>
                 <p style="font-size: 0.75rem; line-height: 1.5; font-weight: 300; font-family: 'Ubuntu', sans-serif; color: #666;">
-                    Un engagement permet à un membre de s'engager à payer un montant total sur une période donnée. Les paiements peuvent être effectués progressivement selon la périodicité définie.
+                    Un engagement permet à un client de s'engager à payer un montant total sur une période donnée. Les paiements peuvent être effectués progressivement selon la périodicité définie.
                 </p>
                 
                 <h6 class="mt-4 mb-3" style="font-weight: 300; font-family: 'Ubuntu', sans-serif; color: var(--primary-dark-blue);">

@@ -1,15 +1,15 @@
 @extends('layouts.app')
 
-@section('title', 'Modifier un Membre')
+@section('title', 'Modifier un Client')
 
 @section('content')
 <div class="page-header">
-    <h1><i class="bi bi-pencil"></i> Modifier le Membre</h1>
+    <h1><i class="bi bi-pencil"></i> Modifier le Client</h1>
 </div>
 
 <div class="card">
     <div class="card-header">
-        <i class="bi bi-info-circle"></i> Informations du Membre
+        <i class="bi bi-info-circle"></i> Informations du Client
     </div>
     <div class="card-body">
         <form action="{{ route('membres.update', $membre) }}" method="POST">

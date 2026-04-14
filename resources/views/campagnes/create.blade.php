@@ -60,10 +60,10 @@
 
                     <hr>
 
-                    <h6 class="mb-3">Ciblage des membres</h6>
+                    <h6 class="mb-3">Ciblage des clients</h6>
 
                     <div class="mb-3">
-                        <label class="form-label">Statut des membres</label>
+                        <label class="form-label">Statut des clients</label>
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" name="statut_membre[]" value="actif" id="statut_actif" {{ in_array('actif', old('statut_membre', ['actif'])) ? 'checked' : '' }}>
                             <label class="form-check-label" for="statut_actif">Actif</label>
@@ -88,7 +88,7 @@
                                 </option>
                             @endforeach
                         </select>
-                        <small class="text-muted">Limiter aux membres ayant effectué un paiement pour cette cotisation</small>
+                        <small class="text-muted">Limiter aux clients ayant effectué un paiement pour cette cotisation</small>
                     </div>
 
                     <div class="row">
@@ -112,7 +112,7 @@
 
                     <div class="alert alert-info" style="font-size: 0.75rem;">
                         <i class="bi bi-info-circle"></i>
-                        <strong>Prévisualisation :</strong> <span id="preview-count">-</span> membre(s) recevront cet email
+                        <strong>Prévisualisation :</strong> <span id="preview-count">-</span> client(s) recevront cet email
                         <button type="button" class="btn btn-sm btn-outline-primary ms-2" id="btn-preview">
                             <i class="bi bi-eye"></i> Actualiser
                         </button>
@@ -139,16 +139,16 @@
             <div class="card-body" style="font-size: 0.75rem;">
                 <h6>Variables disponibles :</h6>
                 <ul>
-                    <li><code>@{{nom}}</code> - Nom du membre</li>
-                    <li><code>@{{prenom}}</code> - Prénom du membre</li>
+                    <li><code>@{{nom}}</code> - Nom du client</li>
+                    <li><code>@{{prenom}}</code> - Prénom du client</li>
                     <li><code>@{{nom_complet}}</code> - Prénom + Nom</li>
-                    <li><code>@{{email}}</code> - Email du membre</li>
+                    <li><code>@{{email}}</code> - Email du client</li>
                     <li><code>@{{telephone}}</code> - Téléphone</li>
                     <li><code>@{{adresse}}</code> - Adresse</li>
                     <li><code>@{{date_adhesion}}</code> - Date d'adhésion</li>
                 </ul>
                 <hr>
-                <p class="mb-0"><strong>Note :</strong> Seuls les membres ayant une adresse email valide recevront le message.</p>
+                <p class="mb-0"><strong>Note :</strong> Seuls les clients ayant une adresse email valide recevront le message.</p>
             </div>
         </div>
     </div>

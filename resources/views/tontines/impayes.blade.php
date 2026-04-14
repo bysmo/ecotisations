@@ -16,7 +16,7 @@
             <table class="table table-hover mb-0">
                 <thead class="bg-light">
                     <tr>
-                        <th>Membre</th>
+                        <th>Client</th>
                         <th>Plan</th>
                         <th>Date Échéance</th>
                         <th>Montant</th>

@@ -24,7 +24,7 @@
         <form method="GET" action="{{ route('nano-credits.index') }}" class="mb-3">
             <div class="row g-2 align-items-end">
                 <div class="col-md-6">
-                    <input type="text" name="search" class="form-control form-control-sm" placeholder="Membre, téléphone, transaction..." value="{{ request('search') }}">
+                    <input type="text" name="search" class="form-control form-control-sm" placeholder="Client, téléphone, transaction..." value="{{ request('search') }}">
                 </div>
                 <div class="col-md-3">
                     <select name="statut" class="form-select form-select-sm">
@@ -79,7 +79,7 @@
                     <thead>
                         <tr>
                             <th>Date demande</th>
-                            <th>Membre</th>
+                            <th>Client</th>
                             <th>Palier</th>
                             <th class="text-end">Montant</th>
                             <th>Téléphone</th>

@@ -104,22 +104,22 @@
         </div>
     </div>
 
-    {{-- Membres à ce palier --}}
+    {{-- Clients à ce palier --}}
     <div class="col-md-7">
         <div class="card">
             <div class="card-header py-2 d-flex align-items-center justify-content-between">
-                <strong><i class="bi bi-people me-2"></i>Membres à ce palier</strong>
+                <strong><i class="bi bi-people me-2"></i>Clients à ce palier</strong>
                 <span class="badge bg-secondary">{{ $membres->total() }}</span>
             </div>
             <div class="card-body p-0">
                 @if($membres->isEmpty())
-                    <p class="text-center text-muted py-4" style="font-size: 0.85rem;">Aucun membre à ce palier.</p>
+                    <p class="text-center text-muted py-4" style="font-size: 0.85rem;">Aucun client à ce palier.</p>
                 @else
                     <div class="table-responsive">
                         <table class="table table-sm table-hover mb-0" style="font-size: 0.82rem;">
                             <thead>
                                 <tr>
-                                    <th>Membre</th>
+                                    <th>Client</th>
                                     <th>Crédits remb.</th>
                                     <th>Statut</th>
                                     <th></th>

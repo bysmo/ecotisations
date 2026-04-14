@@ -32,7 +32,7 @@
                         <label for="description" class="form-label">Description</label>
                         <textarea class="form-control @error('description') is-invalid @enderror"
                                   id="description" name="description" rows="3"
-                                  placeholder="Texte affiché aux membres...">{{ old('description') }}</textarea>
+                                  placeholder="Texte affiché aux clients...">{{ old('description') }}</textarea>
                         @error('description')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
@@ -101,7 +101,7 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="caisse_id" class="form-label">Caisse associée</label>
+                        <label for="caisse_id" class="form-label">Compte associé</label>
                         <select class="form-select @error('caisse_id') is-invalid @enderror" id="caisse_id" name="caisse_id">
                             <option value="">— Aucune —</option>
                             @foreach($caisses as $caisse)
@@ -111,7 +111,7 @@
                         @error('caisse_id')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
-                        <small class="form-text text-muted">Les versements seront enregistrés dans cette caisse.</small>
+                        <small class="form-text text-muted">Les versements seront enregistrés dans ce compte.</small>
                     </div>
 
                     <div class="card mb-4 border-info-subtle bg-light-subtle">
@@ -168,7 +168,7 @@
                         <div class="col-md-6 mb-3 d-flex align-items-end">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" name="actif" id="actif" value="1" {{ old('actif', true) ? 'checked' : '' }}>
-                                <label class="form-check-label" for="actif">Plan actif (proposé aux membres)</label>
+                                <label class="form-check-label" for="actif">Plan actif (proposé aux clients)</label>
                             </div>
                         </div>
                     </div>
@@ -196,11 +196,11 @@
                     <i class="bi bi-piggy-bank"></i> Qu'est-ce qu'un plan ?
                 </h6>
                 <p style="font-size: 0.75rem; line-height: 1.5; font-weight: 300; font-family: 'Ubuntu', sans-serif; color: #666;">
-                    Un plan définit les conditions de tontine proposées aux membres : montant min/max par versement, fréquence (hebdomadaire, mensuel, trimestriel) et la caisse dans laquelle les versements sont enregistrés.
+                    Un plan définit les conditions de tontine proposées aux clients : montant min/max par versement, fréquence (hebdomadaire, mensuel, trimestriel) et le compte dans lequel les versements sont enregistrés.
                 </p>
                 <ul style="font-size: 0.75rem; line-height: 1.8; font-weight: 300; font-family: 'Ubuntu', sans-serif; color: #666; padding-left: 1.2rem;">
-                    <li>Seuls les plans <strong>actifs</strong> sont visibles par les membres.</li>
-                    <li>L'ordre permet de trier l'affichage sur l'espace membre.</li>
+                    <li>Seuls les plans <strong>actifs</strong> sont visibles par les clients.</li>
+                    <li>L'ordre permet de trier l'affichage sur l'espace client.</li>
                 </ul>
             </div>
         </div>

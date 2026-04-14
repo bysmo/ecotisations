@@ -46,7 +46,7 @@
             <div class="card-body" style="padding: 0.5rem 0.75rem;">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="card-subtitle mb-0 text-white-50" style="font-size: 0.65rem; font-weight: 300; font-family: 'Ubuntu', sans-serif;">Membres actifs</h6>
+                        <h6 class="card-subtitle mb-0 text-white-50" style="font-size: 0.65rem; font-weight: 300; font-family: 'Ubuntu', sans-serif;">Clients actifs</h6>
                         <h5 class="mb-0" style="font-size: 1rem; font-weight: 300; font-family: 'Ubuntu', sans-serif;">{{ $totalMembres }}</h5>
                     </div>
                     <i class="bi bi-people" style="font-size: 1.25rem; opacity: 0.5;"></i>
@@ -60,7 +60,7 @@
             <div class="card-body" style="padding: 0.5rem 0.75rem;">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="card-subtitle mb-0 text-white-50" style="font-size: 0.65rem; font-weight: 300; font-family: 'Ubuntu', sans-serif;">Caisses actives</h6>
+                        <h6 class="card-subtitle mb-0 text-white-50" style="font-size: 0.65rem; font-weight: 300; font-family: 'Ubuntu', sans-serif;">Comptes actifs</h6>
                         <h5 class="mb-0" style="font-size: 1rem; font-weight: 300; font-family: 'Ubuntu', sans-serif;">{{ $totalCaisses }}</h5>
                     </div>
                     <i class="bi bi-cash-coin" style="font-size: 1.25rem; opacity: 0.5;"></i>
@@ -90,7 +90,7 @@
             <div class="card-body" style="padding: 0.5rem 0.75rem;">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="card-subtitle mb-0 text-white-50" style="font-size: 0.65rem; font-weight: 300; font-family: 'Ubuntu', sans-serif;">Solde total caisses</h6>
+                        <h6 class="card-subtitle mb-0 text-white-50" style="font-size: 0.65rem; font-weight: 300; font-family: 'Ubuntu', sans-serif;">Solde total comptes</h6>
                         <h5 class="mb-0" style="font-size: 0.9rem; font-weight: 300; font-family: 'Ubuntu', sans-serif;">
                             {{ number_format($soldeTotalCaisses, 0, ',', ' ') }} XOF
                         </h5>
@@ -212,7 +212,7 @@
     <div class="col-md-8">
         <div class="card">
             <div class="card-header">
-                <i class="bi bi-cash-coin"></i> Statistiques par Caisse
+                <i class="bi bi-cash-coin"></i> Statistiques par Compte
             </div>
             <div class="card-body" style="height: 350px; position: relative;">
                 @if($statistiquesCaisses->count() > 0)
@@ -229,7 +229,7 @@
     <div class="col-md-4">
         <div class="card">
             <div class="card-header">
-                <i class="bi bi-list-ul"></i> Détails par Caisse
+                <i class="bi bi-list-ul"></i> Détails par Compte
             </div>
             <div class="card-body" style="height: 350px; position: relative;">
                 @if($statistiquesCaisses->count() > 0)
@@ -268,7 +268,7 @@
     <div class="col-md-6">
         <div class="card">
             <div class="card-header">
-                <i class="bi bi-people"></i> Top 10 Membres
+                <i class="bi bi-people"></i> Top 10 Clients
             </div>
             <div class="card-body" style="height: 350px; position: relative;">
                 @if($topMembres->count() > 0)
@@ -290,7 +290,7 @@
     <div class="col-12">
         <div class="card">
             <div class="card-header">
-                <i class="bi bi-people-fill"></i> Statistiques par Membre
+                <i class="bi bi-people-fill"></i> Statistiques par Client
             </div>
             <div class="card-body">
                 <style>
@@ -326,7 +326,7 @@
                     <table class="table table-hover table-striped table-stat-membres">
                         <thead>
                             <tr>
-                                <th>Membre</th>
+                                <th>Client</th>
                                 <th class="text-end">Nombre paiements</th>
                                 <th class="text-end">Total payé (XOF)</th>
                             </tr>
@@ -481,7 +481,7 @@ window.addEventListener('load', function() {
         });
     }
 
-    // Graphique Statistiques par Caisse
+    // Graphique Statistiques par Compte
     const caissesCtx = document.getElementById('caissesChart');
     if (caissesCtx && caissesData && caissesData.length > 0) {
         const labels = caissesData.map(item => item.nom || '');
@@ -545,7 +545,7 @@ window.addEventListener('load', function() {
         });
     }
 
-    // Graphique Détails par Caisse
+    // Graphique Détails par Compte
     const detailsCtx = document.getElementById('detailsCaissesChart');
     if (detailsCtx && caissesData && caissesData.length > 0) {
         const labels = caissesData.map(item => item.nom || '');
@@ -641,7 +641,7 @@ window.addEventListener('load', function() {
         }
     }
 
-    // Graphique Top 10 Membres
+    // Graphique Top 10 Clients
     const membresCtx = document.getElementById('topMembresChart');
     if (membresCtx && membresData && membresData.length > 0) {
         const labels = membresData.map(item => {

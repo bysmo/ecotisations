@@ -18,11 +18,11 @@ class SortieSeeder extends Seeder
         $caisses = Caisse::where('statut', 'active')->get();
         
         if ($caisses->isEmpty()) {
-            $this->command->warn('Aucune caisse active trouvée. Veuillez d\'abord exécuter CaisseSeeder et ApprovisionnementSeeder.');
+            $this->command->warn('Aucun compte actif trouvé. Veuillez d\'abord exécuter CaisseSeeder et ApprovisionnementSeeder.');
             return;
         }
 
-        $this->command->info('Création des sorties de caisses...');
+        $this->command->info('Création des sorties de comptes...');
 
         $motifs = [
             'Achat de matériel',
@@ -99,7 +99,7 @@ class SortieSeeder extends Seeder
                 'sens' => 'sortie',
                 'montant' => $montant,
                 'date_operation' => $dateSortie,
-                'libelle' => 'Sortie de caisse' . ($motif ? ' - ' . $motif : ''),
+                'libelle' => 'Sortie de compte' . ($motif ? ' - ' . $motif : ''),
                 'notes' => $note,
                 'reference_type' => SortieCaisse::class,
                 'reference_id' => $sortie->id,

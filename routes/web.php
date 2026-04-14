@@ -38,6 +38,7 @@ Route::middleware(['auth:web'])->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
 
     // Routes spécifiques pour les caisses (doivent être avant la route resource)
+    Route::get('/caisses/dashboard', [\App\Http\Controllers\CaisseDashboardController::class, 'index'])->name('caisses.dashboard');
 // Transferts
 Route::get('/caisses/transfert', [CaisseController::class, 'transfert'])->name('caisses.transfert');
 Route::get('/caisses/transfert/create', [CaisseController::class, 'createTransfert'])->name('caisses.transfert.create');

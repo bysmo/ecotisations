@@ -1,17 +1,17 @@
 @extends('layouts.app')
 
-@section('title', 'Approvisionnement de Caisse')
+@section('title', 'Approvisionnement de Compte')
 
 @section('content')
 <div class="page-header">
-    <h1><i class="bi bi-plus-square"></i> Approvisionnement de Caisse</h1>
+    <h1><i class="bi bi-plus-square"></i> Approvisionnement de Compte</h1>
 </div>
 
 <div class="row">
     <div class="col-md-8">
         <div class="card">
     <div class="card-header">
-        <i class="bi bi-info-circle"></i> Approvisionner une Caisse
+        <i class="bi bi-info-circle"></i> Approvisionner un Compte
     </div>
     <div class="card-body">
         <form action="{{ route('caisses.approvisionnement.store') }}" method="POST">
@@ -19,13 +19,13 @@
             
             <div class="mb-3">
                 <label for="caisse_id" class="form-label">
-                    Caisse à approvisionner <span class="text-danger">*</span>
+                    Compte à approvisionner <span class="text-danger">*</span>
                 </label>
                 <select class="form-select @error('caisse_id') is-invalid @enderror" 
                         id="caisse_id" 
                         name="caisse_id" 
                         required>
-                    <option value="">Sélectionner une caisse</option>
+                    <option value="">Sélectionner un compte</option>
                     @foreach($caisses as $caisse)
                         <option value="{{ $caisse->id }}" {{ old('caisse_id') == $caisse->id ? 'selected' : '' }}>
                             {{ $caisse->nom }} (Solde actuel: {{ number_format((float) ($caisse->solde_actuel ?? 0), 0, ',', ' ') }} XOF)
@@ -92,15 +92,15 @@
                     <i class="bi bi-plus-square"></i> Qu'est-ce qu'un approvisionnement ?
                 </h6>
                 <p style="font-size: 0.75rem; line-height: 1.5; font-weight: 300; font-family: 'Ubuntu', sans-serif; color: #666;">
-                    Un approvisionnement consiste à ajouter des fonds à une caisse existante. Cette opération crédite le solde de la caisse et est enregistrée dans le journal des mouvements.
+                    Un approvisionnement consiste à ajouter des fonds à un compte existant. Cette opération crédite le solde du compte et est enregistrée dans le journal des mouvements.
                 </p>
                 
                 <h6 class="mt-4 mb-3" style="font-weight: 300; font-family: 'Ubuntu', sans-serif; color: var(--primary-dark-blue);">
                     <i class="bi bi-lightbulb"></i> Cas d'usage
                 </h6>
                 <ul style="font-size: 0.75rem; line-height: 1.8; font-weight: 300; font-family: 'Ubuntu', sans-serif; color: #666; padding-left: 1.2rem;">
-                    <li><strong>Dépôt initial :</strong> Alimenter une nouvelle caisse</li>
-                    <li><strong>Recharge :</strong> Ajouter des fonds à une caisse existante</li>
+                    <li><strong>Dépôt initial :</strong> Alimenter un nouveau compte</li>
+                    <li><strong>Recharge :</strong> Ajouter des fonds à un compte existant</li>
                     <li><strong>Contribution externe :</strong> Enregistrer un apport de fonds</li>
                 </ul>
                 
@@ -108,7 +108,7 @@
                     <i class="bi bi-shield-check"></i> Traçabilité
                 </h6>
                 <p style="font-size: 0.75rem; line-height: 1.5; font-weight: 300; font-family: 'Ubuntu', sans-serif; color: #666;">
-                    Tous les approvisionnements sont enregistrés dans le journal de la caisse avec le motif et la date, permettant un suivi complet des mouvements.
+                    Tous les approvisionnements sont enregistrés dans le journal du compte avec le motif et la date, permettant un suivi complet des mouvements.
                 </p>
             </div>
         </div>

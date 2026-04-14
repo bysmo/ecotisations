@@ -16,7 +16,7 @@
             <table class="table table-hover mb-0">
                 <thead class="bg-light">
                     <tr>
-                        <th>Membre</th>
+                        <th>Client</th>
                         <th>Plan</th>
                         <th>Montant</th>
                         <th>Début</th>
@@ -34,8 +34,8 @@
                             </td>
                             <td>{{ $souscription->plan->nom ?? 'N/A' }}</td>
                             <td class="fw-bold">{{ number_format($souscription->montant, 0, ',', ' ') }} FCFA</td>
-                            <td>{{ $souscription->date_debut->format('d/m/Y') }}</td>
-                            <td>{{ $souscription->date_fin->format('d/m/Y') }}</td>
+                            <td>{{ $souscription->date_debut ? $souscription->date_debut->format('d/m/Y') : 'N/A' }}</td>
+                            <td>{{ $souscription->date_fin ? $souscription->date_fin->format('d/m/Y') : 'N/A' }}</td>
                             <td>
                                 @php
                                     $badgeClass = match($souscription->statut) {

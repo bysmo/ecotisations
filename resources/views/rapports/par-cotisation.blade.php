@@ -74,11 +74,11 @@
                     <thead>
                         <tr>
                             <th>Cotisation</th>
-                            <th>Caisse</th>
+                            <th>Compte</th>
                             <th>Type montant</th>
                             <th>Montant fixe</th>
                             <th>Nombre paiements</th>
-                            <th>Nombre membres</th>
+                            <th>Nombre clients</th>
                             <th>Montant total</th>
                             <th>Moyenne</th>
                         </tr>

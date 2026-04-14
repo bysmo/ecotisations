@@ -184,7 +184,7 @@
                     <thead>
                         <tr>
                             <th>Numéro</th>
-                            <th>Membre</th>
+                            <th>Client</th>
                             <th>Paiement</th>
                             <th>Montant</th>
                             <th>Statut</th>

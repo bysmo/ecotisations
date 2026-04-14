@@ -88,7 +88,7 @@
                             <th class="text-end">Montant max</th>
                             <th class="text-center">Taux</th>
                             <th class="text-center">Durée</th>
-                            <th>Caisse</th>
+                            <th>Compte</th>
                             <th class="text-center">Ordre</th>
                             <th class="text-center">Souscriptions</th>
                             <th class="text-center">Statut</th>

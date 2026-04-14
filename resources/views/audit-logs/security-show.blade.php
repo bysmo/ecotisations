@@ -144,7 +144,7 @@
                                             <input type="hidden" name="id" value="{{ $err['id'] ?? '' }}">
                                             <input type="hidden" name="action" value="suspend">
                                             
-                                            <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Suspendre le membre lié ?')">
+                                            <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Suspendre le client lié ?')">
                                                 <i class="bi bi-person-lock fs-5 d-block mb-1"></i> <strong>Suspendre Compte</strong><br>
                                                 <small style="font-size:0.7rem;">Mettre le fraudeur en quarantaine</small>
                                             </button>

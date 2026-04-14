@@ -1,10 +1,10 @@
 @extends('layouts.app')
 
-@section('title', 'Rapports par Caisse')
+@section('title', 'Rapports par Compte')
 
 @section('content')
 <div class="page-header">
-    <h1><i class="bi bi-cash-coin"></i> Rapports par Caisse</h1>
+    <h1><i class="bi bi-cash-coin"></i> Rapports par Compte</h1>
 </div>
 
 <!-- Filtres -->
@@ -41,7 +41,7 @@
 
 <div class="card">
     <div class="card-header">
-        <i class="bi bi-list-ul"></i> Statistiques par Caisse
+        <i class="bi bi-list-ul"></i> Statistiques par Compte
     </div>
     <div class="card-body">
         @if($statistiques->count() > 0)
@@ -95,7 +95,7 @@
                 <table class="table table-rapports-caisse table-striped table-hover">
                     <thead>
                         <tr>
-                            <th>Caisse</th>
+                            <th>Compte</th>
                             <th>Numéro</th>
                             <th>Solde actuel</th>
                             <th>Entrées (période)</th>
@@ -144,7 +144,7 @@
         @else
             <div class="text-center py-3">
                 <i class="bi bi-inbox" style="font-size: 1.5rem; color: #ccc;"></i>
-                <p class="text-muted mt-2 mb-2" style="font-size: 0.75rem;">Aucune caisse active</p>
+                <p class="text-muted mt-2 mb-2" style="font-size: 0.75rem;">Aucun compte actif</p>
             </div>
         @endif
     </div>

@@ -119,7 +119,7 @@
                     <thead>
                         <tr>
                             <th>Numéro</th>
-                            <th>Membre</th>
+                            <th>Client</th>
                             <th>Cotisation</th>
                             <th>Montant engagé</th>
                             <th>Périodicité</th>

@@ -8,14 +8,14 @@ use App\Models\Segment;
 /**
  * SegmentSeeder
  *
- * Crée les segments de segmentation clientèle des membres.
+ * Crée les segments de segmentation clientèle des clients.
  * Contextualisé pour le Burkina Faso et l'Afrique de l'Ouest.
  *
  * RÈGLE : Le segment "NON CLASSÉ" (is_default=true) DOIT toujours exister.
- * C'est le segment affecté par défaut à tout nouveau membre non encore classé.
+ * C'est le segment affecté par défaut à tout nouveau client non encore classé.
  * Il ne peut pas être supprimé depuis l'interface admin.
  *
- * La table segments doit exister avant les membres (ordre dans DatabaseSeeder).
+ * La table segments doit exister avant les clients (ordre dans DatabaseSeeder).
  */
 class SegmentSeeder extends Seeder
 {
@@ -26,7 +26,7 @@ class SegmentSeeder extends Seeder
             [
                 'nom'        => 'NON CLASSÉ',
                 'slug'       => 'non-classe',
-                'description'=> 'Segment par défaut pour les membres non encore classifiés. Attribué automatiquement à la création du compte.',
+                'description'=> 'Segment par défaut pour les clients non encore classifiés. Attribué automatiquement à la création du compte.',
                 'couleur'    => '#6b7280',    // Gris neutre
                 'icone'      => 'bi bi-person-dash',
                 'is_default' => true,
@@ -104,7 +104,7 @@ class SegmentSeeder extends Seeder
             [
                 'nom'        => 'Communauté Religieuse',
                 'slug'       => 'communaute-religieuse',
-                'description'=> 'Membres issus de communautés religieuses : paroisses, mosquées, fraternités, groupements de prière…',
+                'description'=> 'Clients issus de communautés religieuses : paroisses, mosquées, fraternités, groupements de prière…',
                 'couleur'    => '#9333ea',    // Violet clair
                 'icone'      => 'bi bi-heart',
                 'is_default' => false,
@@ -113,7 +113,7 @@ class SegmentSeeder extends Seeder
             [
                 'nom'        => 'Association',
                 'slug'       => 'association',
-                'description'=> 'Membres de groupements associatifs (associations de développement, groupements féminins, GIE…).',
+                'description'=> 'Clients de groupements associatifs (associations de développement, groupements féminins, GIE…).',
                 'couleur'    => '#0d9488',    // Teal
                 'icone'      => 'bi bi-people',
                 'is_default' => false,

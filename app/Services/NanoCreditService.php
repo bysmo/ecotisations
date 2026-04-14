@@ -144,22 +144,20 @@ class NanoCreditService
         $compteCredit = Caisse::create([
             'membre_id'    => $membre->id,
             'nom'          => 'Compte Crédit (#' . $nanoCredit->id . ') - ' . $membre->nom_complet,
-            'numero'       => $this->generateNumeroCaisse(),
-            'solde_init'   => 0,
-            'solde_actuel' => (float) $nanoCredit->montant, // On commence avec le montant dû
+            'numero'       => Caisse::generateNumeroCompte(),
+            'solde_initial'   => 0,
+            'statut'       => 'active',
             'type'         => 'credit',
-            'actif'        => true,
         ]);
 
         // C. Création du compte des Impayés
         $compteImpaye = Caisse::create([
             'membre_id'    => $membre->id,
             'nom'          => 'Compte Impayés (#' . $nanoCredit->id . ') - ' . $membre->nom_complet,
-            'numero'       => $this->generateNumeroCaisse(),
-            'solde_init'   => 0,
-            'solde_actuel' => 0,
+            'numero'       => Caisse::generateNumeroCompte(),
+            'solde_initial'   => 0,
+            'statut'       => 'active',
             'type'         => 'impayes',
-            'actif'        => true,
         ]);
 
         // D. Liaison finale au dossier nano-crédit
@@ -168,19 +166,5 @@ class NanoCreditService
             'compte_credit_id'        => $compteCredit->id,
             'compte_impaye_id'        => $compteImpaye->id,
         ]);
-    }
-
-    /**
-     * Générer un numéro de compte unique
-     */
-    private function generateNumeroCaisse(): string
-    {
-        do {
-            $part1 = strtoupper(Str::random(4));
-            $part2 = strtoupper(Str::random(4));
-            $numero = $part1 . '-' . $part2;
-        } while (Caisse::where('numero', $numero)->exists());
-
-        return $numero;
     }
 }

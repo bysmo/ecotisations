@@ -883,6 +883,12 @@
                     <ul class="sidebar-submenu">
                         @if(auth()->user()->hasRole('admin') || auth()->user()->hasPermission('caisses.view'))
                         <li>
+                            <a href="{{ route('caisses.dashboard') }}" class="nav-link {{ request()->routeIs('caisses.dashboard') ? 'active' : '' }}">
+                                <i class="bi bi-speedometer2"></i>
+                                <span>Tableau de bord</span>
+                            </a>
+                        </li>
+                        <li>
                             <a href="{{ route('caisses.index') }}" class="nav-link {{ request()->routeIs('caisses.index') ? 'active' : '' }}">
                                 <i class="bi bi-list-ul"></i>
                                 <span>Liste des comptes</span>
@@ -1305,7 +1311,7 @@
                         <li>
                             <a href="{{ route('rapports.caisse') }}" class="nav-link {{ request()->routeIs('rapports.caisse') ? 'active' : '' }}">
                                 <i class="bi bi-cash-coin"></i>
-                                <span>Par caisse</span>
+                                <span>Par compte</span>
                             </a>
                         </li>
                         <li>
@@ -1317,7 +1323,7 @@
                         <li>
                             <a href="{{ route('rapports.membre') }}" class="nav-link {{ request()->routeIs('rapports.membre') ? 'active' : '' }}">
                                 <i class="bi bi-people"></i>
-                                <span>Par membre</span>
+                                <span>Par client</span>
                             </a>
                         </li>
                     </ul>

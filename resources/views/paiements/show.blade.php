@@ -20,7 +20,7 @@
                         <strong>{{ $paiement->numero ?? '-' }}</strong>
                     </dd>
                     
-                    <dt class="col-sm-4" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">Membre</dt>
+                    <dt class="col-sm-4" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">Client</dt>
                     <dd class="col-sm-8" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">
                         {{ $paiement->membre->nom_complet ?? '-' }} ({{ $paiement->membre->numero ?? '-' }})
                     </dd>
@@ -28,7 +28,7 @@
                     <dt class="col-sm-4" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">Cagnotte</dt>
                     <dd class="col-sm-8" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">{{ $paiement->cotisation->nom ?? '-' }}</dd>
                     
-                    <dt class="col-sm-4" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">Caisse</dt>
+                    <dt class="col-sm-4" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">Compte</dt>
                     <dd class="col-sm-8" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">{{ $paiement->caisse->nom ?? '-' }}</dd>
                     
                     <dt class="col-sm-4" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">Montant</dt>

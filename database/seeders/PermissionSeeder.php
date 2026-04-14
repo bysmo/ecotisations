@@ -14,22 +14,22 @@ class PermissionSeeder extends Seeder
     public function run(): void
     {
         $permissions = [
-            // Caisses
-            ['nom' => 'Voir les caisses', 'slug' => 'caisses.view', 'categorie' => 'Caisses', 'description' => 'Afficher la liste des caisses'],
-            ['nom' => 'Créer une caisse', 'slug' => 'caisses.create', 'categorie' => 'Caisses', 'description' => 'Créer une nouvelle caisse'],
-            ['nom' => 'Modifier une caisse', 'slug' => 'caisses.update', 'categorie' => 'Caisses', 'description' => 'Modifier une caisse existante'],
-            ['nom' => 'Supprimer une caisse', 'slug' => 'caisses.delete', 'categorie' => 'Caisses', 'description' => 'Supprimer une caisse'],
-            ['nom' => 'Effectuer un transfert', 'slug' => 'caisses.transfert', 'categorie' => 'Caisses', 'description' => 'Effectuer un transfert entre caisses'],
-            ['nom' => 'Approvisionner une caisse', 'slug' => 'caisses.approvisionner', 'categorie' => 'Caisses', 'description' => 'Approvisionner une caisse'],
-            ['nom' => 'Enregistrer une sortie', 'slug' => 'caisses.sortie', 'categorie' => 'Caisses', 'description' => 'Enregistrer une sortie de caisse'],
-            ['nom' => 'Voir le journal', 'slug' => 'caisses.journal', 'categorie' => 'Caisses', 'description' => 'Consulter le journal d\'une caisse'],
+            // Comptes
+            ['nom' => 'Voir les comptes', 'slug' => 'caisses.view', 'categorie' => 'Comptes', 'description' => 'Afficher la liste des comptes'],
+            ['nom' => 'Créer un compte', 'slug' => 'caisses.create', 'categorie' => 'Comptes', 'description' => 'Créer un nouveau compte'],
+            ['nom' => 'Modifier un compte', 'slug' => 'caisses.update', 'categorie' => 'Comptes', 'description' => 'Modifier un compte existant'],
+            ['nom' => 'Supprimer un compte', 'slug' => 'caisses.delete', 'categorie' => 'Comptes', 'description' => 'Supprimer un compte'],
+            ['nom' => 'Effectuer un transfert', 'slug' => 'caisses.transfert', 'categorie' => 'Comptes', 'description' => 'Effectuer un transfert entre comptes'],
+            ['nom' => 'Approvisionner un compte', 'slug' => 'caisses.approvisionner', 'categorie' => 'Comptes', 'description' => 'Approvisionner un compte'],
+            ['nom' => 'Enregistrer une sortie', 'slug' => 'caisses.sortie', 'categorie' => 'Comptes', 'description' => 'Enregistrer une sortie de compte'],
+            ['nom' => 'Voir le journal', 'slug' => 'caisses.journal', 'categorie' => 'Comptes', 'description' => 'Consulter le journal d\'un compte'],
             
-            // Membres
-            ['nom' => 'Voir les membres', 'slug' => 'membres.view', 'categorie' => 'Membres', 'description' => 'Afficher la liste des membres'],
-            ['nom' => 'Créer un membre', 'slug' => 'membres.create', 'categorie' => 'Membres', 'description' => 'Créer un nouveau membre'],
-            ['nom' => 'Modifier un membre', 'slug' => 'membres.update', 'categorie' => 'Membres', 'description' => 'Modifier un membre existant'],
-            ['nom' => 'Supprimer un membre', 'slug' => 'membres.delete', 'categorie' => 'Membres', 'description' => 'Supprimer un membre'],
-            ['nom' => 'Gérer KYC', 'slug' => 'membres.kyc', 'categorie' => 'Membres', 'description' => 'Valider les documents KYC des membres'],
+            // Clients
+            ['nom' => 'Voir les clients', 'slug' => 'membres.view', 'categorie' => 'Clients', 'description' => 'Afficher la liste des clients'],
+            ['nom' => 'Créer un client', 'slug' => 'membres.create', 'categorie' => 'Clients', 'description' => 'Créer un nouveau client'],
+            ['nom' => 'Modifier un client', 'slug' => 'membres.update', 'categorie' => 'Clients', 'description' => 'Modifier un client existant'],
+            ['nom' => 'Supprimer un client', 'slug' => 'membres.delete', 'categorie' => 'Clients', 'description' => 'Supprimer un client'],
+            ['nom' => 'Gérer KYC', 'slug' => 'membres.kyc', 'categorie' => 'Clients', 'description' => 'Valider les documents KYC des clients'],
             
             // Cotisations (Cagnottes)
             ['nom' => 'Voir les cagnottes', 'slug' => 'cotisations.view', 'categorie' => 'Cagnottes', 'description' => 'Afficher la liste des cagnottes'],
@@ -153,7 +153,7 @@ class PermissionSeeder extends Seeder
                 ]
             ],
             'resp_membres' => [
-                'nom' => 'Responsable des membres',
+                'nom' => 'Responsable des clients',
                 'description' => 'Onboarding, support et validation KYC',
                 'permissions' => [
                     'membres.view', 'membres.create', 'membres.update', 'membres.kyc',
@@ -171,7 +171,7 @@ class PermissionSeeder extends Seeder
             ],
             'tresorier' => [
                 'nom' => 'Trésorier',
-                'description' => 'Opérations de caisse et paiements courants',
+                'description' => 'Opérations de compte et paiements courants',
                 'permissions' => [
                     'caisses.view', 'caisses.journal', 'caisses.approvisionner', 'caisses.sortie', 'caisses.transfert',
                     'paiements.view', 'paiements.create', 'paiements.update', 'paiements.engagement',

@@ -1,10 +1,10 @@
 @extends('layouts.app')
 
-@section('title', 'Tableau de Bord Membres')
+@section('title', 'Tableau de Bord Clients')
 
 @section('content')
 <div class="page-header d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0"><i class="bi bi-speedometer2 me-2" style="color: var(--primary-blue);"></i>Tableau de Bord des Membres</h1>
+    <h1 class="h3 mb-0"><i class="bi bi-speedometer2 me-2" style="color: var(--primary-blue);"></i>Tableau de Bord des Clients</h1>
     <div class="d-flex gap-2">
         <form action="{{ route('membres.dashboard') }}" method="GET" class="d-flex gap-2 align-items-center bg-white p-2 rounded shadow-sm border">
             <label class="small fw-bold text-muted mb-0">Période :</label>
@@ -24,7 +24,7 @@
         <div class="card border-0 shadow-sm h-100 card-stat" style="border-left: 4px solid var(--primary-blue) !important;">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                    <h6 class="text-muted mb-0 small text-uppercase fw-bold">Total Membres</h6>
+                    <h6 class="text-muted mb-0 small text-uppercase fw-bold">Total Clients</h6>
                     <i class="bi bi-people fs-4 text-primary opacity-50"></i>
                 </div>
                 <h3 class="fw-bold mb-0">{{ number_format($totalMembres, 0, ',', ' ') }}</h3>
@@ -38,7 +38,7 @@
         <div class="card border-0 shadow-sm h-100 card-stat" style="border-left: 4px solid #198754 !important;">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                    <h6 class="text-muted mb-0 small text-uppercase fw-bold">Membres Actifs</h6>
+                    <h6 class="text-muted mb-0 small text-uppercase fw-bold">Clients Actifs</h6>
                     <i class="bi bi-person-check fs-4 text-success opacity-50"></i>
                 </div>
                 <h3 class="fw-bold mb-0">{{ number_format($membresActifs, 0, ',', ' ') }}</h3>

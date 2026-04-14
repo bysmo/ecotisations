@@ -183,7 +183,7 @@
                                 <input class="form-check-input" type="checkbox" name="downgrade_en_cas_impayes" id="downgrade" value="1"
                                        {{ old('downgrade_en_cas_impayes', true) ? 'checked' : '' }}>
                                 <label class="form-check-label" for="downgrade">
-                                    Rétrograder automatiquement le membre (et ses garants) en cas d'impayés
+                                    Rétrograder automatiquement le client (et ses garants) en cas d'impayés
                                 </label>
                             </div>
                         </div>
@@ -192,7 +192,7 @@
                                 <input class="form-check-input" type="checkbox" name="interdiction_en_cas_recidive" id="interdiction" value="1"
                                        {{ old('interdiction_en_cas_recidive') ? 'checked' : '' }}>
                                 <label class="form-check-label" for="interdiction">
-                                    Interdire le membre de prendre des nano-crédits en cas de récidive
+                                    Interdire le client de prendre des nano-crédits en cas de récidive
                                 </label>
                             </div>
                         </div>

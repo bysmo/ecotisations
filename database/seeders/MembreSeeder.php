@@ -16,7 +16,7 @@ use Carbon\Carbon;
  * Prérequis : SegmentSeeder doit être exécuté AVANT ce seeder.
  *
  * Distribution des segments (approximative sur 50 membres) :
- *   - NON CLASSÉ          : ~5  (10%) — membres récemment créés
+ *   - NON CLASSÉ          : ~5  (10%) — clients récemment créés
  *   - Commerçant          : ~10 (20%) — secteur dominant en zone UEMOA
  *   - Fonctionnaire       : ~8  (16%)
  *   - Entreprise Informelle: ~7 (14%)
@@ -128,7 +128,7 @@ class MembreSeeder extends Seeder
             'Tanghin', 
         ];
 
-        $nbMembres = 50; // Nombre de membres à créer
+        $nbMembres = 50; // Nombre de clients à créer
         $created = 0;
 
         for ($i = 0; $i < $nbMembres; $i++) {
@@ -161,7 +161,7 @@ class MembreSeeder extends Seeder
 
             // Numéro unique
             do {
-                $numero = 'MEM-' . strtoupper(Str::random(6));
+                $numero = 'CLI-' . strtoupper(Str::random(6));
             } while (Membre::where('numero', $numero)->exists());
 
             Membre::create([

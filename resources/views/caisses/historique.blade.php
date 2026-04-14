@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="page-header">
-    <h1><i class="bi bi-clock-history"></i> Historique des Mouvements de Caisses</h1>
+    <h1><i class="bi bi-clock-history"></i> Historique des Mouvements de Comptes</h1>
 </div>
 
 <div class="card">
@@ -19,7 +19,7 @@
                     <input type="text" 
                            name="search" 
                            class="form-control form-control-sm" 
-                           placeholder="Rechercher par caisse, motif..." 
+                           placeholder="Rechercher par compte, motif..." 
                            value="{{ request('search') }}">
                 </div>
                 <div class="col-md-3">
@@ -108,7 +108,7 @@
                             <th>ID</th>
                             <th>Date</th>
                             <th>Type</th>
-                            <th>Caisse(s)</th>
+                            <th>Compte(s)</th>
                             <th>Montant</th>
                             <th>Motif</th>
                         </tr>

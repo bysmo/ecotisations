@@ -121,12 +121,12 @@
                     <thead>
                         <tr>
                             <th>Numéro</th>
-                            <th>Membre</th>
+                            <th>Client</th>
                             <th>Cagnotte</th>
                             <th>Montant</th>
                             <th>Date paiement</th>
                             <th>Mode</th>
-                            <th>Caisse</th>
+                            <th>Compte</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -159,7 +159,7 @@
                                               method="POST" 
                                               class="d-inline"
                                               class="delete-form"
-                                              data-message="Êtes-vous sûr de vouloir supprimer ce paiement ? Le solde de la caisse sera ajusté.">
+                                              data-message="Êtes-vous sûr de vouloir supprimer ce paiement ? Le solde du compte sera ajusté.">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" 

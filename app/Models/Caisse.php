@@ -82,4 +82,18 @@ class Caisse extends Model
     {
         return $this->hasMany(\App\Models\EpargnePlan::class);
     }
+
+    /**
+     * Génère un numéro de compte unique au format XXXX-XXXX
+     */
+    public static function generateNumeroCompte(): string
+    {
+        do {
+            $part1 = strtoupper(\Illuminate\Support\Str::random(4));
+            $part2 = strtoupper(\Illuminate\Support\Str::random(4));
+            $numero = $part1 . '-' . $part2;
+        } while (static::where('numero', $numero)->exists());
+
+        return $numero;
+    }
 }

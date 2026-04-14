@@ -1,17 +1,17 @@
 @extends('layouts.app')
 
-@section('title', 'Créer un Membre')
+@section('title', 'Créer un Client')
 
 @section('content')
 <div class="page-header">
-    <h1><i class="bi bi-plus-circle"></i> Créer un Nouveau Membre</h1>
+    <h1><i class="bi bi-plus-circle"></i> Créer un Nouveau Client</h1>
 </div>
 
 <div class="row">
     <div class="col-md-8">
         <div class="card">
     <div class="card-header">
-        <i class="bi bi-info-circle"></i> Informations du Membre
+        <i class="bi bi-info-circle"></i> Informations du Client
     </div>
     <div class="card-body">
         <form action="{{ route('membres.store') }}" method="POST">
@@ -237,31 +237,31 @@
     <div class="col-md-4">
         <div class="card">
             <div class="card-header">
-                <i class="bi bi-info-circle"></i> À propos des Membres
+                <i class="bi bi-info-circle"></i> À propos des Clients
             </div>
             <div class="card-body">
                 <h6 class="mb-3" style="font-weight: 300; font-family: 'Ubuntu', sans-serif; color: var(--primary-dark-blue);">
-                    <i class="bi bi-person"></i> Qu'est-ce qu'un membre ?
+                    <i class="bi bi-person"></i> Qu'est-ce qu'un client ?
                 </h6>
                 <p style="font-size: 0.75rem; line-height: 1.5; font-weight: 300; font-family: 'Ubuntu', sans-serif; color: #666;">
-                    Un membre est une personne inscrite dans votre organisation qui peut effectuer des paiements de cotisations. Chaque membre reçoit un numéro unique et peut se connecter pour consulter ses paiements.
+                    Un client est une personne inscrite dans votre organisation qui peut effectuer des paiements de cotisations. Chaque client reçoit un numéro unique et peut se connecter pour consulter ses paiements.
                 </p>
                 
                 <ul style="font-size: 0.75rem; line-height: 1.8; font-weight: 300; font-family: 'Ubuntu', sans-serif; color: #666; padding-left: 1.2rem;">
                     <li><strong>Nom et prénom :</strong> Identité complète</li>
                     <li><strong>Email :</strong> Pour les notifications et connexion</li>
                     <li><strong>Date d'adhésion :</strong> Date d'inscription</li>
-                    <li><strong>Mot de passe :</strong> Géré par le membre (Lien de reset)</li>
+                    <li><strong>Mot de passe :</strong> Géré par le client (Lien de reset)</li>
                 </ul>
                 
                 <h6 class="mt-4 mb-3" style="font-weight: 300; font-family: 'Ubuntu', sans-serif; color: var(--primary-dark-blue);">
                     <i class="bi bi-lightbulb"></i> Statuts
                 </h6>
                 <p style="font-size: 0.75rem; line-height: 1.5; font-weight: 300; font-family: 'Ubuntu', sans-serif; color: #666;">
-                    <strong>Actif :</strong> Membre pouvant effectuer des paiements<br>
-                    <strong>En attente :</strong> Membre en attente de validation OTP<br>
-                    <strong>Inactif :</strong> Membre temporairement désactivé<br>
-                    <strong>Suspendu :</strong> Membre suspendu par décision administrative
+                    <strong>Actif :</strong> Client pouvant effectuer des paiements<br>
+                    <strong>En attente :</strong> Client en attente de validation OTP<br>
+                    <strong>Inactif :</strong> Client temporairement désactivé<br>
+                    <strong>Suspendu :</strong> Client suspendu par décision administrative
                 </p>
             </div>
         </div>

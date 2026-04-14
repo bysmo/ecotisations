@@ -13,73 +13,73 @@ class UpdateSegmentsSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->command->info('Mise à jour des segments des membres et cotisations...');
+        $this->command->info('Mise à jour des segments des clients et cotisations...');
 
         // Segments disponibles
         $segments = ['VIP', 'Premium', 'Standard', 'Basique', 'Entreprise'];
         
-        // 1. Mettre à jour les segments des membres
-        $membres = Membre::all();
-        $totalMembres = $membres->count();
+        // 1. Mettre à jour les segments des clients
+        $clients = Membre::all();
+        $totalClients = $clients->count();
 
-        if ($totalMembres === 0) {
-            $this->command->warn('Aucun membre trouvé.');
+        if ($totalClients === 0) {
+            $this->command->warn('Aucun client trouvé.');
             return;
         }
 
-        // Répartition des membres par segment
+        // Répartition des clients par segment
         $repartition = [
-            'VIP' => (int) round($totalMembres * 0.15),
-            'Premium' => (int) round($totalMembres * 0.20),
-            'Standard' => (int) round($totalMembres * 0.25),
-            'Basique' => (int) round($totalMembres * 0.15),
-            'Entreprise' => (int) round($totalMembres * 0.10),
+            'VIP' => (int) round($totalClients * 0.15),
+            'Premium' => (int) round($totalClients * 0.20),
+            'Standard' => (int) round($totalClients * 0.25),
+            'Basique' => (int) round($totalClients * 0.15),
+            'Entreprise' => (int) round($totalClients * 0.10),
         ];
         
-        // Ajuster pour que le total soit égal au nombre de membres
+        // Ajuster pour que le total soit égal au nombre de clients
         $totalAlloue = array_sum($repartition);
-        $diff = $totalMembres - $totalAlloue;
+        $diff = $totalClients - $totalAlloue;
         if ($diff !== 0) {
             $repartition['Standard'] += $diff;
         }
 
-        // Mélanger les membres
-        $membres = $membres->shuffle();
+        // Mélanger les clients
+        $clients = $clients->shuffle();
         
         $index = 0;
-        $statsMembres = [];
+        $statsClients = [];
 
-        // Assigner les segments aux membres
+        // Assigner les segments aux clients
         foreach ($repartition as $segment => $nombre) {
-            $statsMembres[$segment] = 0;
-            for ($i = 0; $i < $nombre && $index < $totalMembres; $i++) {
-                $membre = $membres[$index];
-                $membre->segment = $segment;
-                $membre->save();
-                $statsMembres[$segment]++;
+            $statsClients[$segment] = 0;
+            for ($i = 0; $i < $nombre && $index < $totalClients; $i++) {
+                $client = $clients[$index];
+                $client->segment = $segment;
+                $client->save();
+                $statsClients[$segment]++;
                 $index++;
             }
         }
 
-        // Les membres restants n'ont pas de segment
+        // Les clients restants n'ont pas de segment
         $sansSegment = 0;
-        while ($index < $totalMembres) {
-            $membre = $membres[$index];
-            $membre->segment = null;
-            $membre->save();
+        while ($index < $totalClients) {
+            $client = $clients[$index];
+            $client->segment = null;
+            $client->save();
             $sansSegment++;
             $index++;
         }
 
-        $this->command->info("Segments des membres mis à jour.");
+        $this->command->info("Segments des clients mis à jour.");
         $this->command->info("Répartition par segment :");
-        foreach ($statsMembres as $segment => $nombre) {
-            $pourcentage = $totalMembres > 0 ? round(($nombre / $totalMembres) * 100, 1) : 0;
-            $this->command->info("  - {$segment}: {$nombre} membre(s) ({$pourcentage}%)");
+        foreach ($statsClients as $segment => $nombre) {
+            $pourcentage = $totalClients > 0 ? round(($nombre / $totalClients) * 100, 1) : 0;
+            $this->command->info("  - {$segment}: {$nombre} client(s) ({$pourcentage}%)");
         }
         if ($sansSegment > 0) {
-            $pourcentage = round(($sansSegment / $totalMembres) * 100, 1);
-            $this->command->info("  - Sans segment: {$sansSegment} membre(s) ({$pourcentage}%)");
+            $pourcentage = round(($sansSegment / $totalClients) * 100, 1);
+            $this->command->info("  - Sans segment: {$sansSegment} client(s) ({$pourcentage}%)");
         }
 
         // 2. Mettre à jour les cotisations
@@ -162,13 +162,13 @@ class UpdateSegmentsSeeder extends Seeder
         $cotisationsVIP = Cotisation::where('segment', 'VIP')->where('actif', true)->count();
         $this->command->info("\n✓ Vérification : {$cotisationsVIP} cotisation(s) VIP active(s)");
 
-        // Afficher un exemple de membre VIP pour les tests
-        $membreVIP = Membre::where('segment', 'VIP')->first();
-        if ($membreVIP) {
-            $this->command->info("\nExemple de membre VIP pour test :");
-            $this->command->info("  - Numéro: {$membreVIP->numero}");
-            $this->command->info("  - Nom: {$membreVIP->nom_complet}");
-            $this->command->info("  - Segment: {$membreVIP->segment}");
+        // Afficher un exemple de client VIP pour les tests
+        $clientVIP = Membre::where('segment', 'VIP')->first();
+        if ($clientVIP) {
+            $this->command->info("\nExemple de client VIP pour test :");
+            $this->command->info("  - Numéro: {$clientVIP->numero}");
+            $this->command->info("  - Nom: {$clientVIP->nom_complet}");
+            $this->command->info("  - Segment: {$clientVIP->segment}");
         }
     }
 }

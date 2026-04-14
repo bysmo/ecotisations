@@ -71,7 +71,7 @@
                         <tr>
                             <th>Numéro</th>
                             <th>Nom</th>
-                            <th>Caisse</th>
+                            <th>Compte</th>
                             <th>Type</th>
                             <th>Montant</th>
                             <th>Statut</th>

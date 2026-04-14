@@ -76,7 +76,7 @@
 
             <div class="mb-3 form-check">
                 <input type="checkbox" class="form-check-input" id="actif" name="actif" value="1" {{ old('actif', true) ? 'checked' : '' }}>
-                <label class="form-check-label" for="actif">Type actif (visible pour les membres)</label>
+                <label class="form-check-label" for="actif">Type actif (visible pour les clients)</label>
             </div>
 
             <div class="d-flex gap-2">

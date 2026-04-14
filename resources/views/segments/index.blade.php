@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="page-header d-flex justify-content-between align-items-center mb-3">
-    <h1><i class="bi bi-tags me-2"></i>Gestion des Segments de Membres</h1>
+    <h1><i class="bi bi-tags me-2"></i>Gestion des Segments de Clients</h1>
     <a href="{{ route('segments.create') }}" class="btn btn-primary btn-sm">
         <i class="bi bi-plus-circle me-1"></i> Nouveau Segment
     </a>
@@ -38,7 +38,7 @@
                     <tr>
                         <th class="ps-4">Segment</th>
                         <th>Description</th>
-                        <th class="text-center">Membres</th>
+                        <th class="text-center">Clients</th>
                         <th class="text-center">Statut</th>
                         <th class="text-center pe-4">Actions</th>
                     </tr>
@@ -74,7 +74,7 @@
                             </td>
                             <td class="text-center pe-4">
                                 <div class="btn-group">
-                                    <a href="{{ route('segments.show', $segment) }}" class="btn btn-light btn-sm border" title="Voir les membres">
+                                    <a href="{{ route('segments.show', $segment) }}" class="btn btn-light btn-sm border" title="Voir les clients">
                                         <i class="bi bi-eye"></i>
                                     </a>
                                     <a href="{{ route('segments.edit', $segment) }}" class="btn btn-light btn-sm border" title="Modifier">

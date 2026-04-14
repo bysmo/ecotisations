@@ -671,7 +671,7 @@
         <div class="top-bar-left">
             <span style="font-size: 0.85rem; color: var(--primary-dark-blue); font-weight: 300;">
                 <i class="bi bi-person-circle"></i> 
-                {{ $membre->nom_complet ?? 'Membre' }}
+                {{ $membre->nom_complet ?? 'Client' }}
                 <small class="text-muted ms-2">({{ $membre->numero ?? '' }})</small>
             </span>
         </div>

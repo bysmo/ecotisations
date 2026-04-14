@@ -1,10 +1,10 @@
 @extends('layouts.app')
 
-@section('title', 'Transfert Inter Caisse')
+@section('title', 'Transfert Inter Compte')
 
 @section('content')
 <div class="page-header">
-    <h1><i class="bi bi-arrow-left-right"></i> Transfert Inter Caisse</h1>
+    <h1><i class="bi bi-arrow-left-right"></i> Transfert Inter Compte</h1>
 </div>
 
 <div class="row">
@@ -20,13 +20,13 @@
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label for="caisse_source_id" class="form-label">
-                        Caisse source <span class="text-danger">*</span>
+                        Compte source <span class="text-danger">*</span>
                     </label>
                     <select class="form-select @error('caisse_source_id') is-invalid @enderror" 
                             id="caisse_source_id" 
                             name="caisse_source_id" 
                             required>
-                        <option value="">Sélectionner une caisse</option>
+                        <option value="">Sélectionner un compte</option>
                         @foreach($caisses as $caisse)
                             <option value="{{ $caisse->id }}" {{ old('caisse_source_id') == $caisse->id ? 'selected' : '' }}>
                                 {{ $caisse->nom }} (Solde: {{ number_format((float) ($caisse->solde_actuel ?? 0), 0, ',', ' ') }} XOF)
@@ -40,13 +40,13 @@
                 
                 <div class="col-md-6 mb-3">
                     <label for="caisse_destination_id" class="form-label">
-                        Caisse destination <span class="text-danger">*</span>
+                        Compte destination <span class="text-danger">*</span>
                     </label>
                     <select class="form-select @error('caisse_destination_id') is-invalid @enderror" 
                             id="caisse_destination_id" 
                             name="caisse_destination_id" 
                             required>
-                        <option value="">Sélectionner une caisse</option>
+                        <option value="">Sélectionner un compte</option>
                         @foreach($caisses as $caisse)
                             <option value="{{ $caisse->id }}" {{ old('caisse_destination_id') == $caisse->id ? 'selected' : '' }}>
                                 {{ $caisse->nom }} (Solde: {{ number_format((float) ($caisse->solde_actuel ?? 0), 0, ',', ' ') }} XOF)
@@ -114,15 +114,15 @@
                     <i class="bi bi-arrow-left-right"></i> Qu'est-ce qu'un transfert ?
                 </h6>
                 <p style="font-size: 0.75rem; line-height: 1.5; font-weight: 300; font-family: 'Ubuntu', sans-serif; color: #666;">
-                    Un transfert inter-caisse permet de déplacer des fonds d'une caisse source vers une caisse destination. Cette opération débite automatiquement la caisse source et crédite la caisse destination.
+                    Un transfert inter-compte permet de déplacer des fonds d'un compte source vers un compte destination. Cette opération débite automatiquement le compte source et crédite le compte destination.
                 </p>
                 
                 <h6 class="mt-4 mb-3" style="font-weight: 300; font-family: 'Ubuntu', sans-serif; color: var(--primary-dark-blue);">
                     <i class="bi bi-shield-check"></i> Vérifications
                 </h6>
                 <ul style="font-size: 0.75rem; line-height: 1.8; font-weight: 300; font-family: 'Ubuntu', sans-serif; color: #666; padding-left: 1.2rem;">
-                    <li>Le solde de la caisse source doit être suffisant</li>
-                    <li>Les deux caisses doivent être différentes</li>
+                    <li>Le solde du compte source doit être suffisant</li>
+                    <li>Les deux comptes doivent être différentes</li>
                     <li>Le motif est obligatoire pour la traçabilité</li>
                 </ul>
                 
@@ -130,7 +130,7 @@
                     <i class="bi bi-lightbulb"></i> Astuce
                 </h6>
                 <p style="font-size: 0.75rem; line-height: 1.5; font-weight: 300; font-family: 'Ubuntu', sans-serif; color: #666;">
-                    Les transferts sont enregistrés dans le journal de chaque caisse concernée, permettant un suivi complet de tous les mouvements.
+                    Les transferts sont enregistrés dans le journal de chaque compte concerné, permettant un suivi complet de tous les mouvements.
                 </p>
             </div>
         </div>

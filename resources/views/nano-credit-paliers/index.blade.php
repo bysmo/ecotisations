@@ -7,7 +7,7 @@
     <div>
         <h1 class="page-title"><i class="bi bi-ladder me-2"></i>Paliers Nano-Crédit</h1>
         <p class="text-muted mb-0" style="font-size: 0.85rem;">
-            Configurez les niveaux d'accès aux nano-crédits. Chaque membre KYC validé débute au <strong>Palier 1</strong>.
+            Configurez les niveaux d'accès aux nano-crédits. Chaque client KYC validé débute au <strong>Palier 1</strong>.
         </p>
     </div>
     <a href="{{ route('nano-credit-paliers.create') }}" class="btn btn-primary btn-sm">
@@ -74,13 +74,13 @@
             </div>
             <div class="card-body py-3">
                 <div class="row g-3">
-                    {{-- Statistiques membres --}}
+                    {{-- Statistiques clients --}}
                     <div class="col-md-2 col-6">
                         <div class="text-center">
                             <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary-dark-blue);">
                                 {{ $palier->membres_count ?? 0 }}
                             </div>
-                            <small class="text-muted">Membres</small>
+                            <small class="text-muted">Clients</small>
                         </div>
                     </div>
                     <div class="col-md-2 col-6">

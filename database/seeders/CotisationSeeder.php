@@ -29,7 +29,7 @@ class CotisationSeeder extends Seeder
         $caisses = Caisse::where('statut', 'active')->get();
 
         if ($caisses->isEmpty()) {
-            $this->command->warn('Aucune caisse active. Veuillez exécuter CaisseSeeder d\'abord.');
+            $this->command->warn('Aucun compte actif. Veuillez exécuter CaisseSeeder d\'abord.');
             return;
         }
 
@@ -111,7 +111,7 @@ class CotisationSeeder extends Seeder
             [
                 'nom'         => 'Cotisations Association La Diaspora du Djoro',
                 'description' => 'Fonds de l\'association des ressortissants du village de Djoro en diaspora. Objectif : financer les projets de développement local (puits, école, dispensaire) et maintenir le lien entre la diaspora et le village.',
-                'notes'       => 'Cotisation mensuelle obligatoire pour les membres actifs de l\'association. Réunion de bilan chaque trimestre.',
+                'notes'       => 'Cotisation mensuelle obligatoire pour les clients actifs de l\'association. Réunion de bilan chaque trimestre.',
                 'type'        => 'reguliere',
                 'frequence'   => 'mensuelle',
                 'type_montant'=> 'fixe',
@@ -123,7 +123,7 @@ class CotisationSeeder extends Seeder
             [
                 'nom'         => 'Fonds de Construction de l\'École Primaire de Babora',
                 'description' => 'Collecte communautaire pour financer la construction et l\'équipement d\'une école primaire à Babora. Objectif : offrir un cadre scolaire digne aux enfants du village et réduire le taux d\'abandon scolaire.',
-                'notes'       => 'Objectif total : 15 000 000 FCFA. Phase 1 en cours (fondations + murs). Rapport financier mensuel disponible aux membres.',
+                'notes'       => 'Objectif total : 15 000 000 FCFA. Phase 1 en cours (fondations + murs). Rapport financier mensuel disponible aux clients.',
                 'type'        => 'ponctuelle',
                 'frequence'   => 'mensuelle',
                 'type_montant'=> 'libre',
@@ -158,8 +158,8 @@ class CotisationSeeder extends Seeder
             ],
             [
                 'nom'         => 'Tontine Solidarité Femmes de Karpala',
-                'description' => 'Tontine rotatoire du groupement des femmes commerçantes du quartier Karpala à Ouagadougou. Permet à chaque membre de bénéficier d\'un capital mensuel pour développer son activité génératrice de revenus.',
-                'notes'       => 'Tour de bénéfice établi en début d\'année. Ordre déterminé par tirage au sort. Cotisation mensuelle fixe par membre.',
+                'description' => 'Tontine rotatoire du groupement des femmes commerçantes du quartier Karpala à Ouagadougou. Permet à chaque client de bénéficier d\'un capital mensuel pour développer son activité génératrice de revenus.',
+                'notes'       => 'Tour de bénéfice établi en début d\'année. Ordre déterminé par tirage au sort. Cotisation mensuelle fixe par client.',
                 'type'        => 'reguliere',
                 'frequence'   => 'mensuelle',
                 'type_montant'=> 'fixe',

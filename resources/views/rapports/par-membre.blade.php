@@ -1,10 +1,10 @@
 @extends('layouts.app')
 
-@section('title', 'Rapports par Membre')
+@section('title', 'Rapports par Client')
 
 @section('content')
 <div class="page-header">
-    <h1><i class="bi bi-people"></i> Rapports par Membre</h1>
+    <h1><i class="bi bi-people"></i> Rapports par Client</h1>
 </div>
 
 <!-- Filtres -->
@@ -41,7 +41,7 @@
 
 <div class="card">
     <div class="card-header">
-        <i class="bi bi-list-ul"></i> Statistiques par Membre
+        <i class="bi bi-list-ul"></i> Statistiques par Client
     </div>
     <div class="card-body">
         @if($statistiques->count() > 0)
@@ -73,7 +73,7 @@
                 <table class="table table-hover table-rapports-membre table-striped">
                     <thead>
                         <tr>
-                            <th>Membre</th>
+                            <th>Client</th>
                             <th>Numéro</th>
                             <th>Email</th>
                             <th>Nombre paiements</th>
@@ -139,7 +139,7 @@
         @else
             <div class="text-center py-3">
                 <i class="bi bi-inbox" style="font-size: 1.5rem; color: #ccc;"></i>
-                <p class="text-muted mt-2 mb-2" style="font-size: 0.75rem;">Aucun membre actif</p>
+                <p class="text-muted mt-2 mb-2" style="font-size: 0.75rem;">Aucun client actif</p>
             </div>
         @endif
     </div>

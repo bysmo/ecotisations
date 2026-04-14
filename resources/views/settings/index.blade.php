@@ -61,7 +61,7 @@
                 @if(!$schedulerStatus['configured'])
                     <div class="alert alert-warning mt-3" style="font-size: 0.75rem; font-family: 'Ubuntu', sans-serif;">
                         <i class="bi bi-exclamation-triangle"></i> 
-                        <strong>Important :</strong> Sans le scheduler configuré, les rappels automatiques (paiements en retard, alertes de caisses, engagements à échéance) ne fonctionneront pas automatiquement.
+                        <strong>Important :</strong> Sans le scheduler configuré, les rappels automatiques (paiements en retard, alertes de comptes, engagements à échéance) ne fonctionneront pas automatiquement.
                     </div>
                 @endif
             </div>
@@ -79,7 +79,7 @@
                     <i class="bi bi-clock-history"></i> Scheduler Cron
                 </h6>
                 <p style="font-size: 0.75rem; line-height: 1.5; font-weight: 300; font-family: 'Ubuntu', sans-serif; color: #666;">
-                    Le scheduler Laravel permet d'exécuter automatiquement des tâches planifiées telles que les rappels de paiements, les alertes de caisses et les notifications d'engagements.
+                    Le scheduler Laravel permet d'exécuter automatiquement des tâches planifiées telles que les rappels de paiements, les alertes de comptes et les notifications d'engagements.
                 </p>
                 
                 <h6 class="mt-4 mb-3" style="font-weight: 300; font-family: 'Ubuntu', sans-serif; color: var(--primary-dark-blue);">
@@ -87,7 +87,7 @@
                 </h6>
                 <ul style="font-size: 0.75rem; line-height: 1.8; font-weight: 300; font-family: 'Ubuntu', sans-serif; color: #666; padding-left: 1.2rem;">
                     <li><strong>Rappels paiements :</strong> Envoyés quotidiennement à 9h</li>
-                    <li><strong>Alertes caisses :</strong> Vérification des soldes faibles</li>
+                    <li><strong>Alertes comptes :</strong> Vérification des soldes faibles</li>
                     <li><strong>Notifications :</strong> Engagements arrivant à échéance</li>
                 </ul>
                 
@@ -216,7 +216,7 @@
                                 <i class="bi bi-building"></i> Informations de l'entreprise
                             </h6>
                             <p style="font-size: 0.75rem; line-height: 1.5; font-weight: 300; font-family: 'Ubuntu', sans-serif; color: #666;">
-                                Ces informations seront utilisées dans les récapitulatifs PDF envoyés aux membres lors du traitement de fin de mois. Assurez-vous que toutes les informations sont complètes et à jour.
+                                Ces informations seront utilisées dans les récapitulatifs PDF envoyés aux clients lors du traitement de fin de mois. Assurez-vous que toutes les informations sont complètes et à jour.
                             </p>
                             
                             <h6 class="mt-4 mb-3" style="font-weight: 300; font-family: 'Ubuntu', sans-serif; color: var(--primary-dark-blue);">
@@ -325,21 +325,21 @@
                                     <i class="bi bi-bell"></i> Notifications
                                 </h6>
                                 <p style="font-size: 0.75rem; line-height: 1.5; font-weight: 300; font-family: 'Ubuntu', sans-serif; color: #666;">
-                                    Configurez les notifications automatiques pour être alerté des paiements en retard, des soldes de caisses faibles et des engagements arrivant à échéance.
+                                    Configurez les notifications automatiques pour être alerté des paiements en retard, des soldes de comptes faibles et des engagements arrivant à échéance.
                                 </p>
                                 
                                 <h6 class="mt-4 mb-3" style="font-weight: 300; font-family: 'Ubuntu', sans-serif; color: var(--primary-dark-blue);">
                                     <i class="bi bi-exclamation-triangle"></i> Seuil d'alerte
                                 </h6>
                                 <p style="font-size: 0.75rem; line-height: 1.5; font-weight: 300; font-family: 'Ubuntu', sans-serif; color: #666;">
-                                    Définissez le montant minimum en dessous duquel une alerte sera envoyée pour chaque caisse. Les notifications sont envoyées quotidiennement si le solde est inférieur au seuil.
+                                    Définissez le montant minimum en dessous duquel une alerte sera envoyée pour chaque compte. Les notifications sont envoyées quotidiennement si le solde est inférieur au seuil.
                                 </p>
                                 
                                 <h6 class="mt-4 mb-3" style="font-weight: 300; font-family: 'Ubuntu', sans-serif; color: var(--primary-dark-blue);">
                                     <i class="bi bi-calendar-check"></i> Rappels de paiement
                                 </h6>
                                 <p style="font-size: 0.75rem; line-height: 1.5; font-weight: 300; font-family: 'Ubuntu', sans-serif; color: #666;">
-                                    Configurez le nombre de jours avant l'échéance pour envoyer un rappel aux membres concernant leurs cotisations récurrentes. Par défaut, les rappels sont envoyés 3 jours avant l'échéance.
+                                    Configurez le nombre de jours avant l'échéance pour envoyer un rappel aux clients concernant leurs cotisations récurrentes. Par défaut, les rappels sont envoyés 3 jours avant l'échéance.
                                 </p>
                             @elseif($groupe === 'backup')
                                 <h6 class="mb-3" style="font-weight: 300; font-family: 'Ubuntu', sans-serif; color: var(--primary-dark-blue);">
@@ -369,7 +369,7 @@
                                     <i class="bi bi-sliders"></i> Pagination
                                 </h6>
                                 <p style="font-size: 0.75rem; line-height: 1.5; font-weight: 300; font-family: 'Ubuntu', sans-serif; color: #666;">
-                                    Le nombre d'éléments par page détermine combien d'items sont affichés dans les listes (membres, paiements, cotisations, etc.). Par défaut, 15 éléments sont affichés par page.
+                                    Le nombre d'éléments par page détermine combien d'items sont affichés dans les listes (clients, paiements, cotisations, etc.). Par défaut, 15 éléments sont affichés par page.
                                 </p>
                             @else
                                 <h6 class="mb-3" style="font-weight: 300; font-family: 'Ubuntu', sans-serif; color: var(--primary-dark-blue);">

@@ -18,7 +18,7 @@ class ParrainageConfigSeeder extends Seeder
             'niveaux_parrainage'     => 1,
             'taux_niveau_2'          => 0,
             'taux_niveau_3'          => 0,
-            'description'            => 'Parrainez vos proches et gagnez une commission pour chaque membre inscrit grâce à votre code.',
+            'description'            => 'Parrainez vos proches et gagnez une commission pour chaque client inscrit grâce à votre code.',
             'min_filleuls_retrait'   => 1,
             'montant_min_retrait'    => 0,
         ]);

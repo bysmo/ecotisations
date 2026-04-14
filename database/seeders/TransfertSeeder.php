@@ -18,62 +18,62 @@ class TransfertSeeder extends Seeder
         $caisses = Caisse::where('statut', 'active')->get();
         
         if ($caisses->count() < 2) {
-            $this->command->warn('Il faut au moins 2 caisses actives pour créer des transferts.');
+            $this->command->warn('Il faut au moins 2 comptes actifs pour créer des transferts.');
             return;
         }
         
         // Rafraîchir les caisses pour avoir les soldes à jour après les approvisionnements
         $caisses = $caisses->fresh();
         
-        $this->command->info('Création des transferts entre caisses...');
+        $this->command->info('Création des transferts entre comptes...');
         
         // Créer des transferts entre les caisses
         $transferts = [
             [
-                'caisse_source' => 'Caisse Principale',
-                'caisse_destination' => 'Caisse Événements',
+                'caisse_source' => 'Compte Principal',
+                'caisse_destination' => 'Compte Événements',
                 'montant' => 50000,
                 'motif' => 'Transfert pour organisation d\'événement',
             ],
             [
-                'caisse_source' => 'Caisse Principale',
-                'caisse_destination' => 'Caisse Projets',
+                'caisse_source' => 'Compte Principal',
+                'caisse_destination' => 'Compte Projets',
                 'montant' => 100000,
                 'motif' => 'Financement de projet',
             ],
             [
-                'caisse_source' => 'Caisse Événements',
-                'caisse_destination' => 'Caisse Sociale',
+                'caisse_source' => 'Compte Événements',
+                'caisse_destination' => 'Compte Sociale',
                 'montant' => 30000,
                 'motif' => 'Transfert pour actions sociales',
             ],
             [
-                'caisse_source' => 'Caisse Projets',
-                'caisse_destination' => 'Caisse Formation',
+                'caisse_source' => 'Compte Projets',
+                'caisse_destination' => 'Compte Formation',
                 'montant' => 75000,
                 'motif' => 'Financement de formation',
             ],
             [
-                'caisse_source' => 'Caisse Principale',
-                'caisse_destination' => 'Caisse Infrastructure',
+                'caisse_source' => 'Compte Principal',
+                'caisse_destination' => 'Compte Infrastructure',
                 'montant' => 200000,
                 'motif' => 'Investissement infrastructure',
             ],
             [
-                'caisse_source' => 'Caisse Sociale',
-                'caisse_destination' => 'Caisse Urgences',
+                'caisse_source' => 'Compte Sociale',
+                'caisse_destination' => 'Compte Urgences',
                 'montant' => 25000,
-                'motif' => 'Alimentation caisse d\'urgence',
+                'motif' => 'Alimentation compte d\'urgence',
             ],
             [
-                'caisse_source' => 'Caisse Communication',
-                'caisse_destination' => 'Caisse Événements',
+                'caisse_source' => 'Compte Communication',
+                'caisse_destination' => 'Compte Événements',
                 'montant' => 40000,
                 'motif' => 'Support événementiel',
             ],
             [
-                'caisse_source' => 'Caisse Principale',
-                'caisse_destination' => 'Caisse Innovation',
+                'caisse_source' => 'Compte Principal',
+                'caisse_destination' => 'Compte Innovation',
                 'montant' => 150000,
                 'motif' => 'Financement innovation',
             ],
@@ -149,7 +149,7 @@ class TransfertSeeder extends Seeder
             'Financement projet',
             'Transfert opérationnel',
             'Répartition des ressources',
-            'Alimentation caisse',
+            'Alimentation compte',
             'Transfert stratégique',
             'Rééquilibrage financier',
         ];

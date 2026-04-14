@@ -83,7 +83,7 @@ table.table.table-paiements.table-hover tbody tr:nth-child(even):hover { backgro
                             <th>Montant</th>
                             <th>Date paiement</th>
                             <th>Mode</th>
-                            <th>Caisse</th>
+                            <th>Compte</th>
                             <th>Actions</th>
                         </tr>
                     </thead>

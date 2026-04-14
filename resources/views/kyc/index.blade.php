@@ -18,7 +18,7 @@
                     <input type="text"
                            name="search"
                            class="form-control form-control-sm"
-                           placeholder="Rechercher par nom, prénom, email ou numéro membre..."
+                           placeholder="Rechercher par nom, prénom, email ou numéro client..."
                            value="{{ request('search') }}">
                 </div>
                 <div class="col-md-2">
@@ -94,7 +94,7 @@
                 <table class="table table-kyc table-striped table-hover mb-0">
                     <thead>
                         <tr>
-                            <th>Membre</th>
+                            <th>Client</th>
                             <th>Numéro</th>
                             <th>Type pièce</th>
                             <th>Date soumission</th>

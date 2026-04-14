@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Membres du Segment : ' . $segment->nom)
+@section('title', 'Clients du Segment : ' . $segment->nom)
 
 @section('content')
 <div class="page-header d-flex justify-content-between align-items-center mb-3">
@@ -31,10 +31,10 @@
                     <div class="rounded-circle bg-primary-subtle p-2 me-2">
                         <i class="bi bi-person-check text-primary"></i>
                     </div>
-                    <h6 class="text-muted mb-0 small text-uppercase fw-bold">Total Membres</h6>
+                    <h6 class="text-muted mb-0 small text-uppercase fw-bold">Total Clients</h6>
                 </div>
                 <h2 class="fw-bold mb-0 text-primary">{{ number_format($membres->total(), 0, ',', ' ') }}</h2>
-                <p class="text-muted small mt-2 mb-0">Membres actuellement assignés.</p>
+                <p class="text-muted small mt-2 mb-0">Clients actuellement assignés.</p>
             </div>
         </div>
     </div>
@@ -67,7 +67,7 @@
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light text-uppercase" style="font-size: 0.65rem; color: #666;">
                     <tr>
-                        <th class="ps-4">Membre</th>
+                        <th class="ps-4">Client</th>
                         <th>Email / Téléphone</th>
                         <th>Date d'adhésion</th>
                         <th class="text-center">Statut</th>
@@ -114,7 +114,7 @@
                         <tr>
                             <td colspan="5" class="text-center py-5">
                                 <i class="bi bi-people fs-2 text-muted d-block mb-2"></i>
-                                <p class="text-muted small">Aucun membre n'appartient à ce segment.</p>
+                                <p class="text-muted small">Aucun client n'appartient à ce segment.</p>
                             </td>
                         </tr>
                     @endforelse

@@ -1,17 +1,17 @@
 @extends('layouts.app')
 
-@section('title', 'Gestion des Membres')
+@section('title', 'Gestion des Clients')
 
 @section('content')
 <div class="page-header">
-    <h1><i class="bi bi-people"></i> Gestion des Membres</h1>
+    <h1><i class="bi bi-people"></i> Gestion des Clients</h1>
 </div>
 
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <span><i class="bi bi-list-ul"></i> Liste des Membres</span>
+        <span><i class="bi bi-list-ul"></i> Liste des Clients</span>
         <a href="{{ route('membres.create') }}" class="btn btn-light btn-sm">
-            <i class="bi bi-plus-circle"></i> Nouveau Membre
+            <i class="bi bi-plus-circle"></i> Nouveau Client
         </a>
     </div>
     <div class="card-body">
@@ -145,7 +145,7 @@
                                         <form action="{{ route('membres.destroy', $membre) }}" 
                                               method="POST" 
                                               class="delete-form d-inline"
-                                              data-message="Êtes-vous sûr de vouloir supprimer ce membre ?">
+                                              data-message="Êtes-vous sûr de vouloir supprimer ce client ?">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" 
@@ -173,9 +173,9 @@
         @else
             <div class="text-center py-3">
                 <i class="bi bi-inbox" style="font-size: 1.5rem; color: #ccc;"></i>
-                <p class="text-muted mt-2 mb-2" style="font-size: 0.75rem;">Aucun membre enregistré</p>
+                <p class="text-muted mt-2 mb-2" style="font-size: 0.75rem;">Aucun client enregistré</p>
                 <a href="{{ route('membres.create') }}" class="btn btn-primary btn-sm">
-                    <i class="bi bi-plus-circle"></i> Créer le premier membre
+                    <i class="bi bi-plus-circle"></i> Créer le premier client
                 </a>
             </div>
         @endif

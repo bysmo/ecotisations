@@ -29,9 +29,9 @@
                     @csrf
 
                     <div class="mb-3">
-                        <label for="membre_id" class="form-label">Membre bénéficiaire <span class="text-danger">*</span></label>
+                        <label for="membre_id" class="form-label">Client bénéficiaire <span class="text-danger">*</span></label>
                         <select class="form-select @error('membre_id') is-invalid @enderror" id="membre_id" name="membre_id" required>
-                            <option value="">Choisir un membre...</option>
+                            <option value="">Choisir un client...</option>
                             @foreach($membres as $m)
                                 <option value="{{ $m->id }}" {{ old('membre_id') == $m->id ? 'selected' : '' }}
                                         data-telephone="{{ $m->telephone ? preg_replace('/\D/', '', $m->telephone) : '' }}">

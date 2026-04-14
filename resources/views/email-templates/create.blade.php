@@ -43,7 +43,7 @@
                                     required>
                                 <option value="paiement" {{ old('type', 'paiement') === 'paiement' ? 'selected' : '' }}>Paiement</option>
                                 <option value="engagement" {{ old('type') === 'engagement' ? 'selected' : '' }}>Engagement</option>
-                                <option value="membre_inscrit" {{ old('type') === 'membre_inscrit' ? 'selected' : '' }}>Enregistrement du membre</option>
+                                <option value="membre_inscrit" {{ old('type') === 'membre_inscrit' ? 'selected' : '' }}>Enregistrement du client</option>
                                 <option value="nano_credit_octroye" {{ old('type') === 'nano_credit_octroye' ? 'selected' : '' }}>Nano crédit octroyé</option>
                                 <option value="autre" {{ old('type') === 'autre' ? 'selected' : '' }}>Autre</option>
                             </select>
@@ -132,18 +132,18 @@ Cordialement.@endif</textarea>
                     <i class="bi bi-file-text"></i> Qu'est-ce qu'un template ?
                 </h6>
                 <p style="font-size: 0.75rem; line-height: 1.5; font-weight: 300; font-family: 'Ubuntu', sans-serif; color: #666;">
-                    Un template d'email est un modèle de message personnalisable qui sera envoyé automatiquement aux membres lors de certaines actions (paiement, engagement, etc.).
+                    Un template d'email est un modèle de message personnalisable qui sera envoyé automatiquement aux clients lors de certaines actions (paiement, engagement, etc.).
                 </p>
                 
                 <h6 class="mt-4 mb-3" style="font-weight: 300; font-family: 'Ubuntu', sans-serif; color: var(--primary-dark-blue);">
                     <i class="bi bi-code-square"></i> Variables disponibles
                 </h6>
                 <ul style="font-size: 0.75rem; line-height: 1.8; font-weight: 300; font-family: 'Ubuntu', sans-serif; color: #666; padding-left: 1.2rem;">
-                    <li><strong>@{{nom}} :</strong> Nom du membre</li>
-                    <li><strong>@{{prenom}} :</strong> Prénom du membre</li>
-                    <li><strong>@{{email}} :</strong> Email du membre</li>
-                    <li><strong>@{{lien_validation}} :</strong> Lien de validation email (obligatoire pour <em>Enregistrement du membre</em>)</li>
-                    <li><strong>@{{app_nom}} :</strong> Nom de l'application (Enregistrement du membre)</li>
+                    <li><strong>@{{nom}} :</strong> Nom du client</li>
+                    <li><strong>@{{prenom}} :</strong> Prénom du client</li>
+                    <li><strong>@{{email}} :</strong> Email du client</li>
+                    <li><strong>@{{lien_validation}} :</strong> Lien de validation email (obligatoire pour <em>Enregistrement du client</em>)</li>
+                    <li><strong>@{{app_nom}} :</strong> Nom de l'application (Enregistrement du client)</li>
                     <li><strong>@{{date_paiement}} :</strong> Date du paiement (Paiement)</li>
                     <li><strong>@{{montant}} :</strong> Montant payé ou octroyé</li>
                     <li><strong>@{{cotisation}} :</strong> Nom de la cotisation (Paiement)</li>
@@ -151,8 +151,8 @@ Cordialement.@endif</textarea>
                     <li><strong>@{{date_octroi}} :</strong> Date d'octroi (Nano crédit octroyé)</li>
                 </ul>
                 <p style="font-size: 0.7rem; line-height: 1.4; font-weight: 300; font-family: 'Ubuntu', sans-serif; color: #888; margin-top: 0.5rem;">
-                    <strong>Enregistrement du membre</strong> : utilisé à l'inscription. Pensez à inclure <strong>@{{lien_validation}}</strong> dans le corps pour que le membre puisse valider son email.<br>
-                    <strong>Nano crédit octroyé</strong> : utilisé lorsqu'un nano crédit est accordé au membre.
+                    <strong>Enregistrement du client</strong> : utilisé à l'inscription. Pensez à inclure <strong>@{{lien_validation}}</strong> dans le corps pour que le client puisse valider son email.<br>
+                    <strong>Nano crédit octroyé</strong> : utilisé lorsqu'un nano crédit est accordé au client.
                 </p>
                 
                 <h6 class="mt-4 mb-3" style="font-weight: 300; font-family: 'Ubuntu', sans-serif; color: var(--primary-dark-blue);">

@@ -167,23 +167,24 @@
                 </ol>
                 
                 <h6 class="mt-4 mb-3" style="font-weight: 300; font-family: 'Ubuntu', sans-serif; color: var(--primary-dark-blue);">
-                    <i class="bi bi-arrow-repeat"></i> Comment un membre paie via PayDunya ?
+                    <i class="bi bi-arrow-repeat"></i> Comment un client paie via PayDunya ?
                 </h6>
                 <p style="font-size: 0.75rem; line-height: 1.5; font-weight: 300; font-family: 'Ubuntu', sans-serif; color: #666; margin-bottom: 0.5rem;">
                     <strong>Processus de paiement :</strong>
                 </p>
                 <ol style="font-size: 0.75rem; line-height: 1.8; font-weight: 300; font-family: 'Ubuntu', sans-serif; color: #666; padding-left: 1.2rem; margin-bottom: 0.5rem;">
-                    <li>Le membre se connecte à son espace</li>
+                    <li>Le client se connecte à son espace</li>
                     <li>Il consulte ses cotisations/engagements en attente</li>
                     <li>Il sélectionne une cotisation et clique sur <strong>"Payer via PayDunya"</strong></li>
                     <li>L'application crée une facture PayDunya et redirige vers la page de paiement</li>
-                    <li>Le membre choisit son moyen de paiement (Mobile Money ou carte bancaire)</li>
+                    <li>Le client répond aux instructions de paiement sur l'interface sécurisée</li>
+                    <li>Le client choisit son moyen de paiement (Mobile Money ou carte bancaire)</li>
                     <li>Il valide le paiement sur son téléphone</li>
                     <li>PayDunya envoie une notification IPN à l'application</li>
-                    <li>Le paiement est automatiquement enregistré et la caisse est mise à jour</li>
+                    <li>Le paiement est automatiquement enregistré et le compte est mis à jour</li>
                 </ol>
                 <p style="font-size: 0.75rem; line-height: 1.5; font-weight: 300; font-family: 'Ubuntu', sans-serif; color: #666; margin-top: 0.5rem; margin-bottom: 0;">
-                    <strong>Note :</strong> Cette fonctionnalité nécessite l'intégration de l'API PayDunya dans l'application. Une fois configurée, les membres pourront payer directement depuis leur espace personnel.
+                    <strong>Note :</strong> Cette fonctionnalité nécessite l'intégration de l'API PayDunya dans l'application. Une fois configurée, les clients pourront payer directement depuis leur espace personnel.
                 </p>
             </div>
         </div>

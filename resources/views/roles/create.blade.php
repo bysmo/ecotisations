@@ -152,7 +152,7 @@
                 <p style="font-size: 0.75rem; line-height: 1.5; font-weight: 300; font-family: 'Ubuntu', sans-serif; color: #666;">
                     <strong>Administrateur :</strong> Accès complet<br>
                     <strong>Trésorier :</strong> Gestion financière<br>
-                    <strong>Membre :</strong> Consultation uniquement
+                    <strong>Client :</strong> Consultation uniquement
                 </p>
             </div>
         </div>

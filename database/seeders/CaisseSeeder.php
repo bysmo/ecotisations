@@ -8,9 +8,9 @@ use Illuminate\Database\Seeder;
 class CaisseSeeder extends Seeder
 {
     /**
-     * Générer un numéro de caisse unique au format XXXX-XXXX (alphanumérique)
+     * Générer un numéro de compte unique au format XXXX-XXXX (alphanumérique)
      */
-    private function generateNumeroCaisse(): string
+    private function generateNumeroCompte(): string
     {
         do {
             // Générer 4 caractères alphanumériques (majuscules et chiffres)
@@ -64,7 +64,7 @@ class CaisseSeeder extends Seeder
 
         foreach ($caisses as $caisseData) {
             // Générer un numéro unique
-            $caisseData['numero'] = $this->generateNumeroCaisse();
+            $caisseData['numero'] = $this->generateNumeroCompte();
             // Le solde initial est toujours 0
             $caisseData['solde_initial'] = 0;
 

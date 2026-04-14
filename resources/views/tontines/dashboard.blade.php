@@ -122,7 +122,7 @@
                             <div class="d-flex align-items-center">
                                 <span class="badge bg-dark rounded-circle me-3" style="width: 25px; height: 25px; padding: 5px;">{{ $index + 1 }}</span>
                                 <div>
-                                    <h6 class="mb-0 fw-bold">{{ $dep->membre->nom ?? 'Membre inconnu' }}</h6>
+                                    <h6 class="mb-0 fw-bold">{{ $dep->membre->nom ?? 'Client inconnu' }}</h6>
                                     <small class="text-muted">{{ $dep->membre->id_national ?? '' }}</small>
                                 </div>
                             </div>

@@ -152,7 +152,7 @@
                             <td>
                                 {{ $log->actor_name }}
                                 @if($log->actor_type === \App\Models\Membre::class)
-                                    <span class="badge bg-secondary" style="font-size: 0.5rem;">Membre</span>
+                                    <span class="badge bg-secondary" style="font-size: 0.5rem;">Client</span>
                                 @elseif($log->actor_type === \App\Models\User::class)
                                     <span class="badge bg-primary" style="font-size: 0.5rem;">Admin</span>
                                 @endif

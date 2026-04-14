@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'KYC - ' . ($kyc->membre->nom_complet ?? 'Membre'))
+@section('title', 'KYC - ' . ($kyc->membre->nom_complet ?? 'Client'))
 
 @section('content')
 <style>
@@ -13,7 +13,7 @@
     }
 </style>
 <div class="page-header d-flex justify-content-between align-items-center">
-    <h1><i class="bi bi-shield-check"></i> Dossier KYC - {{ $kyc->membre->nom_complet ?? 'Membre' }}</h1>
+    <h1><i class="bi bi-shield-check"></i> Dossier KYC - {{ $kyc->membre->nom_complet ?? 'Client' }}</h1>
     <a href="{{ route('kyc.index') }}" class="btn btn-secondary btn-sm">
         <i class="bi bi-arrow-left"></i> Retour
     </a>
@@ -29,7 +29,7 @@
                 <div class="row">
                     <div class="col-md-6">
                         <dl class="row mb-0" style="font-size: 0.8rem; font-weight: 300; font-family: 'Ubuntu', sans-serif;">
-                            <dt class="col-sm-5">Membre</dt>
+                            <dt class="col-sm-5">Client</dt>
                             <dd class="col-sm-7">{{ $kyc->membre->nom_complet }} ({{ $kyc->membre->numero }})</dd>
                             <dt class="col-sm-5">Email</dt>
                             <dd class="col-sm-7">{{ $kyc->membre->email }}</dd>
@@ -150,7 +150,7 @@
             </div>
             <div class="card-body">
                 <p style="font-size: 0.75rem; font-weight: 300; color: #666;">
-                    Validez le KYC pour autoriser le membre à faire une demande de nano crédit. En cas de rejet, indiquez obligatoirement un motif ; le membre pourra soumettre à nouveau son dossier.
+                    Validez le KYC pour autoriser le client à faire une demande de nano crédit. En cas de rejet, indiquez obligatoirement un motif ; le client pourra soumettre à nouveau son dossier.
                 </p>
             </div>
         </div>
@@ -169,7 +169,7 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="text-muted small">Le motif du rejet est obligatoire. Il sera communiqué au membre.</p>
+                    <p class="text-muted small">Le motif du rejet est obligatoire. Il sera communiqué au client.</p>
                     <div class="mb-3">
                         <label for="motif_rejet" class="form-label">Motif du rejet <span class="text-danger">*</span></label>
                         <textarea class="form-control @error('motif_rejet') is-invalid @enderror" id="motif_rejet" name="motif_rejet" rows="4" required placeholder="Ex : Document d'identité illisible, justificatif de domicile non conforme...">{{ old('motif_rejet') }}</textarea>
