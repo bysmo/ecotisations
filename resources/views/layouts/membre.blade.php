@@ -507,6 +507,12 @@
                     </a>
                 </li>
                 <li>
+                    <a href="{{ route('membre.comptes') }}" class="nav-link {{ request()->routeIs('membre.comptes*') ? 'active' : '' }}">
+                        <i class="bi bi-wallet2"></i>
+                        <span>Mes Comptes</span>
+                    </a>
+                </li>
+                <li>
                     @php
                         $cagnettesRoutesActive = request()->routeIs('membre.cotisations*') || request()->routeIs('membre.mes-cotisations*');
                     @endphp

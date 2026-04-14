@@ -318,6 +318,8 @@ Route::prefix('membre')->name('membre.')->group(function () {
         Route::post('/mes-cotisations/{cotisation}/demande-versement', [\App\Http\Controllers\MembreCotisationController::class, 'demandeVersement'])->name('mes-cotisations.demande-versement');
         Route::post('/cotisations/{id}/paydunya', [\App\Http\Controllers\MembreDashboardController::class, 'initierPaiementPayDunya'])->name('cotisations.paydunya');
         Route::post('/cotisations/{id}/pispi', [\App\Http\Controllers\MembreDashboardController::class, 'initierPaiementPiSpi'])->name('cotisations.pispi');
+        Route::get('/comptes', [\App\Http\Controllers\MembreCaisseController::class, 'index'])->name('comptes');
+        Route::get('/comptes/{id}', [\App\Http\Controllers\MembreCaisseController::class, 'show'])->name('comptes.show');
         Route::get('/paiements', [\App\Http\Controllers\MembreDashboardController::class, 'paiements'])->name('paiements');
         Route::get('/paiements/{paiement}/pdf', [\App\Http\Controllers\PaiementController::class, 'pdf'])->name('paiements.pdf');
         Route::get('/engagements', [\App\Http\Controllers\MembreDashboardController::class, 'engagements'])->name('engagements');
