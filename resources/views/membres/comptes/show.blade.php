@@ -18,10 +18,21 @@
             <div class="card-body p-4">
                 <h6 class="text-muted fw-bold mb-4 small text-uppercase" style="letter-spacing: 1px;">Information d'identité</h6>
                 
-                <div class="mb-4">
-                    <label class="text-muted small display-block mb-1" style="font-size: 0.7rem;">NUMÉRO DE COMPTE</label>
-                    <div class="fw-bold text-dark px-3 py-2 bg-light rounded" style="font-family: monospace; font-size: 1.1rem; border-left: 3px solid var(--primary-dark-blue);">
-                        {{ $compte->numero }}
+                <div class="row g-3 mb-4">
+                    <div class="col-12">
+                        <label class="text-muted small display-block mb-1" style="font-size: 0.7rem;">NUMÉRO DE COMPTE (INTERNE)</label>
+                        <div class="fw-bold text-dark px-3 py-2 bg-light rounded" style="font-family: monospace; font-size: 1rem; border-left: 3px solid var(--primary-dark-blue);">
+                            {{ $compte->numero }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-12">
+                        <label class="text-muted small display-block mb-1" style="font-size: 0.7rem;">NUMÉRO DE COMPTE BANCAIRE (CORE BANKING)</label>
+                        <div class="fw-bold text-primary px-3 py-2 bg-light rounded" style="font-family: monospace; font-size: 1rem; border-left: 3px solid var(--light-blue);">
+                            {{ $compte->numero_core_banking ?? 'NON DÉFINI' }}
+                        </div>
                     </div>
                 </div>
 
@@ -30,11 +41,11 @@
                         <label class="text-muted small display-block mb-1" style="font-size: 0.7rem;">TYPE DE COMPTE</label>
                         <div>
                             @switch($compte->type)
-                                @case('courant') <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1 w-100">COURANT</span> @break
-                                @case('epargne') <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 w-100">ÉPARGNE</span> @break
-                                @case('tontine') <span class="badge bg-info-subtle text-info border border-info-subtle px-2 py-1 w-100">TONTINE</span> @break
-                                @case('nano_credit') <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-2 py-1 w-100">NANO-CRÉDIT</span> @break
-                                @default <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2 py-1 w-100">{{ strtoupper($compte->type) }}</span>
+                                @case('courant') <span class="badge bg-primary px-2 py-1 w-100" style="font-weight: 400;">COURANT</span> @break
+                                @case('epargne') <span class="badge bg-success px-2 py-1 w-100" style="font-weight: 400;">ÉPARGNE</span> @break
+                                @case('tontine') <span class="badge bg-info px-2 py-1 w-100" style="font-weight: 400;">TONTINE</span> @break
+                                @case('nano_credit') <span class="badge bg-warning text-dark px-2 py-1 w-100" style="font-weight: 400;">NANO-CRÉDIT</span> @break
+                                @default <span class="badge bg-secondary px-2 py-1 w-100" style="font-weight: 400;">{{ strtoupper($compte->type) }}</span>
                             @endswitch
                         </div>
                     </div>
@@ -89,12 +100,12 @@
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
                 <thead>
-                    <tr class="bg-light">
-                        <th class="ps-4 py-3 border-0 text-muted small text-uppercase" style="width: 150px;">Date & Heure</th>
-                        <th class="py-3 border-0 text-muted small text-uppercase">Libellé / Détails</th>
-                        <th class="py-3 border-0 text-muted small text-uppercase text-center" style="width: 120px;">Sens</th>
-                        <th class="py-3 border-0 text-muted small text-uppercase text-end" style="width: 150px;">Montant</th>
-                        <th class="pe-4 py-3 border-0 text-muted small text-uppercase text-end" style="width: 200px;">Référence</th>
+                    <tr style="background-color: var(--primary-dark-blue); color: white;">
+                        <th class="ps-4 py-3 border-0 text-white small text-uppercase" style="width: 150px; font-weight: 500;">Date & Heure</th>
+                        <th class="py-3 border-0 text-white small text-uppercase" style="font-weight: 500;">Libellé / Détails</th>
+                        <th class="py-3 border-0 text-white small text-uppercase text-center" style="width: 120px; font-weight: 500;">Sens</th>
+                        <th class="py-3 border-0 text-white small text-uppercase text-end" style="width: 150px; font-weight: 500;">Montant</th>
+                        <th class="pe-4 py-3 border-0 text-white small text-uppercase text-end" style="width: 200px; font-weight: 500;">Référence</th>
                     </tr>
                 </thead>
                 <tbody>

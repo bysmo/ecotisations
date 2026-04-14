@@ -49,56 +49,64 @@
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
-                <thead style="background-color: #f8f9fa;">
-                    <tr>
-                        <th class="ps-4 py-3 border-0 text-muted text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.5px;">Numéro de Compte</th>
-                        <th class="py-3 border-0 text-muted text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.5px;">Libellé / Nom</th>
-                        <th class="py-3 border-0 text-muted text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.5px;">Type de Compte</th>
-                        <th class="py-3 border-0 text-muted text-uppercase text-end pe-4" style="font-size: 0.7rem; letter-spacing: 0.5px;">Solde Actuel</th>
-                        <th class="py-3 border-0 text-muted text-uppercase text-center" style="font-size: 0.7rem; letter-spacing: 0.5px;">Actions</th>
+                <thead>
+                    <tr style="background-color: var(--primary-dark-blue); color: white;">
+                        <th class="ps-4 py-3 border-0 text-white text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; font-weight: 500;">N° de Compte</th>
+                        <th class="py-3 border-0 text-white text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; font-weight: 500;">N° Bancaire</th>
+                        <th class="py-3 border-0 text-white text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px; font-weight: 500;">Libellé / Nom</th>
+                        <th class="py-3 border-0 text-white text-uppercase text-center" style="font-size: 0.75rem; letter-spacing: 0.5px; font-weight: 500;">Type</th>
+                        <th class="py-3 border-0 text-white text-uppercase text-end pe-4" style="font-size: 0.75rem; letter-spacing: 0.5px; font-weight: 500;">Solde</th>
+                        <th class="py-3 border-0 text-white text-uppercase text-center" style="font-size: 0.75rem; letter-spacing: 0.5px; font-weight: 500;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($comptes as $compte)
                     <tr>
                         <td class="ps-4 py-3">
-                            <span class="badge bg-light text-dark border fw-normal px-2 py-1" style="font-family: monospace; font-size: 0.8rem;">{{ $compte->numero }}</span>
+                            <span class="badge bg-light text-dark border fw-normal px-2 py-1" style="font-family: monospace; font-size: 0.85rem;">{{ $compte->numero }}</span>
                         </td>
                         <td class="py-3">
-                            <div class="fw-bold" style="color: var(--primary-dark-blue);">{{ $compte->nom }}</div>
+                            @if($compte->numero_core_banking)
+                                <span class="text-primary fw-bold" style="font-family: monospace;">{{ $compte->numero_core_banking }}</span>
+                            @else
+                                <span class="text-muted italic small">Non défini</span>
+                            @endif
+                        </td>
+                        <td class="py-3">
+                            <div class="fw-bold" style="color: var(--primary-dark-blue); font-size: 0.9rem;">{{ $compte->nom }}</div>
                             <small class="text-muted" style="font-size: 0.7rem;">Créé le {{ $compte->created_at->format('d/m/Y') }}</small>
                         </td>
-                        <td class="py-3">
+                        <td class="py-3 text-center">
                             @switch($compte->type)
                                 @case('courant')
-                                    <span class="badge rounded-pill bg-primary-subtle text-primary px-3" style="font-weight: 400; font-size: 0.7rem; border: 1px solid rgba(13, 110, 253, 0.2);">COURANT</span>
+                                    <span class="badge rounded-pill bg-primary px-3 py-1" style="font-weight: 400; font-size: 0.65rem;">COURANT</span>
                                     @break
                                 @case('epargne')
-                                    <span class="badge rounded-pill bg-success-subtle text-success px-3" style="font-weight: 400; font-size: 0.7rem; border: 1px solid rgba(25, 135, 84, 0.2);">ÉPARGNE</span>
+                                    <span class="badge rounded-pill bg-success px-3 py-1" style="font-weight: 400; font-size: 0.65rem;">ÉPARGNE</span>
                                     @break
                                 @case('tontine')
-                                    <span class="badge rounded-pill bg-info-subtle text-info px-3" style="font-weight: 400; font-size: 0.7rem; border: 1px solid rgba(13, 202, 240, 0.2);">TONTINE</span>
+                                    <span class="badge rounded-pill bg-info px-3 py-1" style="font-weight: 400; font-size: 0.65rem;">TONTINE</span>
                                     @break
                                 @case('nano_credit')
-                                    <span class="badge rounded-pill bg-warning-subtle text-warning px-3" style="font-weight: 400; font-size: 0.7rem; border: 1px solid rgba(255, 193, 7, 0.2);">NANO-CRÉDIT</span>
+                                    <span class="badge rounded-pill bg-warning text-dark px-3 py-1" style="font-weight: 400; font-size: 0.65rem;">NANO-CRÉDIT</span>
                                     @break
                                 @default
-                                    <span class="badge rounded-pill bg-secondary-subtle text-secondary px-3" style="font-weight: 400; font-size: 0.7rem;">{{ strtoupper($compte->type) }}</span>
+                                    <span class="badge rounded-pill bg-secondary px-3 py-1" style="font-weight: 400; font-size: 0.65rem;">{{ strtoupper($compte->type) }}</span>
                             @endswitch
                         </td>
-                        <td class="py-3 text-end pe-4 fw-bold" style="font-size: 1rem; color: var(--primary-dark-blue);">
+                        <td class="py-3 text-end pe-4 fw-bold" style="font-size: 1.05rem; color: var(--primary-dark-blue);">
                             {{ number_format($compte->solde_actuel, 0, ',', ' ') }} <small style="font-size: 0.6em; font-weight: 400;">XOF</small>
                         </td>
                         <td class="py-3 text-center">
-                            <a href="{{ route('membre.comptes.show', $compte->id) }}" class="btn btn-sm btn-link text-decoration-none fw-bold" style="color: var(--light-blue); font-size: 0.75rem;">
-                                <i class="bi bi-arrow-right-circle me-1"></i>DÉTAILS
+                            <a href="{{ route('membre.comptes.show', $compte->id) }}" class="btn btn-sm btn-primary shadow-sm px-3" style="font-size: 0.7rem; border-radius: 20px;">
+                                <i class="bi bi-eye-fill me-1"></i>DÉTAILS
                             </a>
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="5" class="py-5 text-center text-muted">
-                            <i class="bi bi-inbox mb-2" style="font-size: 2rem; opacity: 0.3; display: block;"></i>
+                        <td colspan="6" class="py-5 text-center text-muted">
+                            <i class="bi bi-inbox mb-2" style="font-size: 2.5rem; opacity: 0.2; display: block;"></i>
                             Aucun compte trouvé.
                         </td>
                     </tr>
