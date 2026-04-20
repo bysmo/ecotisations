@@ -57,10 +57,32 @@ class NanoCreditService
         $submit = $paydunya->submitDisburseInvoice($result['disburse_token'], (string) $nanoCredit->id);
 
         if (!$submit['success']) {
-            $nanoCredit->update([
-                'error_message' => $submit['message'] ?? 'Erreur à la soumission',
-            ]);
-            return ['success' => false, 'message' => $submit['message'] ?? 'Soumission échouée.'];
+            // Cas particulier : La facture a déjà été soumise (ex: timeout ou double clic)
+            $isAlreadySubmitted = str_contains(strtolower($submit['message'] ?? ''), 'already submitted');
+            
+            if ($isAlreadySubmitted) {
+                Log::info('NanoCreditService: Facture déjà soumise pour #' . $nanoCredit->id . '. Vérification du statut...');
+                $verify = $paydunya->checkDisburseStatus($result['disburse_token']);
+                
+                // Si le statut est positif dans PayDunya, on considère que la soumission a réussi
+                // Statuts PayDunya possibles : success, pending, completed...
+                if ($verify['success'] && in_array(strtolower($verify['status']), ['success', 'pending', 'completed'])) {
+                    $submit = [
+                        'success' => true,
+                        'status' => $verify['status'],
+                        'transaction_id' => $verify['transaction_id'] ?? null,
+                    ];
+                    Log::info('NanoCreditService: Statut vérifié avec succès: ' . $verify['status']);
+                } else {
+                    $nanoCredit->update(['error_message' => $submit['message']]);
+                    return ['success' => false, 'message' => $submit['message']];
+                }
+            } else {
+                $nanoCredit->update([
+                    'error_message' => $submit['message'] ?? 'Erreur à la soumission',
+                ]);
+                return ['success' => false, 'message' => $submit['message'] ?? 'Soumission échouée.'];
+            }
         }
 
         // 4. Finaliser localement (statut debourse en attendant le callback de confirmation finale)

@@ -128,12 +128,11 @@ class ParrainageAdminController extends Controller
             'note_admin' => 'nullable|string|max:500',
         ]);
 
-        $commission->update([
-            'statut'      => 'paye',
-            'paye_le'     => now(),
-            'traite_par'  => Auth::id(),
-            'note_admin'  => $request->note_admin,
-        ]);
+        try {
+            $this->parrainageService->payerCommission($commission, Auth::id(), $request->note_admin);
+        } catch (\Exception $e) {
+            return back()->with('error', "Erreur lors du paiement : " . $e->getMessage());
+        }
 
         return back()->with('success', "Commission #{$commission->reference} approuvée et marquée comme payée.");
     }
@@ -169,17 +168,27 @@ class ParrainageAdminController extends Controller
             'note_admin' => 'nullable|string|max:500',
         ]);
 
-        $count = DB::transaction(function () use ($request) {
-            return ParrainageCommission::where('statut', 'reclame')
-                ->update([
-                    'statut'     => 'paye',
-                    'paye_le'    => now(),
-                    'traite_par' => Auth::id(),
-                    'note_admin' => $request->note_admin ?? 'Paiement groupé',
-                ]);
-        });
+        $commissions = ParrainageCommission::where('statut', 'reclame')->get();
+        $count = 0;
+        $errors = 0;
 
-        return back()->with('success', "{$count} réclamation(s) payée(s) avec succès.");
+        foreach ($commissions as $commission) {
+            try {
+                $this->parrainageService->payerCommission($commission, Auth::id(), $request->note_admin ?? 'Paiement groupé');
+                $count++;
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error("Erreur paiement commission (mass) #{$commission->id}: " . $e->getMessage());
+                $errors++;
+            }
+        }
+
+        $message = "{$count} réclamation(s) payée(s) avec succès.";
+        if ($errors > 0) {
+            $message .= " Cependant, {$errors} réclamation(s) ont échoué en raison d'erreurs financières. Consultez les logs pour plus de détails.";
+            return back()->with('warning', $message);
+        }
+
+        return back()->with('success', $message);
     }
 
     /**

@@ -38,9 +38,15 @@
                                 <span class="badge bg-danger">En retard</span>
                             </td>
                             <td class="text-end">
-                                <a href="{{ route('membres.show', $echeance->souscription->membre_id) }}" class="btn btn-sm btn-info text-white">
-                                    <i class="bi bi-person"></i> Profil
-                                </a>
+                                @if($echeance->souscription && $echeance->souscription->membre_id)
+                                    <a href="{{ route('membres.show', $echeance->souscription->membre_id) }}" class="btn btn-sm btn-info text-white">
+                                        <i class="bi bi-person"></i> Profil
+                                    </a>
+                                @else
+                                    <button class="btn btn-sm btn-secondary" disabled>
+                                        <i class="bi bi-person-x"></i> N/A
+                                    </button>
+                                @endif
                             </td>
                         </tr>
                     @empty

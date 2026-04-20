@@ -122,9 +122,13 @@
                                 <td>{{ $caisse->id }}</td>
                                 <td>{{ $caisse->numero ?? '-' }}</td>
                                 <td>
-                                    <a href="{{ route('membres.show', $caisse->membre_id) }}" class="text-decoration-none">
-                                        {{ $caisse->membre->nom_complet ?? 'N/A' }}
-                                    </a>
+                                    @if($caisse->membre_id)
+                                        <a href="{{ route('membres.show', $caisse->membre_id) }}" class="text-decoration-none">
+                                            {{ $caisse->membre->nom_complet ?? 'N/A' }}
+                                        </a>
+                                    @else
+                                        <span class="badge bg-light text-dark border small">COMPTE SYSTÈME</span>
+                                    @endif
                                 </td>
                                 <td>
                                     <span class="badge bg-secondary badge-account-type">{{ $caisse->type }}</span>

@@ -1736,7 +1736,7 @@
                     form.removeAttribute('onsubmit');
                     form.addEventListener('submit', function(e) {
                         e.preventDefault();
-                        const message = originalOnsubmit.match(/'([^']+)'/)[1] || 'Êtes-vous sûr de vouloir effectuer cette action ?';
+                        const message = originalOnsubmit.match(/'((?:\\'|[^'])+)'/)[1].replace(/\\'/g, "'") || 'Êtes-vous sûr de vouloir effectuer cette action ?';
                         confirmAction(message, function() {
                             form.submit();
                         });
@@ -1754,7 +1754,7 @@
                     if (form) {
                         button.addEventListener('click', function(e) {
                             e.preventDefault();
-                            const message = originalOnclick.match(/'([^']+)'/)[1] || 'Êtes-vous sûr de vouloir effectuer cette action ?';
+                            const message = originalOnclick.match(/'((?:\\'|[^'])+)'/)[1].replace(/\\'/g, "'") || 'Êtes-vous sûr de vouloir effectuer cette action ?';
                             confirmAction(message, function() {
                                 form.submit();
                             });

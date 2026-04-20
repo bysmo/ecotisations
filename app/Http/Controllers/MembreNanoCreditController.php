@@ -105,11 +105,16 @@ class MembreNanoCreditController extends Controller
 
         $montantMax = (float) $palier->montant_plafond;
 
-        $validated = $request->validate([
+        $rules = [
             'montant' => 'required|numeric|min:1000|max:' . $montantMax,
-            'garant_ids' => 'required|array|size:' . $palier->nombre_garants,
-            'garant_ids.*' => 'required|exists:membres,id',
-        ], [
+        ];
+
+        if ($palier->nombre_garants > 0) {
+            $rules['garant_ids'] = 'required|array|size:' . $palier->nombre_garants;
+            $rules['garant_ids.*'] = 'required|exists:membres,id';
+        }
+
+        $validated = $request->validate($rules, [
             'montant.required' => 'Le montant est obligatoire.',
             'montant.min' => 'Le montant minimum est 1 000 XOF.',
             'montant.max' => 'Le montant maximum pour votre palier actuel est ' . number_format($montantMax, 0, ',', ' ') . ' XOF.',
@@ -126,8 +131,10 @@ class MembreNanoCreditController extends Controller
                 'statut' => 'demande_en_attente',
             ]);
 
-            // Créer les sollicitations des garants
-            foreach ($validated['garant_ids'] as $garantId) {
+            // Créer les sollicitations des garants (si requis)
+            $garantIds = $palier->nombre_garants > 0 ? ($validated['garant_ids'] ?? []) : [];
+
+            foreach ($garantIds as $garantId) {
                 $garantMembre = Membre::findOrFail($garantId);
                 
                 // Vérification supplémentaire de l'éligibilité
@@ -157,8 +164,11 @@ class MembreNanoCreditController extends Controller
                 $admin->notify(new NanoCreditDemandeNotification($nanoCredit));
             }
 
-            return redirect()->route('membre.nano-credits.mes')
-                ->with('success', 'Votre demande a été enregistrée. Vos garants ont été notifiés pour validation.');
+            $message = $palier->nombre_garants > 0 
+                ? 'Votre demande a été enregistrée. Vos garants ont été notifiés pour validation.'
+                : 'Votre demande de nano crédit a été enregistrée avec succès.';
+
+            return redirect()->route('membre.nano-credits.mes')->with('success', $message);
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->withInput()->with('error', 'Erreur : ' . $e->getMessage());

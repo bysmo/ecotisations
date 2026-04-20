@@ -96,6 +96,7 @@
                 </div>
             </div>
 
+            @if($palier->nombre_garants > 0)
             <div class="card border-0 shadow-sm mb-4" style="border-radius: 16px;">
                 <div class="card-header bg-white border-bottom py-3 fw-bold">
                     <i class="bi bi-people-fill me-2 text-primary"></i> Choix des Garants ({{ $palier->nombre_garants }} requis)
@@ -118,6 +119,9 @@
                     </div>
                 </div>
             </div>
+            @else
+                <input type="hidden" name="garant_ids" value="">
+            @endif
 
             <div class="d-flex gap-3 mb-5">
                 <button type="submit" class="btn btn-primary btn-lg px-5 shadow-sm" style="border-radius: 12px;" id="submit-btn">

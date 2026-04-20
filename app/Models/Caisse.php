@@ -129,6 +129,7 @@ class Caisse extends Model
     public static function getCaisseNanoCredit(): ?self { return self::getSystemCaisse('SYS-NAN-CRD'); }
     public static function getCaisseProduit(): ?self { return self::getSystemCaisse('SYS-PROD'); }
     public static function getCaisseCharge(): ?self { return self::getSystemCaisse('SYS-CHG'); }
+    public static function getCaisseParrainage(): ?self { return self::getSystemCaisse('SYS-PAR'); }
 
     /**
      * Génère un numéro de compte unique au format XXXX-XXXX

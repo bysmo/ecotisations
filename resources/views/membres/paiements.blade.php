@@ -1,201 +1,241 @@
 @extends('layouts.membre')
 
-@section('title', 'Mes Paiements')
+@section('title', 'Flux financiers')
 
 @section('content')
 <style>
-.table-paiements { margin-bottom: 0; }
-.table-paiements thead th {
-    padding: 0.15rem 0.35rem !important;
-    font-size: 0.65rem !important;
-    line-height: 1.05 !important;
-    vertical-align: middle !important;
-    font-weight: 300 !important;
-    font-family: 'Ubuntu', sans-serif !important;
-    color: #fff !important;
-    background-color: var(--primary-dark-blue) !important;
-    border-bottom: 2px solid #dee2e6 !important;
-}
-.table-paiements tbody td {
-    padding: 0.15rem 0.35rem !important;
-    font-size: 0.65rem !important;
-    line-height: 1.05 !important;
-    vertical-align: middle !important;
-    border-bottom: 1px solid #f0f0f0 !important;
-    font-weight: 300 !important;
-    font-family: 'Ubuntu', sans-serif !important;
-    color: var(--primary-dark-blue) !important;
-}
-.table-paiements tbody tr:last-child td { border-bottom: none !important; }
-.table-paiements .actions-cell { display: flex; flex-wrap: wrap; gap: 0.2rem; align-items: center; }
-.table-paiements .actions-cell .btn {
-    padding: 0.15rem 0.3rem !important;
-    font-size: 0.6rem !important;
-    line-height: 1.1 !important;
-    min-height: 20px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-}
-.table-paiements .actions-cell .btn i { font-size: 0.65rem !important; }
-table.table.table-paiements.table-hover tbody tr { background-color: #fff !important; transition: background-color 0.2s ease !important; }
-table.table.table-paiements.table-hover tbody tr:nth-child(even) { background-color: #d4dde8 !important; }
-table.table.table-paiements.table-hover tbody tr:hover { background-color: #b8c7d9 !important; cursor: pointer !important; }
-table.table.table-paiements.table-hover tbody tr:nth-child(even):hover { background-color: #9fb3cc !important; }
-.card-header-compact-paiements { padding: 0.35rem 0.6rem !important; font-size: 0.75rem !important; font-weight: 300 !important; font-family: 'Ubuntu', sans-serif !important; }
-.nav-tabs .nav-link { font-size: 0.75rem !important; padding: 0.35rem 0.6rem !important; color: var(--primary-dark-blue); }
-.nav-tabs .nav-link.active { font-weight: 500; }
+    /* Stats Cards Styling */
+    .stat-card {
+        border: none;
+        border-radius: 12px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        overflow: hidden;
+        position: relative;
+        color: white;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+    }
+    .stat-card .card-body {
+        padding: 1.5rem;
+        z-index: 2;
+        position: relative;
+    }
+    .stat-card .icon-bg {
+        position: absolute;
+        right: -10px;
+        bottom: -10px;
+        font-size: 5rem;
+        opacity: 0.15;
+        z-index: 1;
+        transform: rotate(-15deg);
+    }
+    .bg-gradient-cagnotte { background: linear-gradient(135deg, #1e3a5f 0%, #2c5282 100%); }
+    .bg-gradient-tontine { background: linear-gradient(135deg, #2c7a7b 0%, #38b2ac 100%); }
+    .bg-gradient-credit { background: linear-gradient(135deg, #744210 0%, #b7791f 100%); }
+    .bg-gradient-solde { background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%); }
+
+    /* Table Styling */
+    .table-flux { margin-bottom: 0; border-collapse: separate; border-spacing: 0; }
+    .table-flux thead th {
+        padding: 0.75rem 1rem !important;
+        font-size: 0.8rem !important;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        background-color: #f8fafc !important;
+        color: #64748b !important;
+        border-bottom: 2px solid #e2e8f0 !important;
+        font-weight: 600 !important;
+    }
+    .table-flux tbody td {
+        padding: 1rem !important;
+        font-size: 0.85rem !important;
+        vertical-align: middle !important;
+        border-bottom: 1px solid #f1f5f9 !important;
+        color: #334155 !important;
+    }
+    .table-flux tbody tr:hover { background-color: #f8fafc; }
+    
+    .badge-flux {
+        padding: 0.35em 0.65em;
+        font-weight: 500;
+        border-radius: 6px;
+        font-size: 0.75rem;
+    }
+    .amount-positive { color: #10b981; font-weight: 600; }
+    .amount-negative { color: #ef4444; font-weight: 600; }
+    
+    .type-icon {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        margin-right: 12px;
+        font-size: 0.9rem;
+    }
+    .x-small { font-size: 0.65rem; }
+    .fw-500 { font-weight: 500; }
 </style>
-<div class="page-header">
-    <h1 style="font-weight: 300; font-family: 'Ubuntu', sans-serif;"><i class="bi bi-receipt"></i> Mes Paiements</h1>
+
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="mb-1" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;"><i class="bi bi-arrow-left-right text-primary me-2"></i>Flux financiers</h1>
+        <p class="text-muted small mb-0">Suivez l'ensemble de vos transactions et activités financières en un seul endroit.</p>
+    </div>
 </div>
 
-<div class="card">
-    <div class="card-header card-header-compact-paiements d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <span><i class="bi bi-list-ul"></i> Liste de mes paiements</span>
-        @if($paiements->count() > 0)
-            <div class="d-flex align-items-center gap-2">
-                <label class="small mb-0 text-white opacity-75">Rechercher :</label>
-                <input type="text" class="form-control form-control-sm table-search-paiements" placeholder="Numéro, cotisation, montant…" style="max-width: 200px; height: 28px; font-size: 0.75rem;" data-table-target="table-mes-paiements">
+<!-- Dashboard Stats -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card bg-gradient-solde h-100">
+            <div class="card-body">
+                <div class="small opacity-75 mb-1 text-uppercase fw-bold">Solde Global</div>
+                <h3 class="mb-0" style="font-weight: 400;">{{ number_format($stats['solde_global'], 0, ',', ' ') }} <small style="font-size: 0.8rem;">XOF</small></h3>
+                <i class="bi bi-wallet2 icon-bg"></i>
             </div>
-        @endif
+        </div>
     </div>
-    <div class="card-body pt-2 pb-3">
-        @if($annees->isNotEmpty() || $paiements->total() > 0)
-            <ul class="nav nav-tabs mb-3" role="tablist">
-                <li class="nav-item">
-                    <a class="nav-link {{ (request('annee') === null || request('annee') === '') ? 'active' : '' }}" href="{{ route('membre.paiements', ['annee' => '']) }}"><i class="bi bi-grid-3x3-gap"></i> Tous</a>
-                </li>
-                @foreach($annees as $a)
-                    <li class="nav-item">
-                        <a class="nav-link {{ request('annee') == $a ? 'active' : '' }}" href="{{ route('membre.paiements', ['annee' => $a]) }}">{{ $a }}</a>
-                    </li>
-                @endforeach
-            </ul>
-        @endif
-        @if($paiements->count() > 0)
-            <div class="table-responsive">
-                <table class="table table-paiements table-striped table-hover" id="table-mes-paiements">
-                    <thead>
-                        <tr>
-                            <th>Numéro</th>
-                            <th>Tontine</th>
-                            <th>Montant</th>
-                            <th>Date paiement</th>
-                            <th>Mode</th>
-                            <th>Compte</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($paiements as $paiement)
-                            <tr>
-                                <td>{{ $paiement->numero ?? '-' }}</td>
-                                <td>{{ $paiement->cotisation->nom ?? '-' }}</td>
-                                <td>{{ number_format($paiement->montant, 0, ',', ' ') }} XOF</td>
-                                <td>{{ $paiement->date_paiement ? $paiement->date_paiement->format('d/m/Y') : '-' }}</td>
-                                <td>{{ ucfirst(str_replace('_', ' ', $paiement->mode_paiement ?? '')) }}</td>
-                                <td>{{ $paiement->caisse->nom ?? '-' }}</td>
-                                <td>
-                                    <div class="actions-cell">
-                                        <a href="{{ route('membre.paiements.pdf', $paiement) }}" class="btn btn-outline-primary btn-sm" target="_blank" title="Télécharger le reçu"><i class="bi bi-download"></i></a>
-                                        @php
-                                            $remboursementExistant = $paiement->remboursements()->whereIn('statut', ['en_attente', 'approuve'])->first();
-                                        @endphp
-                                        @if(!$remboursementExistant)
-                                            <button type="button" class="btn btn-outline-warning btn-sm" data-bs-toggle="modal" data-bs-target="#modalRemboursement{{ $paiement->id }}" title="Demander un remboursement"><i class="bi bi-arrow-counterclockwise"></i></button>
-                                        @endif
-                                    </div>
-                                </td>
+    <div class="col-md-3">
+        <div class="card stat-card bg-gradient-cagnotte h-100">
+            <div class="card-body">
+                <div class="small opacity-75 mb-1 text-uppercase fw-bold">Cagnottes</div>
+                <h3 class="mb-0" style="font-weight: 400;">{{ number_format($stats['total_cagnottes'], 0, ',', ' ') }} <small style="font-size: 0.8rem;">XOF</small></h3>
+                <i class="bi bi-receipt-cutoff icon-bg"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card bg-gradient-tontine h-100">
+            <div class="card-body">
+                <div class="small opacity-75 mb-1 text-uppercase fw-bold">Tontines / Épargne</div>
+                <h3 class="mb-0" style="font-weight: 400;">{{ number_format($stats['total_tontines'], 0, ',', ' ') }} <small style="font-size: 0.8rem;">XOF</small></h3>
+                <i class="bi bi-piggy-bank icon-bg"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card bg-gradient-credit h-100">
+            <div class="card-body">
+                <div class="small opacity-75 mb-1 text-uppercase fw-bold">Nano-Crédits (Remboursés)</div>
+                <h3 class="mb-0" style="font-weight: 400;">{{ number_format($stats['total_credits'], 0, ',', ' ') }} <small style="font-size: 0.8rem;">XOF</small></h3>
+                <i class="bi bi-credit-card-2-front icon-bg"></i>
+            </div>
+        </div>
+    </div>
+</div>
 
-                                <!-- Modal demande remboursement -->
-                                <div class="modal fade" id="modalRemboursement{{ $paiement->id }}" tabindex="-1">
-                                    <div class="modal-dialog">
-                                        <div class="modal-content">
-                                            <form action="{{ route('membre.remboursements.creer') }}" method="POST">
-                                                @csrf
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title">Demander un remboursement</h5>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                                </div>
-                                                <div class="modal-body">
-                                                    <input type="hidden" name="paiement_id" value="{{ $paiement->id }}">
-                                                    
-                                                    <div class="mb-3">
-                                                        <label class="form-label">Paiement</label>
-                                                        <input type="text" class="form-control" value="{{ $paiement->numero }} - {{ number_format($paiement->montant, 0, ',', ' ') }} XOF" disabled>
-                                                    </div>
-                                                    
-                                                    <div class="mb-3">
-                                                        <label for="montant{{ $paiement->id }}" class="form-label">Montant à rembourser <span class="text-danger">*</span></label>
-                                                        <input type="number" 
-                                                               class="form-control @error('montant') is-invalid @enderror" 
-                                                               id="montant{{ $paiement->id }}"
-                                                               name="montant" 
-                                                               value="{{ old('montant', $paiement->montant) }}"
-                                                               min="1" 
-                                                               max="{{ $paiement->montant }}" 
-                                                               required>
-                                                        <small class="text-muted">Maximum: {{ number_format($paiement->montant, 0, ',', ' ') }} XOF</small>
-                                                        @error('montant')
-                                                            <div class="invalid-feedback">{{ $message }}</div>
-                                                        @enderror
-                                                    </div>
-                                                    
-                                                    <div class="mb-3">
-                                                        <label for="raison{{ $paiement->id }}" class="form-label">Raison <span class="text-danger">*</span></label>
-                                                        <textarea class="form-control @error('raison') is-invalid @enderror" 
-                                                                  id="raison{{ $paiement->id }}"
-                                                                  name="raison" 
-                                                                  rows="3" 
-                                                                  maxlength="1000" 
-                                                                  required>{{ old('raison') }}</textarea>
-                                                        @error('raison')
-                                                            <div class="invalid-feedback">{{ $message }}</div>
-                                                        @enderror
-                                                    </div>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                                                    <button type="submit" class="btn btn-warning">Envoyer la demande</button>
-                                                </div>
-                                            </form>
-                                        </div>
+<!-- Liste des mouvements -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 text-primary fw-bold" style="font-size: 1rem;"><i class="bi bi-list-stars me-2"></i>Journal d'activité</h5>
+        
+        <div class="d-flex gap-2 align-items-center">
+            @if($annees->isNotEmpty())
+                <form action="{{ route('membre.paiements') }}" method="GET" class="d-flex gap-2">
+                    <select name="annee" class="form-select form-select-sm" onchange="this.form.submit()" style="width: 100px;">
+                        <option value="">Années</option>
+                        @foreach($annees as $a)
+                            <option value="{{ $a }}" {{ request('annee') == $a ? 'selected' : '' }}>{{ $a }}</option>
+                        @endforeach
+                    </select>
+                </form>
+            @endif
+            <div class="position-relative">
+                <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-2 text-muted small"></i>
+                <input type="text" class="form-control form-control-sm ps-4 table-search-flux" placeholder="Rechercher une opération..." style="width: 250px;">
+            </div>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-flux table-hover" id="table-flux-financiers">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Opération</th>
+                        <th>Type</th>
+                        <th>Compte</th>
+                        <th class="text-end">Montant</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($mouvements as $m)
+                        @php
+                            $isEntree = $m->sens === 'entree';
+                            $typeLabel = match($m->type) {
+                                'cotisation' => ['label' => 'Cagnotte', 'icon' => 'bi-receipt-cutoff', 'bg' => '#e0e7ff', 'text' => '#4338ca'],
+                                'epargne', 'epargne_libre' => ['label' => 'Tontine', 'icon' => 'bi-piggy-bank', 'bg' => '#ccfbf1', 'text' => '#0f766e'],
+                                'remboursement_credit' => ['label' => 'Remb. Crédit', 'icon' => 'bi-credit-card-2-front', 'bg' => '#fef3c7', 'text' => '#b45309'],
+                                'deboursement_credit' => ['label' => 'Débours. Crédit', 'icon' => 'bi-cash-coin', 'bg' => '#dcfce7', 'text' => '#15803d'],
+                                'commission_garantie' => ['label' => 'Gains Garant', 'icon' => 'bi-shield-check', 'bg' => '#fae8ff', 'text' => '#a21caf'],
+                                'remboursement' => ['label' => 'Remb. Reçu', 'icon' => 'bi-arrow-counterclockwise', 'bg' => '#fee2e2', 'text' => '#b91c1c'],
+                                default => ['label' => ucfirst($m->type), 'icon' => 'bi-dot', 'bg' => '#f1f5f9', 'text' => '#475569'],
+                            };
+                        @endphp
+                        <tr>
+                            <td>
+                                <div class="fw-bold">{{ $m->date_operation->format('d/m/Y') }}</div>
+                                <div class="text-muted x-small">{{ $m->date_operation->format('H:i') }}</div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="type-icon" style="background-color: {{ $typeLabel['bg'] }}; color: {{ $typeLabel['text'] }};">
+                                        <i class="bi {{ $typeLabel['icon'] }}"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold text-dark">{{ $m->libelle }}</div>
+                                        <div class="text-muted small" style="font-size: 0.7rem;">{{ \Illuminate\Support\Str::limit($m->notes, 50) }}</div>
                                     </div>
                                 </div>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-            
-            @if($paiements->hasPages() || $paiements->total() > 0)
-                <div class="d-flex justify-content-end mt-3">
-                    <div class="pagination-custom">
-                        {{ $paiements->links() }}
-                    </div>
+                            </td>
+                            <td>
+                                <span class="badge-flux" style="background-color: {{ $typeLabel['bg'] }}; color: {{ $typeLabel['text'] }};">
+                                    {{ $typeLabel['label'] }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="small fw-500 text-secondary">{{ $m->caisse->nom ?? '-' }}</div>
+                            </td>
+                            <td class="text-end">
+                                <span class="{{ $isEntree ? 'amount-positive' : 'amount-negative' }}">
+                                    {{ $isEntree ? '+' : '-' }} {{ number_format($m->montant, 0, ',', ' ') }}
+                                </span>
+                                <div class="text-muted x-small text-uppercase">XOF</div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5" class="text-center py-5">
+                                <div class="py-5">
+                                    <i class="bi bi-inbox text-muted opacity-25" style="font-size: 4rem;"></i>
+                                    <p class="text-muted mt-3 mb-0">Aucun flux financier enregistré pour le moment.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+        
+        @if($mouvements->hasPages())
+            <div class="card-footer bg-white border-0 py-3">
+                <div class="d-flex justify-content-center">
+                    {{ $mouvements->links() }}
                 </div>
-            @endif
-        @else
-            <div class="text-center py-3">
-                <i class="bi bi-inbox" style="font-size: 1.5rem; color: #ccc;"></i>
-                <p class="text-muted mt-2 mb-0" style="font-size: 0.75rem;">Aucun paiement enregistré</p>
             </div>
         @endif
     </div>
 </div>
 
 <script>
-document.querySelectorAll('.table-search-paiements').forEach(function(inp) {
-    var tableId = inp.getAttribute('data-table-target');
-    var table = document.getElementById(tableId);
-    if (!table) return;
-    inp.addEventListener('input', function() {
-        var q = this.value.trim().toLowerCase();
-        table.querySelectorAll('tbody tr').forEach(function(tr) {
-            var text = tr.textContent.replace(/\s+/g, ' ').toLowerCase();
-            tr.style.display = text.indexOf(q) !== -1 ? '' : 'none';
-        });
+document.querySelector('.table-search-flux').addEventListener('input', function() {
+    var q = this.value.trim().toLowerCase();
+    document.querySelectorAll('#table-flux-financiers tbody tr').forEach(function(tr) {
+        var text = tr.textContent.replace(/\s+/g, ' ').toLowerCase();
+        tr.style.display = text.indexOf(q) !== -1 ? '' : 'none';
     });
 });
 </script>

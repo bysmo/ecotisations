@@ -564,8 +564,8 @@
                 </li>
                 <li>
                     <a href="{{ route('membre.paiements') }}" class="nav-link {{ request()->routeIs('membre.paiements') ? 'active' : '' }}">
-                        <i class="bi bi-receipt"></i>
-                        <span>Mes Paiements</span>
+                        <i class="bi bi-arrow-left-right"></i>
+                        <span>Flux financiers</span>
                     </a>
                 </li>
                 <li>

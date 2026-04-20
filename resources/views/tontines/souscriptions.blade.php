@@ -48,9 +48,15 @@
                                 <span class="badge {{ $badgeClass }}">{{ ucfirst($souscription->statut) }}</span>
                             </td>
                             <td class="text-end">
-                                <a href="{{ route('membres.show', $souscription->membre_id) }}" class="btn btn-sm btn-info text-white">
-                                    <i class="bi bi-person"></i>
-                                </a>
+                                @if($souscription->membre_id)
+                                    <a href="{{ route('membres.show', $souscription->membre_id) }}" class="btn btn-sm btn-info text-white">
+                                        <i class="bi bi-person"></i>
+                                    </a>
+                                @else
+                                    <button class="btn btn-sm btn-secondary" disabled>
+                                        <i class="bi bi-person-x"></i>
+                                    </button>
+                                @endif
                             </td>
                         </tr>
                     @empty

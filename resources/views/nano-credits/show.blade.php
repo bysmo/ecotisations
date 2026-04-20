@@ -24,7 +24,13 @@
         <div class="card h-100">
             <div class="card-header"><i class="bi bi-person"></i> Membre & demande</div>
             <div class="card-body">
-                <p class="mb-1"><strong>Membre :</strong> <a href="{{ route('membres.show', $nanoCredit->membre) }}">{{ $nanoCredit->membre->nom_complet ?? '—' }}</a></p>
+                <p class="mb-1"><strong>Membre :</strong> 
+                    @if($nanoCredit->membre)
+                        <a href="{{ route('membres.show', $nanoCredit->membre) }}">{{ $nanoCredit->membre->nom_complet ?? '—' }}</a>
+                    @else
+                        <span class="text-muted">Inconnu</span>
+                    @endif
+                </p>
                 <p class="mb-1"><strong>Palier Appliqué :</strong> 
                     @if($nanoCredit->palier)
                         <span class="badge" style="background: var(--primary-dark-blue);">Palier {{ $nanoCredit->palier->numero }} : {{ $nanoCredit->palier->nom }}</span>
@@ -50,7 +56,11 @@
                         <ul class="mb-0 small" style="padding-left: 1rem;">
                             @foreach($nanoCredit->garants as $garant)
                                 <li>
-                                    <a href="{{ route('membres.show', $garant->membre) }}">{{ $garant->membre->nom_complet }}</a>
+                                    @if($garant->membre)
+                                        <a href="{{ route('membres.show', $garant->membre) }}">{{ $garant->membre->nom_complet }}</a>
+                                    @else
+                                        <span class="text-muted">Membre inconnu</span>
+                                    @endif
                                     @if($garant->statut === 'en_attente')
                                         <span class="badge bg-warning text-dark">En attente</span>
                                     @elseif($garant->statut === 'accepte')
@@ -102,7 +112,7 @@
                             </select>
                             @error('withdraw_mode')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
-                        <button type="submit" class="btn btn-primary btn-sm" onclick="return confirm('Confirmer l\'octroi du crédit ? Le montant sera décaissé vers le mobile money du membre.');">
+                        <button type="submit" class="btn btn-primary btn-sm" onclick="return confirm('Confirmer l\'octroi de ce nano-crédit ? Le montant sera transféré vers le compte mobile money du membre.');">
                             <i class="bi bi-send"></i> Octroyer le crédit (PayDunya)
                         </button>
                     </form>

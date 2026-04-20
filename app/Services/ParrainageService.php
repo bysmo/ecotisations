@@ -212,6 +212,63 @@ class ParrainageService
     /**
      * Statistiques globales de parrainage pour le tableau de bord admin
      */
+    /**
+     * Traiter le paiement d'une commission (Mouvement financier)
+     */
+    public function payerCommission(ParrainageCommission $commission, int $adminId, ?string $noteAdmin = null): void
+    {
+        if (!in_array($commission->statut, ['reclame', 'disponible'])) {
+            throw new \Exception("Cette commission ne peut pas être payée dans son état actuel.");
+        }
+
+        DB::transaction(function () use ($commission, $adminId, $noteAdmin) {
+            $parrain = $commission->parrain;
+            $montant = (float) $commission->montant;
+            
+            $compteCourant = $parrain->compteCourant;
+            $caisseParrainage = \App\Models\Caisse::getCaisseParrainage();
+
+            if (!$compteCourant) throw new \Exception("Le compte courant du parrain est introuvable.");
+            if (!$caisseParrainage) throw new \Exception("Le compte système des parrainages (SYS-PAR) est introuvable.");
+
+            // 1. Débit du compte système PARRAINAGE
+            \App\Models\MouvementCaisse::create([
+                'caisse_id'      => $caisseParrainage->id,
+                'type'           => 'commission_parrainage',
+                'sens'           => 'sortie',
+                'montant'        => $montant,
+                'date_operation' => now(),
+                'libelle'        => 'Paiement Commission Parrainage #' . $commission->id . ' - Parrain: ' . $parrain->numero,
+                'reference_type' => ParrainageCommission::class,
+                'reference_id'   => $commission->id,
+            ]);
+
+            // 2. Crédit du compte courant du parrain
+            \App\Models\MouvementCaisse::create([
+                'caisse_id'      => $compteCourant->id,
+                'type'           => 'commission_parrainage',
+                'sens'           => 'entree',
+                'montant'        => $montant,
+                'date_operation' => now(),
+                'libelle'        => 'Paiement Commission de Parrainage',
+                'notes'          => 'Filleul: ' . ($commission->filleul ? $commission->filleul->nom_complet : 'N/A'),
+                'reference_type' => ParrainageCommission::class,
+                'reference_id'   => $commission->id,
+            ]);
+
+            // 3. Mise à jour de la commission
+            $commission->update([
+                'statut'      => 'paye',
+                'paye_le'     => now(),
+                'traite_par'  => $adminId,
+                'note_admin'  => $noteAdmin,
+            ]);
+        });
+    }
+
+    /**
+     * Statistiques globales de parrainage pour le tableau de bord admin
+     */
     public function statsGlobales(): array
     {
         return [

@@ -301,22 +301,43 @@ class MembreDashboardController extends Controller
     {
         $membre = Auth::guard('membre')->user();
         
-        $query = $membre->paiements()->with(['cotisation', 'caisse']);
+        // Récupérer tous les comptes du membre
+        $comptes = $membre->comptes;
+        $caisseIds = $comptes->pluck('id')->toArray();
         
+        // Requête de base sur les mouvements de caisse
+        $query = \App\Models\MouvementCaisse::whereIn('caisse_id', $caisseIds)
+            ->with('caisse');
+            
         // Liste des années pour le filtre
-        $annees = $membre->paiements()
-            ->selectRaw('YEAR(date_paiement) as annee')
+        $annees = \App\Models\MouvementCaisse::whereIn('caisse_id', $caisseIds)
+            ->selectRaw('YEAR(date_operation) as annee')
             ->distinct()
             ->orderBy('annee', 'desc')
             ->pluck('annee');
             
         if ($request->filled('annee')) {
-            $query->whereYear('date_paiement', $request->annee);
+            $query->whereYear('date_operation', $request->annee);
         }
         
-        $paiements = $query->orderBy('date_paiement', 'desc')->paginate(15);
+        // Pagination des mouvements (Flux financiers)
+        $mouvements = $query->orderBy('date_operation', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->paginate(15);
+            
+        // Calcul des statistiques globales pour le dashboard
+        // On récupère tous les mouvements (sans pagination) pour les calculs de stats
+        $allMouvements = \App\Models\MouvementCaisse::whereIn('caisse_id', $caisseIds)->get();
         
-        return view('membres.paiements', compact('paiements', 'annees'));
+        $stats = [
+            'total_cagnottes' => (float) $allMouvements->where('type', 'cotisation')->where('sens', 'entree')->sum('montant'),
+            'total_tontines'  => (float) $allMouvements->whereIn('type', ['epargne', 'epargne_libre'])->where('sens', 'entree')->sum('montant'),
+            'total_credits'   => (float) $allMouvements->where('type', 'remboursement_credit')->where('sens', 'entree')->sum('montant'),
+            'solde_global'    => (float) $comptes->sum(function($c) { return $c->solde_actuel; }),
+            'nb_operations'   => $allMouvements->count(),
+        ];
+        
+        return view('membres.paiements', compact('mouvements', 'annees', 'stats'));
     }
 
     public function engagements(Request $request)

@@ -213,7 +213,6 @@ class PayDunyaService
      */
     public function createDisburseInvoice(string $accountAlias, int $amount, string $withdrawMode, string $callbackUrl, ?string $debitAccountNumber = null): array
     {
-        $url = 'https://app.paydunya.com/api/v2/disburse/get-invoice';
         $payload = [
             'account_alias' => $accountAlias,
             'amount' => $amount,
@@ -226,7 +225,7 @@ class PayDunyaService
 
         $response = Http::withOptions($this->getPayDunyaHttpOptions())
             ->withHeaders($this->getDisburseHeaders())
-            ->post($url, $payload);
+            ->post($this->getDisburseUrl('get-invoice'), $payload);
 
         $body = $response->json();
         $code = $body['response_code'] ?? null;
@@ -255,7 +254,6 @@ class PayDunyaService
      */
     public function submitDisburseInvoice(string $disburseToken, ?string $disburseId = null): array
     {
-        $url = 'https://app.paydunya.com/api/v2/disburse/submit-invoice';
         $payload = ['disburse_invoice' => $disburseToken];
         if ($disburseId !== null) {
             $payload['disburse_id'] = $disburseId;
@@ -263,7 +261,7 @@ class PayDunyaService
 
         $response = Http::withOptions($this->getPayDunyaHttpOptions())
             ->withHeaders($this->getDisburseHeaders())
-            ->post($url, $payload);
+            ->post($this->getDisburseUrl('submit-invoice'), $payload);
 
         $body = $response->json();
         $code = $body['response_code'] ?? null;
@@ -300,10 +298,9 @@ class PayDunyaService
      */
     public function checkDisburseStatus(string $disburseToken): array
     {
-        $url = 'https://app.paydunya.com/api/v2/disburse/check-status';
         $response = Http::withOptions($this->getPayDunyaHttpOptions())
             ->withHeaders($this->getDisburseHeaders())
-            ->post($url, ['disburse_invoice' => $disburseToken]);
+            ->post($this->getDisburseUrl('check-status'), ['disburse_invoice' => $disburseToken]);
 
         $body = $response->json();
         $code = $body['response_code'] ?? null;
@@ -331,14 +328,7 @@ class PayDunyaService
      */
     private function getDisburseHeaders(): array
     {
-        $modeOverride = env('PAYDUNYA_MODE_OVERRIDE');
-        if ($modeOverride === 'test' || $modeOverride === 'live') {
-            $mode = $modeOverride;
-        } elseif (! app()->environment('production')) {
-            $mode = 'test';
-        } else {
-            $mode = $this->config->mode ?? 'test';
-        }
+        $mode = $this->getMode();
         return [
             'Content-Type' => 'application/json',
             'PAYDUNYA-MASTER-KEY' => $this->config->master_key,
@@ -346,6 +336,35 @@ class PayDunyaService
             'PAYDUNYA-TOKEN' => $this->config->token,
             'PAYDUNYA-MODE' => $mode,
         ];
+    }
+
+    /**
+     * Détermine le mode de fonctionnement (test ou live).
+     */
+    private function getMode(): string
+    {
+        $modeOverride = env('PAYDUNYA_MODE_OVERRIDE');
+        if ($modeOverride === 'test' || $modeOverride === 'live') {
+            return $modeOverride;
+        }
+
+        if (! app()->environment('production')) {
+            return 'test';
+        }
+
+        return $this->config->mode ?? 'test';
+    }
+
+    /**
+     * Construit l'URL complète pour les appels API Disburse (PUSH).
+     */
+    private function getDisburseUrl(string $endpoint): string
+    {
+        $base = $this->getMode() === 'test'
+            ? 'https://app.paydunya.com/sandbox/api/v2/disburse/'
+            : 'https://app.paydunya.com/api/v2/disburse/';
+
+        return $base . $endpoint;
     }
 
     /**
