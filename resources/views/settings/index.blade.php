@@ -227,6 +227,7 @@
                                 @if($setting->type === 'boolean')
                                     <div class="col-12">
                                         <div class="form-check form-switch p-3 bg-light rounded">
+                                            <input type="hidden" name="{{ $setting->cle }}" value="0">
                                             <input class="form-check-input" type="checkbox" id="setting_{{ $setting->cle }}" name="{{ $setting->cle }}" value="1" {{ filter_var($setting->valeur, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
                                             <label class="form-check-label fw-bold small ms-2" for="setting_{{ $setting->cle }}">
                                                 {{ $setting->description ?? $setting->cle }} (Activé)
@@ -265,8 +266,8 @@
         </div>
     @endif
 
-    {{-- 3. Autres informations (Notifications, Backup, Affichage, etc.) --}}
-    @foreach(['notifications', 'backup', 'affichage'] as $otherGroup)
+    {{-- 3. Autres informations (Notifications, Backup, Affichage, Sécurité, etc.) --}}
+    @foreach(['notifications', 'backup', 'affichage', 'securite'] as $otherGroup)
         @if(isset($settingsByGroup[$otherGroup]))
             <div class="row">
                 <div class="col-md-8">
@@ -282,6 +283,7 @@
                                     @if($setting->type === 'boolean')
                                         <div class="col-12">
                                             <div class="form-check p-2">
+                                                <input type="hidden" name="{{ $setting->cle }}" value="0">
                                                 <input class="form-check-input" type="checkbox" id="setting_{{ $setting->cle }}" name="{{ $setting->cle }}" value="1" {{ filter_var($setting->valeur, FILTER_VALIDATE_BOOLEAN) ? 'checked' : '' }}>
                                                 <label class="form-check-label small ms-2" for="setting_{{ $setting->cle }}">
                                                     {{ $setting->description ?? $setting->cle }}

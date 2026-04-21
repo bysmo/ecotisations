@@ -22,6 +22,13 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::post('/logout', [\App\Http\Controllers\Auth\AdminAuthController::class, 'logout'])->name('logout');
 });
 
+Route::middleware('web')->group(function () {
+    Route::get('/password/expire', [\App\Http\Controllers\Auth\PasswordExpirationController::class, 'showExpireForm'])
+        ->name('password.expire');
+    Route::post('/password/expire/update', [\App\Http\Controllers\Auth\PasswordExpirationController::class, 'postExpire'])
+        ->name('password.expire.update');
+});
+
 Route::get('/', function () {
     // Si l'application n'est pas installée, rediriger vers l'installation
     if (!file_exists(storage_path('installed'))) {

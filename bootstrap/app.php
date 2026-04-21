@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // Vérifier l'installation (doit être en premier, avant le middleware de session)
         $middleware->prependToGroup('web', \App\Http\Middleware\CheckInstallation::class);
+        $middleware->appendToGroup('web', \App\Http\Middleware\CheckPasswordExpiration::class);
         
         // Configurer la redirection pour les utilisateurs non authentifiés vers admin.login
         $middleware->redirectGuestsTo(function () {
@@ -27,6 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Enregistrer le middleware de permissions
         $middleware->alias([
             'permission' => \App\Http\Middleware\CheckPermission::class,
+            'password.expiration' => \App\Http\Middleware\CheckPasswordExpiration::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

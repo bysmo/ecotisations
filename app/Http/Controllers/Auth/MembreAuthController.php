@@ -13,6 +13,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\RateLimiter;
+use App\Models\AppSetting;
+use Illuminate\Support\Str;
 
 class MembreAuthController extends Controller
 {
@@ -66,6 +69,10 @@ class MembreAuthController extends Controller
             'country_code' => 'required|string|size:2',
             'telephone' => 'required|string|max:20',
             'password' => 'required',
+            'captcha' => 'required|captcha',
+        ], [
+            'captcha.required' => 'Veuillez recopier les caractères de l\'image.',
+            'captcha.captcha' => 'Le code saisi est incorrect. Veuillez réessayer.'
         ]);
 
         $phoneNormalized = $this->normalizePhone(
@@ -76,6 +83,18 @@ class MembreAuthController extends Controller
         if (strlen($phoneNormalized) < 8) {
             throw ValidationException::withMessages([
                 'telephone' => ['Le numéro de téléphone est invalide.'],
+            ]);
+        }
+
+        $throttleKey = 'membre|' . Str::lower($phoneNormalized) . '|' . $request->ip();
+        $maxAttempts = AppSetting::get('lockout_max_attempts', 5);
+        $lockoutMinutes = AppSetting::get('lockout_duration_min', 15);
+
+        if (RateLimiter::tooManyAttempts($throttleKey, $maxAttempts)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            $minutes = ceil($seconds / 60);
+            throw ValidationException::withMessages([
+                'telephone' => ["Trop de tentatives. Veuillez réessayer dans {$minutes} minute(s)."],
             ]);
         }
 
@@ -101,11 +120,13 @@ class MembreAuthController extends Controller
         }
 
         if (!Hash::check($request->input('password'), $membre->password)) {
+            RateLimiter::hit($throttleKey, $lockoutMinutes * 60);
             throw ValidationException::withMessages([
                 'telephone' => ['Les identifiants fournis sont incorrects.'],
             ]);
         }
 
+        RateLimiter::clear($throttleKey);
         Auth::guard('membre')->login($membre, $request->boolean('remember'));
         $request->session()->regenerate();
 
@@ -149,6 +170,10 @@ class MembreAuthController extends Controller
             'secteur'          => 'nullable|string|max:100',
             'password'         => 'required|string|min:6|confirmed',
             'code_parrainage'  => 'nullable|string|max:12',
+            'captcha'          => 'required|captcha',
+        ], [
+            'captcha.required' => 'Veuillez recopier les caractères de l\'image.',
+            'captcha.captcha' => 'Le code saisi est incorrect. Veuillez réessayer.'
         ]);
 
         if (strlen($phoneNormalized) < 8) {

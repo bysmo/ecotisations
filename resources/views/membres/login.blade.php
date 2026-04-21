@@ -17,7 +17,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         * { font-family: 'Ubuntu', sans-serif; font-weight: 300; }
-        body { margin: 0; padding: 0; min-height: 100vh; background-image: url('{{ asset('images/background.jpg') }}'); background-size: cover; background-position: center; background-attachment: fixed; }
+        body { margin: 0; padding: 0; min-height: 100vh; background-image: url('{{ asset('images/bg-clients-login.png.webp') }}'); background-size: cover; background-position: center; background-attachment: fixed; }
         .login-container { position: relative; z-index: 1; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; }
         .login-card { background: white; border-radius: 10px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); max-width: 420px; width: 100%; padding: 1.5rem; }
         .login-header { text-align: center; margin-bottom: 1.25rem; }
@@ -80,6 +80,18 @@
                 <div class="mb-3 form-check">
                     <input type="checkbox" class="form-check-input" id="remember" name="remember">
                     <label class="form-check-label" for="remember">Se souvenir de moi</label>
+                </div>
+                <div class="mb-4">
+                    <div class="d-flex flex-column mb-2 p-2 bg-light rounded border shadow-sm">
+                        <div class="text-center w-100 mb-2" style="overflow: hidden; border-radius: 4px;">
+                            <img src="{{ captcha_src('default') }}" class="captcha-img img-fluid" alt="CAPTCHA" style="max-width: 100%; height: auto;">
+                        </div>
+                        <button type="button" class="btn btn-outline-secondary btn-sm w-100" onclick="document.querySelector('.captcha-img').src = '{{ captcha_src('default') }}' + Math.random()">
+                            <i class="bi bi-arrow-clockwise"></i> Changer l'image
+                        </button>
+                    </div>
+                    <input type="text" class="form-control text-center @error('captcha') is-invalid @enderror" name="captcha" placeholder="Recopiez le code ci-dessus" required autocomplete="off">
+                    @error('captcha')<div class="invalid-feedback d-block text-center">{{ $message }}</div>@enderror
                 </div>
                 <button type="submit" class="btn btn-primary w-100"><i class="bi bi-box-arrow-in-right"></i> Se connecter</button>
             </form>

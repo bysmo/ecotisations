@@ -158,6 +158,21 @@
                                 <small class="text-muted">Si un client vous a parrainé, entrez son code ici</small>
                             </div>
                             @endif
+                            
+                            <div class="mb-4">
+                                <label class="form-label">Validation de sécurité <span class="text-danger">*</span></label>
+                                <div class="d-flex flex-column mb-2 p-2 bg-light rounded border shadow-sm">
+                                    <div class="text-center w-100 mb-2" style="overflow: hidden; border-radius: 4px;">
+                                        <img src="{{ captcha_src('default') }}" class="captcha-img img-fluid" alt="CAPTCHA" style="max-width: 100%; height: auto;">
+                                    </div>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm w-100" onclick="document.querySelector('.captcha-img').src = '{{ captcha_src('default') }}' + Math.random()">
+                                        <i class="bi bi-arrow-clockwise"></i> Changer l'image
+                                    </button>
+                                </div>
+                                <input type="text" class="form-control text-center @error('captcha') is-invalid @enderror" name="captcha" placeholder="Recopiez le code ci-dessus" required autocomplete="off">
+                                @error('captcha')<div class="invalid-feedback d-block text-center">{{ $message }}</div>@enderror
+                            </div>
+
                             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 register-actions-row">
                                 <span class="login-link-text">Vous avez déjà un compte ?</span>
                                 <div class="d-flex gap-2">
