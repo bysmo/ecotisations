@@ -506,6 +506,14 @@
                         <span>Tableau de bord</span>
                     </a>
                 </li>
+
+                 <li>
+                    <a href="{{ route('membre.wallets.index') }}" class="nav-link {{ request()->routeIs('membre.wallets*') ? 'active' : '' }}">
+                        <i class="bi bi-wallet2"></i>
+                        <span>Mon Portefeuille</span>
+                    </a>
+                </li>
+
                 <li>
                     <a href="{{ route('membre.comptes') }}" class="nav-link {{ request()->routeIs('membre.comptes*') ? 'active' : '' }}">
                         <i class="bi bi-wallet2"></i>
@@ -557,37 +565,6 @@
                     </a>
                 </li>
                 <li>
-                    <a href="{{ route('membre.epargne.index') }}" class="nav-link {{ request()->routeIs('membre.epargne*') ? 'active' : '' }}">
-                        <i class="bi bi-piggy-bank"></i>
-                        <span>Mes Tontines</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ route('membre.paiements') }}" class="nav-link {{ request()->routeIs('membre.paiements') ? 'active' : '' }}">
-                        <i class="bi bi-arrow-left-right"></i>
-                        <span>Flux financiers</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ route('membre.engagements') }}" class="nav-link {{ request()->routeIs('membre.engagements') ? 'active' : '' }}">
-                        <i class="bi bi-clipboard-check"></i>
-                        <span>Mes Engagements</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ route('membre.remboursements') }}" class="nav-link {{ request()->routeIs('membre.remboursements*') ? 'active' : '' }}">
-                        <i class="bi bi-arrow-counterclockwise"></i>
-                        <span>Mes Remboursements</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ route('membre.kyc.index') }}" class="nav-link {{ request()->routeIs('membre.kyc*') ? 'active' : '' }}">
-                        <i class="bi bi-shield-check"></i>
-                        <span>Mon KYC</span>
-                    </a>
-                </li>
-              
-                <li>
                     @php
                         $garantRoutesActive = request()->routeIs('membre.garant*');
                     @endphp
@@ -619,6 +596,36 @@
                         </ul>
                     </div>
                 </li>
+                <li>
+                    <a href="{{ route('membre.epargne.index') }}" class="nav-link {{ request()->routeIs('membre.epargne*') ? 'active' : '' }}">
+                        <i class="bi bi-piggy-bank"></i>
+                        <span>Tontines</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('membre.paiements') }}" class="nav-link {{ request()->routeIs('membre.paiements') ? 'active' : '' }}">
+                        <i class="bi bi-arrow-left-right"></i>
+                        <span>Flux financiers</span>
+                    </a>
+                </li>
+                <!--li>
+                    <a href="{{ route('membre.engagements') }}" class="nav-link {{ request()->routeIs('membre.engagements') ? 'active' : '' }}">
+                        <i class="bi bi-clipboard-check"></i>
+                        <span>Mes Engagements</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('membre.remboursements') }}" class="nav-link {{ request()->routeIs('membre.remboursements*') ? 'active' : '' }}">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                        <span>Mes Remboursements</span>
+                    </a>
+                </li-->
+                <li>
+                    <a href="{{ route('membre.kyc.index') }}" class="nav-link {{ request()->routeIs('membre.kyc*') ? 'active' : '' }}">
+                        <i class="bi bi-shield-check"></i>
+                        <span>Mon KYC</span>
+                    </a>
+                </li>
                 @php
                     $parrainageActif = \App\Models\ParrainageConfig::current()->actif;
                     $parrainageRoutesActive = request()->routeIs('membre.parrainage*');
@@ -629,7 +636,7 @@
                        data-bs-toggle="collapse" data-bs-target="#parrainageSubmenu"
                        aria-expanded="{{ $parrainageRoutesActive ? 'true' : 'false' }}">
                         <i class="bi bi-people"></i>
-                        <span>Parrainage</span>
+                        <span>Espace Parrainage</span>
                         @php
                             $totalDispoParrainage = auth('membre')->user() ? auth('membre')->user()->totalCommissionsDisponibles() : 0;
                         @endphp

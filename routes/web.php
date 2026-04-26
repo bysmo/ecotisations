@@ -191,6 +191,7 @@ Route::get('/caisses/{caisse}/mouvements', [CaisseController::class, 'mouvements
     // Routes pour BCEAO Pi-SPI
     Route::get('/pispi', [\App\Http\Controllers\PiSpiController::class, 'index'])->name('pispi.index');
     Route::put('/pispi', [\App\Http\Controllers\PiSpiController::class, 'update'])->name('pispi.update');
+    Route::post('/pispi/webhook-register', [\App\Http\Controllers\PiSpiController::class, 'registerWebhook'])->name('pispi.webhook.register');
     
     // Routes pour les moyens de paiement
     Route::get('/payment-methods', [\App\Http\Controllers\PaymentMethodController::class, 'index'])->name('payment-methods.index');
@@ -396,6 +397,13 @@ Route::prefix('membre')->name('membre.')->group(function () {
         // Interception PIN
         Route::get('/pin/verify-action', [\App\Http\Controllers\MembrePinWebController::class, 'showVerifyActionForm'])->name('pin.verify-action');
         Route::post('/pin/verify-action', [\App\Http\Controllers\MembrePinWebController::class, 'verifyAction'])->name('pin.verify-action.submit');
+
+        // ─── Gestion des Alias Portefeuille Pi-SPI ─────────────────────────────
+        Route::get('/wallets', [\App\Http\Controllers\MembreWalletAliasController::class, 'index'])->name('wallets.index');
+        Route::post('/wallets', [\App\Http\Controllers\MembreWalletAliasController::class, 'store'])->name('wallets.store');
+        Route::put('/wallets/{alias}', [\App\Http\Controllers\MembreWalletAliasController::class, 'update'])->name('wallets.update');
+        Route::post('/wallets/{alias}/default', [\App\Http\Controllers\MembreWalletAliasController::class, 'setDefault'])->name('wallets.default');
+        Route::delete('/wallets/{alias}', [\App\Http\Controllers\MembreWalletAliasController::class, 'destroy'])->name('wallets.destroy');
     });
 });
 

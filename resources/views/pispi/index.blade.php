@@ -92,6 +92,31 @@
                         <small class="text-muted">Clé d'API nécessaire pour chaque requête HTTP</small>
                     </div>
 
+                    <div class="card bg-light border-0 mb-4">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-3 text-primary"><i class="bi bi-diagram-3-fill me-2"></i>Alias Opérationnels (Destination)</h6>
+                            <p class="small text-muted mb-3">Configurez les alias UUID Serenity qui recevront les fonds selon le type d'opération.</p>
+                            
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold">Cagnottes</label>
+                                    <input type="text" name="operation_aliases[cagnotte]" class="form-control form-control-sm font-monospace" 
+                                           value="{{ $operationAliases['cagnotte'] ?? '' }}" placeholder="UUID-CAGNOTTE">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold">Tontines</label>
+                                    <input type="text" name="operation_aliases[tontine]" class="form-control form-control-sm font-monospace" 
+                                           value="{{ $operationAliases['tontine'] ?? '' }}" placeholder="UUID-TONTINE">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold">Nano-Crédits (Remb.)</label>
+                                    <input type="text" name="operation_aliases[nano_credit]" class="form-control form-control-sm font-monospace" 
+                                           value="{{ $operationAliases['nano_credit'] ?? '' }}" placeholder="UUID-CREDIT">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <hr class="my-4">
 
                     <div class="d-flex justify-content-between align-items-center">
@@ -108,6 +133,45 @@
                         </div>
                     </div>
                 </form>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0 mt-4 mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0 text-success"><i class="bi bi-broadcast me-2"></i>Configuration du Webhook</h5>
+            </div>
+            <div class="card-body p-4">
+                <p class="small text-muted mb-4">
+                    Le webhook permet à Pi-SPI de notifier Serenity lorsqu'un paiement est validé ou échoué par le client sur son application mobile.
+                </p>
+
+                <div class="bg-light p-3 rounded mb-4">
+                    <label class="form-label small fw-bold text-uppercase opacity-75">URL de Rappel (Callback)</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control form-control-sm bg-white" value="{{ route('api.pispi.webhook') }}" readonly>
+                        <button class="btn btn-outline-secondary btn-sm" type="button" onclick="navigator.clipboard.writeText('{{ route('api.pispi.webhook') }}')">
+                            <i class="bi bi-clipboard"></i>
+                        </button>
+                    </div>
+                    <div class="form-text small">Cette URL doit être accessible publiquement par les serveurs de la BCEAO.</div>
+                </div>
+
+                <form action="{{ route('pispi.webhook.register') }}" method="POST">
+                    @csrf
+                    <button type="submit" class="btn btn-success w-100 py-2 fw-bold">
+                        <i class="bi bi-cloud-arrow-up-fill me-2"></i>Enregistrer le Webhook auprès de Pi-SPI
+                    </button>
+                </form>
+
+                @if($config->webhook_secret)
+                    <div class="mt-3 text-center">
+                        <span class="badge bg-success-soft text-success"><i class="bi bi-check-circle-fill me-1"></i>Secret de signature configuré</span>
+                    </div>
+                @else
+                    <div class="alert alert-warning border-0 small mt-3 mb-0">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i> <strong>Attention :</strong> Aucun secret de webhook configuré dans la table. La vérification des signatures sera ignorée en sandbox.
+                    </div>
+                @endif
             </div>
         </div>
     </div>

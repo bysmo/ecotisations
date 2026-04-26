@@ -621,4 +621,11 @@ class Membre extends Authenticatable implements MustVerifyEmail
 
         return $membre;
     }
+    /**
+     * Relation avec les alias de portefeuille Pi-SPI
+     */
+    public function walletAliases()
+    {
+        return $this->hasMany(MembreWalletAlias::class);
+    }
 }

@@ -99,3 +99,6 @@ Route::prefix('membre')->group(function () {
     });
 });
 
+// ── Webhooks (Publics) ───────────────────────────────────────────────────
+Route::post('pispi/webhook', [\App\Http\Controllers\PiSpiWebhookController::class, 'handle'])->name('api.pispi.webhook');
+

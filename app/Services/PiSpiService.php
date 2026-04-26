@@ -27,11 +27,13 @@ class PiSpiService
 
         // Configuration des URLs selon le mode
         if ($this->config->mode === 'live') {
-            $this->baseUrl = 'https://api.pi-bceao.com/piz/v1'; // À confirmer pour la prod
+            $this->baseUrl = 'https://api.pi-bceao.com/piz/v1';
             $this->authUrl = 'https://piz-business.auth.eu-west-1.amazoncognito.com/oauth2/token';
         } else {
-            // Utilisation du endpoint No-MTLS pour le sandbox pour faciliter l'intégration
-            $this->baseUrl = 'https://no-mtls.piz.simulateurs.pi-bceao.com/piz/v1';
+            // URL du simulateur Sandbox (no-MTLS)
+            // Note: Le playground montre souvent une URL de type .../{participantCode}/demandes-paiements
+            $participantCode = $this->config->participant_code ?? 'BFC999';
+            $this->baseUrl = 'https://no-mtls.piz.simulateurs.pi-bceao.com/' . $participantCode;
             $this->authUrl = 'https://piz-simulateur-business-sandbox.auth.eu-west-1.amazoncognito.com/oauth2/token';
         }
     }
@@ -41,14 +43,14 @@ class PiSpiService
      */
     public function getAccessToken()
     {
-        $cacheKey = $this->config->token_cache_key ?? 'pispi_access_token';
+        $cacheKey = ($this->config->token_cache_key ?? 'pispi_access_token') . '_v7';
 
         return Cache::remember($cacheKey, 3500, function () {
             $response = Http::asForm()->post($this->authUrl, [
                 'grant_type' => 'client_credentials',
                 'client_id' => $this->config->client_id,
                 'client_secret' => $this->config->client_secret,
-                'scope' => 'piz/demande_paiement.write piz/demande_paiement.read',
+                'scope' => 'piz/compte.read piz/alias.read piz/demande_paiement.write piz/demande_paiement.read piz/demande_paiement_reponse.write piz/webhook.write piz/webhook.read',
             ]);
 
             if ($response->successful()) {
@@ -58,7 +60,8 @@ class PiSpiService
 
             Log::error('Pi-SPI Auth Error', [
                 'status' => $response->status(),
-                'body' => $response->body()
+                'body' => $response->body(),
+                'url' => $this->authUrl
             ]);
             
             throw new \Exception('Échec de l\'authentification Pi-SPI : ' . ($response->json()['error_description'] ?? 'Erreur inconnue'));
@@ -68,7 +71,7 @@ class PiSpiService
     /**
      * Initier une demande de paiement (Request to Pay - RTP)
      * 
-     * @param array $data ['txId', 'phone', 'amount', 'description']
+     * @param array $data ['txId', 'payeurAlias', 'payeAlias', 'amount', 'description']
      * @return array
      */
     public function initiatePayment(array $data)
@@ -76,25 +79,30 @@ class PiSpiService
         try {
             $token = $this->getAccessToken();
             
+            // On s'assure d'avoir un txId unique et court (max 16-20 caractères recommandés par certaines banques)
+            $txId = substr((string)$data['txId'], 0, 16);
+
             $payload = [
-                'txId' => (string) $data['txId'],
+                'txId' => $txId,
                 'confirmation' => false,
-                'categorie' => '500', // Transaction standard Business to Customer
-                'payeurAlias' => $this->formatPhone($data['phone']),
-                'payeAlias' => $this->config->paye_alias ?? 'SERENITY_BIZ',
+                'payeurAlias' => $data['payeurAlias'],
+                'payeAlias' => $data['payeAlias'] ?? ($this->config->paye_alias ?? '9b1b2499-3e50-435b-b757-ac7a83d8aa8c'),
                 'montant' => (int) $data['amount'],
                 'motif' => substr($data['description'] ?? 'Paiement Serenity', 0, 100),
+                'categorie' => '500', // Format string selon le playground
             ];
 
-            $response = Http::withHeaders([
-                'Authorization' => $token, // Suppression de 'Bearer ' car PI-SPI/AWS sandbox semble mal le parser
-                'x-api-key' => $this->config->api_key,
+            $headers = [
+                'Authorization' => 'Bearer ' . $token,
+                'X-API-Key' => $this->config->api_key,
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
-            ])->post($this->baseUrl . '/demandes-paiements', $payload);
+            ];
+
+            $response = Http::withHeaders($headers)->post($this->baseUrl . '/demandes-paiements', $payload);
 
             if ($response->successful()) {
-                Log::info('Pi-SPI Payment Initiated', ['txId' => $data['txId']]);
+                Log::info('Pi-SPI Payment Initiated', ['txId' => $txId]);
                 return [
                     'success' => true,
                     'data' => $response->json(),
@@ -102,12 +110,8 @@ class PiSpiService
             }
 
             Log::error('Pi-SPI Payment Request Failed', [
-                'txId' => $data['txId'],
+                'txId' => $txId,
                 'url' => $this->baseUrl . '/demandes-paiements',
-                'headers_subset' => [
-                    'Authorization' => substr($token, 0, 10) . '...',
-                    'x-api-key' => substr($this->config->api_key, 0, 5) . '...'
-                ],
                 'payload' => $payload,
                 'response' => $response->json(),
                 'status' => $response->status()
@@ -135,11 +139,13 @@ class PiSpiService
         try {
             $token = $this->getAccessToken();
 
-            $response = Http::withHeaders([
-                'Authorization' => $token, // Suppression de 'Bearer '
-                'x-api-key' => $this->config->api_key,
+            $headers = [
+                'Authorization' => 'Bearer ' . $token,
+                'X-API-Key' => $this->config->api_key,
                 'Accept' => 'application/json',
-            ])->get($this->baseUrl . '/demandes-paiements/' . $txId);
+            ];
+
+            $response = Http::withHeaders($headers)->get($this->baseUrl . '/demandes-paiements/' . $txId);
 
             if ($response->successful()) {
                 return [
@@ -163,16 +169,71 @@ class PiSpiService
     }
 
     /**
-     * Formate le numéro de téléphone pour Pi-SPI (Alias)
-     * Habituellement au format international sans le '+' ? Ou format mobile money local.
+     * Enregistrer l'URL du webhook auprès de Pi-SPI
+     */
+    public function registerWebhook($callbackUrl)
+    {
+        try {
+            $token = $this->getAccessToken();
+
+            $headers = [
+                'Authorization' => 'Bearer ' . $token,
+                'X-API-Key' => $this->config->api_key,
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/json',
+            ];
+
+            $payload = [
+                'callbackUrl' => $callbackUrl
+            ];
+
+            $response = Http::withHeaders($headers)->post($this->baseUrl . '/webhooks', $payload);
+
+            if ($response->successful()) {
+                Log::info('Pi-SPI Webhook Registered', ['url' => $callbackUrl]);
+                return [
+                    'success' => true,
+                    'data' => $response->json(),
+                ];
+            }
+
+            Log::error('Pi-SPI Webhook Registration Failed', [
+                'url' => $this->baseUrl . '/webhooks',
+                'payload' => $payload,
+                'response' => $response->json(),
+                'status' => $response->status()
+            ]);
+
+            return [
+                'success' => false,
+                'message' => 'Échec de l\'enregistrement du webhook.',
+            ];
+
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => $this->getFriendlyErrorMessage($e),
+            ];
+        }
+    }
+
+    /**
+     * Valide la signature d'un webhook Pi-SPI
+     */
+    public function verifyWebhookSignature($payload, $signature)
+    {
+        $secret = $this->config->webhook_secret;
+        if (empty($secret)) return true; // Pour le test si non configuré
+
+        $computed = hash_hmac('sha256', json_encode($payload), $secret);
+        return hash_equals($computed, $signature);
+    }
+
+    /**
+     * Formate le numéro de téléphone pour Pi-SPI (Alias) - Obsolète pour UUID
      */
     private function formatPhone($phone)
     {
-        // Nettoyer le numéro
-        $clean = preg_replace('/[^0-9]/', '', $phone);
-        
-        // Si le numéro commence par +226..., on garde l'indicatif mais sans le +
-        // Pi-SPI sandbox attend souvent un numéro spécifique pour simuler.
-        return $clean;
+        return preg_replace('/[^0-9]/', '', $phone);
     }
 }

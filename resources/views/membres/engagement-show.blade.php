@@ -307,23 +307,42 @@
     @endif
 </div>
 
-<!-- Modal de confirmation de paiement PayDunya -->
-<div class="modal fade" id="paydunyaConfirmModal" tabindex="-1" aria-labelledby="paydunyaConfirmModalLabel" aria-hidden="true">
+<!-- Modal de confirmation de paiement -->
+<div class="modal fade" id="paymentConfirmModal" tabindex="-1" aria-labelledby="paymentConfirmModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header" style="background: var(--primary-dark-blue); color: white;">
-                <h5 class="modal-title" id="paydunyaConfirmModalLabel" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">
-                    <i class="bi bi-phone"></i> Confirmation de paiement
+            <div class="modal-header" id="modalHeader" style="background: var(--primary-dark-blue); color: white;">
+                <h5 class="modal-title" id="paymentConfirmModalLabel" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">
+                    <i class="bi bi-credit-card"></i> Confirmation de paiement
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">
-                <p id="paydunyaConfirmMessage"></p>
+                <p id="paymentConfirmMessage"></p>
+                
+                <div id="pispiWalletGroup" class="mb-3" style="display: none;">
+                    <label class="form-label small fw-bold">Sélectionnez votre portefeuille Pi-SPI :</label>
+                    @if($walletAliases->count() > 0)
+                        <select id="wallet_alias_id" class="form-select rounded-pill px-3">
+                            @foreach($walletAliases as $alias)
+                                <option value="{{ $alias->id }}" {{ $alias->is_default ? 'selected' : '' }}>
+                                    {{ $alias->label }} ({{ substr($alias->alias, 0, 8) }}...)
+                                </option>
+                            @endforeach
+                        </select>
+                    @else
+                        <div class="alert alert-warning small py-2 mb-0">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Vous n'avez pas encore d'alias Pi-SPI. 
+                            <a href="{{ route('membre.wallets.index') }}" class="fw-bold">Ajoutez-en un ici</a>.
+                        </div>
+                    @endif
+                </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">Annuler</button>
-                <button type="button" class="btn btn-primary" id="paydunyaConfirmButton" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">
-                    <i class="bi bi-check-circle"></i> Confirmer le paiement
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">Annuler</button>
+                <button type="button" class="btn btn-primary rounded-pill px-4" id="paymentConfirmButton" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">
+                    <i class="bi bi-check-circle"></i> Confirmer
                 </button>
             </div>
         </div>
@@ -331,86 +350,89 @@
 </div>
 
 @push('scripts')
-@if($paydunyaEnabled)
 <script>
 let currentEngagementId = null;
+let paymentMode = null;
 
 function initierPaiementPayDunya(engagementId, nomEngagement, montant) {
     currentEngagementId = engagementId;
+    paymentMode = "paydunya";
     
-    // Mettre à jour le message du modal
+    document.getElementById('modalHeader').style.background = 'var(--primary-dark-blue)';
+    document.getElementById('paymentConfirmModalLabel').innerHTML = '<i class="bi bi-phone"></i> Paiement Mobile/Carte';
+    document.getElementById('pispiWalletGroup').style.display = 'none';
+
     const message = 'Voulez-vous payer l\'engagement "<strong>' + nomEngagement + '</strong>" d\'un montant de <strong>' + new Intl.NumberFormat('fr-FR').format(montant) + ' XOF</strong> ?';
-    document.getElementById('paydunyaConfirmMessage').innerHTML = message;
+    document.getElementById('paymentConfirmMessage').innerHTML = message;
     
-    // Afficher le modal
-    const modal = new bootstrap.Modal(document.getElementById('paydunyaConfirmModal'));
+    const modal = new bootstrap.Modal(document.getElementById('paymentConfirmModal'));
     modal.show();
 }
 
-// Gérer le clic sur le bouton de confirmation
+function initierPaiementPiSpi(engagementId, nomEngagement, montant) {
+    currentEngagementId = engagementId;
+    paymentMode = "pispi";
+    
+    document.getElementById('modalHeader').style.background = '#198754';
+    document.getElementById('paymentConfirmModalLabel').innerHTML = '<i class="bi bi-bank"></i> Paiement Compte Bancaire (Pi-SPI)';
+    document.getElementById('pispiWalletGroup').style.display = 'block';
+
+    const message = 'Voulez-vous payer l\'engagement "<strong>' + nomEngagement + '</strong>" d\'un montant de <strong>' + new Intl.NumberFormat('fr-FR').format(montant) + ' XOF</strong> via Pi-SPI ?';
+    document.getElementById('paymentConfirmMessage').innerHTML = message;
+    
+    const modal = new bootstrap.Modal(document.getElementById('paymentConfirmModal'));
+    modal.show();
+}
+
 document.addEventListener('DOMContentLoaded', function() {
-    const confirmButton = document.getElementById('paydunyaConfirmButton');
+    const confirmButton = document.getElementById('paymentConfirmButton');
     if (confirmButton) {
         confirmButton.addEventListener('click', function() {
-            if (currentEngagementId) {
-                // Créer un formulaire pour soumettre la requête POST
-                const form = document.createElement('form');
-                form.method = 'POST';
-                const routeName = window.pispiMode ? "membre.engagements.pispi" : "membre.engagements.paydunya";
-                form.action = (window.pispiMode ? '{{ route("membre.engagements.pispi", ":id") }}' : '{{ route("membre.engagements.paydunya", ":id") }}').replace(':id', currentEngagementId);
-                
-                // Ajouter le token CSRF
-                const csrfToken = document.createElement('input');
-                csrfToken.type = 'hidden';
-                csrfToken.name = '_token';
-                csrfToken.value = '{{ csrf_token() }}';
-                form.appendChild(csrfToken);
-                
-                // Soumettre le formulaire
-                document.body.appendChild(form);
-                form.submit();
+            if (!currentEngagementId || !paymentMode) return;
+
+            if (paymentMode === 'pispi') {
+                const walletId = document.getElementById('wallet_alias_id')?.value;
+                if (!walletId) {
+                    alert("Veuillez sélectionner un portefeuille ou en configurer un.");
+                    return;
+                }
             }
+
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = (paymentMode === 'pispi' 
+                ? '{{ route("membre.engagements.pispi", ":id") }}' 
+                : '{{ route("membre.engagements.paydunya", ":id") }}'
+            ).replace(':id', currentEngagementId);
+            
+            const csrfToken = document.createElement('input');
+            csrfToken.type = 'hidden'; csrfToken.name = '_token'; csrfToken.value = '{{ csrf_token() }}';
+            form.appendChild(csrfToken);
+
+            if (paymentMode === 'pispi') {
+                const walletInput = document.createElement('input');
+                walletInput.type = 'hidden'; walletInput.name = 'wallet_alias_id';
+                walletInput.value = document.getElementById('wallet_alias_id').value;
+                form.appendChild(walletInput);
+            }
+            
+            document.body.appendChild(form);
+            form.submit();
         });
     }
 });
 
-function initierPaiementPiSpi(engagementId, nomEngagement, montant) {
-    currentEngagementId = engagementId;
-    window.pispiMode = true;
-    
-    // Mettre à jour le message du modal
-    const message = 'Voulez-vous payer l\'engagement "<strong>' + nomEngagement + '</strong>" d\'un montant de <strong>' + new Intl.NumberFormat('fr-FR').format(montant) + ' XOF</strong> via Pi-SPI ? Un message sera envoyé sur votre mobile.';
-    document.getElementById('paydunyaConfirmMessage').innerHTML = message;
-    document.getElementById('paydunyaConfirmModalLabel').innerHTML = '<i class="bi bi-bank"></i> Paiement Pi-SPI (BCEAO)';
-    
-    // Afficher le modal
-    const modal = new bootstrap.Modal(document.getElementById('paydunyaConfirmModal'));
-    modal.show();
-}
-
-// Afficher une notification toast selon le statut du paiement
 @if(isset($paymentStatus))
     @if($paymentStatus === 'success')
-        if (typeof showToast === 'function') {
-            showToast('{{ $paymentMessage ?? "Paiement effectué avec succès !" }}', 'success');
-        } else {
-            console.error('showToast function not available');
-        }
+        if (typeof showToast === 'function') showToast('{{ $paymentMessage ?? "Paiement réussi !" }}', 'success');
     @elseif($paymentStatus === 'cancelled')
-        if (typeof showToast === 'function') {
-            showToast('{{ $paymentMessage ?? "Paiement annulé. Vous pouvez réessayer à tout moment." }}', 'warning');
-        }
+        if (typeof showToast === 'function') showToast('{{ $paymentMessage ?? "Paiement annulé." }}', 'warning');
     @elseif($paymentStatus === 'pending')
-        if (typeof showToast === 'function') {
-            showToast('{{ $paymentMessage ?? "Paiement en attente de confirmation." }}', 'info');
-        }
+        if (typeof showToast === 'function') showToast('{{ $paymentMessage ?? "En attente." }}', 'info');
     @elseif($paymentStatus === 'error')
-        if (typeof showToast === 'function') {
-            showToast('{{ $paymentMessage ?? "Erreur lors du paiement. Veuillez réessayer." }}', 'error');
-        }
+        if (typeof showToast === 'function') showToast('{{ $paymentMessage ?? "Erreur." }}', 'error');
     @endif
 @endif
 </script>
-@endif
 @endpush
 @endsection

@@ -46,10 +46,12 @@ class MembreEpargneLibreController extends Controller
         $paymentStatus  = session('payment_status');
         $paymentMessage = session('payment_message');
 
+        $walletAliases = $membre->walletAliases()->get();
+
         return view('membres.epargne-libre.index', compact(
             'membre', 'compteEpargne', 'solde', 'mouvements',
             'paydunyaEnabled', 'pispiEnabled',
-            'paymentStatus', 'paymentMessage'
+            'paymentStatus', 'paymentMessage', 'walletAliases'
         ));
     }
 
@@ -120,7 +122,11 @@ class MembreEpargneLibreController extends Controller
 
         $request->validate([
             'montant' => 'required|numeric|min:100',
+            'wallet_alias_id' => 'required|exists:membre_wallet_aliases,id',
         ]);
+
+        $walletAlias = \App\Models\MembreWalletAlias::findOrFail($request->wallet_alias_id);
+        if ($walletAlias->membre_id !== $membre->id) abort(403);
 
         $montant       = (float) $request->input('montant');
         $compteEpargne = $membre->compteEpargne;
@@ -129,35 +135,52 @@ class MembreEpargneLibreController extends Controller
             return back()->with('error', 'Aucun compte épargne trouvé.');
         }
 
-        if (!$membre->telephone) {
-            return back()->with('error', 'Téléphone requis pour Pi-SPI.');
-        }
-
         $pispiConfig = \App\Models\PiSpiConfiguration::getActive();
         if (!$pispiConfig || !$pispiConfig->enabled) {
             return back()->with('error', 'Le paiement Pi-SPI n\'est pas activé.');
         }
 
         try {
-            $pispiService = new \App\Services\PiSpiService();
+            $pispiService = app(\App\Services\PiSpiService::class);
+            $payeAlias = \App\Models\PiSpiOperationAlias::getForType('tontine');
+            
             $reference    = 'EL-PISPI-' . time() . '-' . $membre->id;
+
+            // Enregistrer le paiement en attente
+            Paiement::create([
+                'reference' => $reference,
+                'membre_id' => $membre->id,
+                'wallet_alias_id' => $walletAlias->id,
+                'montant' => $montant,
+                'date_paiement' => now(),
+                'statut' => 'en_attente',
+                'mode_paiement' => 'pispi',
+                'caisse_id' => $compteEpargne->id,
+                'metadata' => [
+                    'type' => 'epargne_libre',
+                    'caisse_id' => $compteEpargne->id
+                ],
+                'commentaire' => 'Versement libre épargne via Pi-SPI',
+            ]);
 
             $result = $pispiService->initiatePayment([
                 'txId'        => $reference,
-                'phone'       => $membre->telephone,
+                'payeurAlias' => $walletAlias->alias,
+                'payeAlias'   => $payeAlias,
                 'amount'      => $montant,
                 'description' => 'Épargne libre - ' . $membre->nom_complet,
             ]);
 
             if ($result['success']) {
-                // Le webhook Pi-SPI traitera la confirmation
-                return back()->with('success', 'Demande Pi-SPI envoyée. Validez sur votre mobile.');
+                return back()->with('success', 'Demande Pi-SPI envoyée vers "' . $walletAlias->label . '". Validez sur votre mobile.');
             }
 
+            // Nettoyage si erreur
+            Paiement::where('reference', $reference)->delete();
             return back()->with('error', 'Erreur Pi-SPI : ' . ($result['message'] ?? 'Echec initiation.'));
 
         } catch (\Exception $e) {
-            Log::error('Pi-SPI épargne libre: ' . $e->getMessage());
+            Log::error('Pi-SPI épargne libre error: ' . $e->getMessage());
             $friendly = app(\App\Services\PiSpiService::class)->getFriendlyErrorMessage($e);
             return back()->with('error', $friendly);
         }

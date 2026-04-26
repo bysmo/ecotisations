@@ -361,7 +361,7 @@ class PayDunyaService
     private function getDisburseUrl(string $endpoint): string
     {
         $base = $this->getMode() === 'test'
-            ? 'https://app.paydunya.com/sandbox/api/v2/disburse/'
+            ? 'https://app.paydunya.com/sandbox-api/v2/disburse/'
             : 'https://app.paydunya.com/api/v2/disburse/';
 
         return $base . $endpoint;

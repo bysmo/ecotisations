@@ -139,6 +139,13 @@ class MembreDashboardController extends Controller
             ->limit(10)
             ->get();
         
+        // Paiements Pi-SPI en attente de confirmation
+        $paiementsEnAttente = \App\Models\Paiement::where('membre_id', $membre->id)
+            ->where('statut', 'en_attente')
+            ->where('mode_paiement', 'pispi')
+            ->orderBy('created_at', 'desc')
+            ->get();
+        
         $annonces = Annonce::active()->orderBy('ordre')->orderBy('created_at')->get();
 
         return view('membres.dashboard_portal', compact(
@@ -147,7 +154,7 @@ class MembreDashboardController extends Controller
             'creditActif', 'prochaineEcheance', 'limiteCredit',
             'commissionsDisponibles',
             'cagnottesAdherreesCount', 'cagnottesCreeesCount',
-            'activites', 'annonces'
+            'activites', 'annonces', 'paiementsEnAttente'
         ));
     }
 
@@ -290,10 +297,11 @@ class MembreDashboardController extends Controller
         $pispiEnabled = $pispiConfig && $pispiConfig->enabled;
         
         $paymentMethods = \App\Models\PaymentMethod::where('enabled', true)->orderBy('order')->get();
+        $walletAliases = $membre->walletAliases()->get();
 
         return view('membres.cotisation-show', compact(
             'cotisation', 'adhesion', 'paiements', 'totalPaye', 'canPay',
-            'paydunyaEnabled', 'pispiEnabled', 'paymentMethods'
+            'paydunyaEnabled', 'pispiEnabled', 'paymentMethods', 'walletAliases'
         ));
     }
 
@@ -371,9 +379,11 @@ class MembreDashboardController extends Controller
         
         $paymentMethods = \App\Models\PaymentMethod::where('enabled', true)->orderBy('order')->get();
 
+        $walletAliases = $membre->walletAliases()->get();
+
         return view('membres.engagement-show', compact(
             'engagement', 'paiements', 'montantPaye', 'resteAPayer',
-            'paydunyaEnabled', 'pispiEnabled', 'paymentMethods'
+            'paydunyaEnabled', 'pispiEnabled', 'paymentMethods', 'walletAliases'
         ));
     }
 
@@ -456,25 +466,24 @@ class MembreDashboardController extends Controller
         $cotisation = Cotisation::findOrFail($id);
         $membre = Auth::guard('membre')->user();
         
-        // Vérifier si le membre a un numéro de téléphone valide pour Pi-SPI
-        if (!$membre->telephone) {
-            return back()->with('error', 'Vous devez renseigner votre numéro de téléphone dans votre profil pour utiliser ce mode de paiement.');
-        }
+        $request->validate([
+            'wallet_alias_id' => 'required|exists:membre_wallet_aliases,id',
+            'montant' => $cotisation->type_montant === 'libre' ? 'required|numeric|min:100' : 'nullable',
+        ]);
+
+        $walletAlias = \App\Models\MembreWalletAlias::findOrFail($request->wallet_alias_id);
+        if ($walletAlias->membre_id !== $membre->id) abort(403);
 
         try {
-            // Montant : si type_montant libre, le prendre du formulaire
-            $montant = null;
-            if ($cotisation->type_montant === 'fixe') {
-                $montant = (float) $cotisation->montant;
-            } else {
-                $request->validate(['montant' => 'required|numeric|min:100']);
-                $montant = (float) $request->input('montant');
-            }
+            $montant = $cotisation->type_montant === 'fixe' ? (float)$cotisation->montant : (float)$request->montant;
 
             if (!$montant || $montant <= 0) {
                 return back()->with('error', 'Montant invalide.');
             }
 
+            $pispiService = app(\App\Services\PiSpiService::class);
+            $payeAlias = \App\Models\PiSpiOperationAlias::getForType('cagnotte');
+            
             $reference = 'P-PISPI-' . time() . '-' . $membre->id;
             
             // Créer le paiement en attente
@@ -482,6 +491,7 @@ class MembreDashboardController extends Controller
                 'reference' => $reference,
                 'cotisation_id' => $cotisation->id,
                 'membre_id' => $membre->id,
+                'wallet_alias_id' => $walletAlias->id,
                 'montant' => $montant,
                 'date_paiement' => now(),
                 'statut' => 'en_attente',
@@ -492,13 +502,14 @@ class MembreDashboardController extends Controller
 
             $result = $pispiService->initiatePayment([
                 'txId' => $reference,
-                'phone' => $membre->telephone,
+                'payeurAlias' => $walletAlias->alias,
+                'payeAlias' => $payeAlias,
                 'amount' => $montant,
                 'description' => 'Cagnotte ' . $cotisation->nom . ' (Serenity)',
             ]);
 
             if ($result['success']) {
-                return back()->with('success', 'Une demande de paiement a été envoyée sur votre téléphone. Veuillez valider la transaction.');
+                return back()->with('success', 'Une demande de paiement a été envoyée vers votre portefeuille "' . $walletAlias->label . '". Veuillez valider la transaction.');
             }
 
             // Si échec API, on supprime ou annule le paiement
@@ -523,18 +534,24 @@ class MembreDashboardController extends Controller
         if ($engagement->membre_id !== $membre->id) abort(403);
         if ($engagement->estPaye()) return back()->with('error', 'Cet engagement est déjà réglé.');
 
-        if (!$membre->telephone) {
-            return back()->with('error', 'Numéro de téléphone requis pour le paiement Pi-SPI.');
-        }
+        $request->validate([
+            'wallet_alias_id' => 'required|exists:membre_wallet_aliases,id',
+        ]);
+
+        $walletAlias = \App\Models\MembreWalletAlias::findOrFail($request->wallet_alias_id);
+        if ($walletAlias->membre_id !== $membre->id) abort(403);
 
         try {
-            $pispiService = new \App\Services\PiSpiService();
+            $pispiService = app(\App\Services\PiSpiService::class);
+            $payeAlias = \App\Models\PiSpiOperationAlias::getForType('tontine');
+            
             $reference = 'E-PISPI-' . time() . '-' . $engagement->id;
             
             $paiement = Paiement::create([
                 'reference' => $reference,
                 'cotisation_id' => $engagement->cotisation_id,
                 'membre_id' => $membre->id,
+                'wallet_alias_id' => $walletAlias->id,
                 'montant' => $engagement->montant_du,
                 'date_paiement' => now(),
                 'statut' => 'en_attente',
@@ -546,19 +563,21 @@ class MembreDashboardController extends Controller
 
             $result = $pispiService->initiatePayment([
                 'txId' => $reference,
-                'phone' => $membre->telephone,
+                'payeurAlias' => $walletAlias->alias,
+                'payeAlias' => $payeAlias,
                 'amount' => $engagement->montant_du,
                 'description' => 'Engagement ' . ($engagement->cotisation->nom ?? '') . ' (Serenity)',
             ]);
 
             if ($result['success']) {
-                return back()->with('success', 'Demande Pi-SPI envoyée. Validez sur votre mobile.');
+                return back()->with('success', 'Demande Pi-SPI envoyée vers "' . $walletAlias->label . '". Validez sur votre mobile.');
             }
 
             $paiement->delete();
             return back()->with('error', 'Erreur Pi-SPI : ' . ($result['message'] ?? 'Echec initiation.'));
 
         } catch (\Exception $e) {
+            Log::error('Pi-SPI Engagement Init Error: ' . $e->getMessage());
             $friendly = app(\App\Services\PiSpiService::class)->getFriendlyErrorMessage($e);
             return back()->with('error', $friendly);
         }

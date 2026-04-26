@@ -295,27 +295,47 @@
     @endif
 </div>
 
-<!-- Modal de confirmation de paiement PayDunya -->
-<div class="modal fade" id="paydunyaConfirmModal" tabindex="-1" aria-labelledby="paydunyaConfirmModalLabel" aria-hidden="true">
+<!-- Modal de confirmation de paiement -->
+<div class="modal fade" id="paymentConfirmModal" tabindex="-1" aria-labelledby="paymentConfirmModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header" style="background: var(--primary-dark-blue); color: white;">
-                <h5 class="modal-title" id="paydunyaConfirmModalLabel" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">
+            <div class="modal-header" id="modalHeader" style="background: var(--primary-dark-blue); color: white;">
+                <h5 class="modal-title" id="paymentConfirmModalLabel" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">
                     <i class="bi bi-credit-card"></i> Confirmation de paiement
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">
-                <p id="paydunyaConfirmMessage"></p>
-                <div id="montantInputGroup" class="mt-3" style="display: none;">
-                    <label for="montant_saisi" class="form-label small">Montant à payer (XOF) :</label>
-                    <input type="number" id="montant_saisi" class="form-control" placeholder="Entrez le montant" min="100">
+                <p id="paymentConfirmMessage"></p>
+                
+                <div id="montantInputGroup" class="mb-3" style="display: none;">
+                    <label for="montant_saisi" class="form-label small fw-bold">Montant à payer (XOF) :</label>
+                    <input type="number" id="montant_saisi" class="form-control rounded-pill px-3" placeholder="Entrez le montant" min="100">
+                </div>
+
+                <div id="pispiWalletGroup" class="mb-3" style="display: none;">
+                    <label class="form-label small fw-bold">Sélectionnez votre portefeuille Pi-SPI :</label>
+                    @if($walletAliases->count() > 0)
+                        <select id="wallet_alias_id" class="form-select rounded-pill px-3">
+                            @foreach($walletAliases as $alias)
+                                <option value="{{ $alias->id }}" {{ $alias->is_default ? 'selected' : '' }}>
+                                    {{ $alias->label }} ({{ substr($alias->alias, 0, 8) }}...)
+                                </option>
+                            @endforeach
+                        </select>
+                    @else
+                        <div class="alert alert-warning small py-2 mb-0">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Vous n'avez pas encore d'alias Pi-SPI. 
+                            <a href="{{ route('membre.wallets.index') }}" class="fw-bold">Ajoutez-en un ici</a>.
+                        </div>
+                    @endif
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">Annuler</button>
-                <button type="button" class="btn btn-primary" id="paydunyaConfirmButton" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">
-                    <i class="bi bi-check-circle"></i> Confirmer le paiement
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">Annuler</button>
+                <button type="button" class="btn btn-primary rounded-pill px-4" id="paymentConfirmButton" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">
+                    <i class="bi bi-check-circle"></i> Confirmer
                 </button>
             </div>
         </div>
@@ -323,13 +343,17 @@
 </div>
 
 @push('scripts')
-@if($paydunyaEnabled)
 <script>
 let currentTontineId = null;
+let paymentMode = null; // 'paydunya' or 'pispi'
 
 function initierPaiementPayDunya(cotisationId, nomTontine, montant, typeMontant) {
     currentTontineId = cotisationId;
-    window.paymentType = "paydunya";
+    paymentMode = "paydunya";
+    
+    document.getElementById('modalHeader').style.background = 'var(--primary-dark-blue)';
+    document.getElementById('paymentConfirmModalLabel').innerHTML = '<i class="bi bi-credit-card"></i> Paiement Mobile/Carte';
+    document.getElementById('pispiWalletGroup').style.display = 'none';
     
     const inputGroup = document.getElementById('montantInputGroup');
     const montantSaisi = document.getElementById('montant_saisi');
@@ -337,110 +361,105 @@ function initierPaiementPayDunya(cotisationId, nomTontine, montant, typeMontant)
     if (typeMontant === 'libre') {
         inputGroup.style.display = 'block';
         montantSaisi.value = montant > 0 ? montant : "";
-        document.getElementById('paydunyaConfirmMessage').innerHTML = 'Voulez-vous payer pour la cagnotte "<strong>' + nomTontine + '</strong>" ? Veuillez préciser le montant ci-dessous.';
+        document.getElementById('paymentConfirmMessage').innerHTML = 'Voulez-vous payer pour la cagnotte "<strong>' + nomTontine + '</strong>" ? Veuillez préciser le montant ci-dessous.';
     } else {
         inputGroup.style.display = 'none';
         const message = 'Voulez-vous payer la cotisation "<strong>' + nomTontine + '</strong>" d\'un montant de <strong>' + new Intl.NumberFormat('fr-FR').format(montant) + ' XOF</strong> ?';
-        document.getElementById('paydunyaConfirmMessage').innerHTML = message;
+        document.getElementById('paymentConfirmMessage').innerHTML = message;
     }
     
-    // Afficher le modal
-    const modal = new bootstrap.Modal(document.getElementById('paydunyaConfirmModal'));
+    const modal = new bootstrap.Modal(document.getElementById('paymentConfirmModal'));
     modal.show();
 }
 
-// Gérer le clic sur le bouton de confirmation
+function initierPaiementPiSpi(cotisationId, nomTontine, montant, typeMontant) {
+    currentTontineId = cotisationId;
+    paymentMode = "pispi";
+    
+    document.getElementById('modalHeader').style.background = '#198754';
+    document.getElementById('paymentConfirmModalLabel').innerHTML = '<i class="bi bi-bank"></i> Paiement Compte Bancaire (Pi-SPI)';
+    document.getElementById('pispiWalletGroup').style.display = 'block';
+    
+    const inputGroup = document.getElementById('montantInputGroup');
+    const montantSaisi = document.getElementById('montant_saisi');
+
+    if (typeMontant === 'libre') {
+        inputGroup.style.display = 'block';
+        montantSaisi.value = montant > 0 ? montant : "";
+        document.getElementById('paymentConfirmMessage').innerHTML = 'Voulez-vous payer pour la cagnotte "<strong>' + nomTontine + '</strong>" via Pi-SPI ? Précisez le montant et sélectionnez votre portefeuille.';
+    } else {
+        inputGroup.style.display = 'none';
+        const message = 'Voulez-vous payer la cotisation "<strong>' + nomTontine + '</strong>" d\'un montant de <strong>' + new Intl.NumberFormat('fr-FR').format(montant) + ' XOF</strong> via Pi-SPI ?';
+        document.getElementById('paymentConfirmMessage').innerHTML = message;
+    }
+    
+    const modal = new bootstrap.Modal(document.getElementById('paymentConfirmModal'));
+    modal.show();
+}
+
 document.addEventListener('DOMContentLoaded', function() {
-    const confirmButton = document.getElementById('paydunyaConfirmButton');
+    const confirmButton = document.getElementById('paymentConfirmButton');
     if (confirmButton) {
         confirmButton.addEventListener('click', function() {
-            if (currentTontineId) {
-                const montantSaisi = document.getElementById('montant_saisi').value;
-                const isLibre = document.getElementById('montantInputGroup').style.display === 'block';
+            if (!currentTontineId || !paymentMode) return;
 
-                if (isLibre && (!montantSaisi || montantSaisi < 100)) {
-                    alert("Veuillez saisir un montant valide (min 100 XOF).");
+            const montantSaisi = document.getElementById('montant_saisi').value;
+            const isLibre = document.getElementById('montantInputGroup').style.display === 'block';
+
+            if (isLibre && (!montantSaisi || montantSaisi < 100)) {
+                alert("Veuillez saisir un montant valide (min 100 XOF).");
+                return;
+            }
+
+            if (paymentMode === 'pispi') {
+                const walletId = document.getElementById('wallet_alias_id')?.value;
+                if (!walletId) {
+                    alert("Veuillez sélectionner un portefeuille ou en configurer un dans votre profil.");
                     return;
                 }
-
-                // Créer un formulaire pour soumettre la requête POST
-                const form = document.createElement('form');
-                form.method = 'POST';
-                const isPiSpi = window.pispiMode;
-                form.action = (isPiSpi ? '{{ route("membre.cotisations.pispi", ":id") }}' : '{{ route("membre.cotisations.paydunya", ":id") }}').replace(':id', currentTontineId);
-                
-                // Ajouter le token CSRF
-                const csrfToken = document.createElement('input');
-                csrfToken.type = 'hidden';
-                csrfToken.name = '_token';
-                csrfToken.value = '{{ csrf_token() }}';
-                form.appendChild(csrfToken);
-
-                // Ajouter le montant si libre
-                if (isLibre) {
-                    const montantInput = document.createElement('input');
-                    montantInput.type = 'hidden';
-                    montantInput.name = 'montant';
-                    montantInput.value = montantSaisi;
-                    form.appendChild(montantInput);
-                }
-                
-                // Soumettre le formulaire
-                document.body.appendChild(form);
-                form.submit();
             }
+
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = (paymentMode === 'pispi' 
+                ? '{{ route("membre.cotisations.pispi", ":id") }}' 
+                : '{{ route("membre.cotisations.paydunya", ":id") }}'
+            ).replace(':id', currentTontineId);
+            
+            const csrfToken = document.createElement('input');
+            csrfToken.type = 'hidden'; csrfToken.name = '_token'; csrfToken.value = '{{ csrf_token() }}';
+            form.appendChild(csrfToken);
+
+            if (isLibre) {
+                const montantInput = document.createElement('input');
+                montantInput.type = 'hidden'; montantInput.name = 'montant'; montantInput.value = montantSaisi;
+                form.appendChild(montantInput);
+            }
+
+            if (paymentMode === 'pispi') {
+                const walletInput = document.createElement('input');
+                walletInput.type = 'hidden'; walletInput.name = 'wallet_alias_id';
+                walletInput.value = document.getElementById('wallet_alias_id').value;
+                form.appendChild(walletInput);
+            }
+            
+            document.body.appendChild(form);
+            form.submit();
         });
     }
 });
 
-function initierPaiementPiSpi(cotisationId, nomTontine, montant, typeMontant) {
-    currentTontineId = cotisationId;
-    window.pispiMode = true;
-    
-    const inputGroup = document.getElementById('montantInputGroup');
-    const montantSaisi = document.getElementById('montant_saisi');
-
-    if (typeMontant === 'libre') {
-        inputGroup.style.display = 'block';
-        montantSaisi.value = montant > 0 ? montant : "";
-        document.getElementById('paydunyaConfirmMessage').innerHTML = 'Voulez-vous payer pour la cagnotte "<strong>' + nomTontine + '</strong>" via Pi-SPI ? Veuillez préciser le montant ci-dessous.';
-    } else {
-        inputGroup.style.display = 'none';
-        const message = 'Voulez-vous payer la cotisation "<strong>' + nomTontine + '</strong>" d\'un montant de <strong>' + new Intl.NumberFormat('fr-FR').format(montant) + ' XOF</strong> via Pi-SPI ? Un message de validation sera envoyé sur votre mobile.';
-        document.getElementById('paydunyaConfirmMessage').innerHTML = message;
-    }
-    
-    document.getElementById('paydunyaConfirmModalLabel').innerHTML = '<i class="bi bi-bank"></i> Paiement par Compte Bancaire';
-    
-    // Afficher le modal
-    const modal = new bootstrap.Modal(document.getElementById('paydunyaConfirmModal'));
-    modal.show();
-}
-
-// Afficher une notification toast selon le statut du paiement
-// Le script s'exécute après le script du layout qui définit showToast
 @if(isset($paymentStatus))
     @if($paymentStatus === 'success')
-        if (typeof showToast === 'function') {
-            showToast('{{ $paymentMessage ?? "Paiement effectué avec succès !" }}', 'success');
-        } else {
-            console.error('showToast function not available');
-        }
+        if (typeof showToast === 'function') showToast('{{ $paymentMessage ?? "Paiement réussi !" }}', 'success');
     @elseif($paymentStatus === 'cancelled')
-        if (typeof showToast === 'function') {
-            showToast('{{ $paymentMessage ?? "Paiement annulé. Vous pouvez réessayer à tout moment." }}', 'warning');
-        }
+        if (typeof showToast === 'function') showToast('{{ $paymentMessage ?? "Paiement annulé." }}', 'warning');
     @elseif($paymentStatus === 'pending')
-        if (typeof showToast === 'function') {
-            showToast('{{ $paymentMessage ?? "Paiement en attente de confirmation." }}', 'info');
-        }
+        if (typeof showToast === 'function') showToast('{{ $paymentMessage ?? "En attente." }}', 'info');
     @elseif($paymentStatus === 'error')
-        if (typeof showToast === 'function') {
-            showToast('{{ $paymentMessage ?? "Erreur lors du paiement. Veuillez réessayer." }}', 'error');
-        }
+        if (typeof showToast === 'function') showToast('{{ $paymentMessage ?? "Erreur." }}', 'error');
     @endif
 @endif
 </script>
-@endif
 @endpush
 @endsection

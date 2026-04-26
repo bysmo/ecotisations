@@ -225,7 +225,9 @@ class MembreEpargneController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return view('membres.epargne.mes-epargnes', compact('souscriptions'));
+        $walletAliases = $membre->walletAliases()->get();
+
+        return view('membres.epargne.mes-epargnes', compact('souscriptions', 'walletAliases'));
     }
 
     /**
@@ -359,24 +361,32 @@ class MembreEpargneController extends Controller
             return redirect()->back()->with('error', 'Cette échéance est déjà réglée.');
         }
 
+        $request->validate([
+            'wallet_alias_id' => 'required|exists:membre_wallet_aliases,id',
+        ]);
+
+        $walletAlias = \App\Models\MembreWalletAlias::findOrFail($request->wallet_alias_id);
+        if ($walletAlias->membre_id !== $membre->id) abort(403);
+
         $pispiConfig = \App\Models\PiSpiConfiguration::getActive();
         if (!$pispiConfig || !$pispiConfig->enabled) {
             return redirect()->back()->with('error', 'Le paiement Pi-SPI n\'est pas activé.');
         }
 
-        if (!$membre->telephone) {
-            return redirect()->back()->with('error', 'Téléphone requis pour Pi-SPI.');
-        }
-
         try {
-            $pispiService = new \App\Services\PiSpiService();
+            $pispiService = app(\App\Services\PiSpiService::class);
+            $payeAlias = \App\Models\PiSpiOperationAlias::getForType('tontine');
+            
             $reference = 'T-PISPI-' . time() . '-' . $echeance->id;
+
+            $montant = (float) $echeance->montant;
 
             // Créer un enregistrement de paiement en attente
             $paiement = \App\Models\Paiement::create([
                 'reference' => $reference,
                 'membre_id' => $membre->id,
-                'montant' => $echeance->montant,
+                'wallet_alias_id' => $walletAlias->id,
+                'montant' => $montant,
                 'date_paiement' => now(),
                 'statut' => 'en_attente',
                 'mode_paiement' => 'pispi',
@@ -391,19 +401,21 @@ class MembreEpargneController extends Controller
 
             $result = $pispiService->initiatePayment([
                 'txId' => $reference,
-                'phone' => $membre->telephone,
-                'amount' => $echeance->montant,
+                'payeurAlias' => $walletAlias->alias,
+                'payeAlias' => $payeAlias,
+                'amount' => $montant,
                 'description' => 'Épargne ' . ($souscription->plan->nom ?? '') . ' - Éch ' . $echeance->date_echeance->format('d/m/Y'),
             ]);
 
             if ($result['success']) {
-                return redirect()->back()->with('success', 'La demande Pi-SPI a été envoyée. Validez sur votre mobile.');
+                return redirect()->back()->with('success', 'La demande Pi-SPI a été envoyée vers "' . $walletAlias->label . '". Validez sur votre mobile.');
             }
 
             $paiement->delete();
             return redirect()->back()->with('error', 'Erreur Pi-SPI : ' . ($result['message'] ?? 'Echec initiation.'));
 
         } catch (\Exception $e) {
+            \Log::error('Pi-SPI Epargne Init Error: ' . $e->getMessage());
             $friendly = app(\App\Services\PiSpiService::class)->getFriendlyErrorMessage($e);
             return redirect()->back()->with('error', $friendly);
         }

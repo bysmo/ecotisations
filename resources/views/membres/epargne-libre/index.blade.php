@@ -90,26 +90,18 @@
                         <label class="form-label" style="font-size: 0.7rem; font-weight: 300; font-family: 'Ubuntu', sans-serif;">Moyen de paiement</label>
                         <div class="d-flex gap-2 flex-wrap">
                             @if($paydunyaEnabled)
-                                <form id="form-paydunya" action="{{ route('membre.epargne-libre.paydunya') }}" method="POST" class="d-inline">
-                                    @csrf
-                                    <input type="hidden" name="montant" id="montant-paydunya">
-                                    <button type="submit" id="btn-paydunya"
-                                        class="btn btn-sm btn-primary"
-                                        style="font-size: 0.72rem; font-weight: 300; font-family: 'Ubuntu', sans-serif;">
-                                        <i class="bi bi-phone-fill"></i> Payer par Mobile/Carte
-                                    </button>
-                                </form>
+                                <button type="button" onclick="initierPaiement('paydunya')"
+                                    class="btn btn-sm btn-primary"
+                                    style="font-size: 0.72rem; font-weight: 300; font-family: 'Ubuntu', sans-serif;">
+                                    <i class="bi bi-phone-fill"></i> Mobiles/Carte
+                                </button>
                             @endif
                             @if($pispiEnabled)
-                                <form id="form-pispi" action="{{ route('membre.epargne-libre.pispi') }}" method="POST" class="d-inline">
-                                    @csrf
-                                    <input type="hidden" name="montant" id="montant-pispi">
-                                    <button type="submit" id="btn-pispi"
-                                        class="btn btn-sm btn-success"
-                                        style="font-size: 0.72rem; font-weight: 300; font-family: 'Ubuntu', sans-serif;">
-                                        <i class="bi bi-bank"></i> Payer par Compte Bancaire
-                                    </button>
-                                </form>
+                                <button type="button" onclick="initierPaiement('pispi')"
+                                    class="btn btn-sm btn-success"
+                                    style="font-size: 0.72rem; font-weight: 300; font-family: 'Ubuntu', sans-serif;">
+                                    <i class="bi bi-bank"></i> Compte Bancaire
+                                </button>
                             @endif
                         </div>
                     </div>
@@ -168,41 +160,119 @@
         @endif
     </div>
 </div>
-@endsection
+
+<!-- Modal de confirmation de versement -->
+<div class="modal fade" id="paymentConfirmModal" tabindex="-1" aria-labelledby="paymentConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" id="modalHeader" style="background: var(--primary-dark-blue); color: white;">
+                <h5 class="modal-title" id="paymentConfirmModalLabel" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">
+                    <i class="bi bi-credit-card"></i> Confirmation de versement
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">
+                <p id="paymentConfirmMessage"></p>
+                
+                <div id="pispiWalletGroup" class="mb-3" style="display: none;">
+                    <label class="form-label small fw-bold">Sélectionnez votre portefeuille Pi-SPI :</label>
+                    @if($walletAliases->count() > 0)
+                        <select id="wallet_alias_id" class="form-select rounded-pill px-3">
+                            @foreach($walletAliases as $alias)
+                                <option value="{{ $alias->id }}" {{ $alias->is_default ? 'selected' : '' }}>
+                                    {{ $alias->label }} ({{ substr($alias->alias, 0, 8) }}...)
+                                </option>
+                            @endforeach
+                        </select>
+                    @else
+                        <div class="alert alert-warning small py-2 mb-0">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Vous n'avez pas d'alias Pi-SPI. <a href="{{ route('membre.wallets.index') }}" class="fw-bold">Ajoutez-en un ici</a>.
+                        </div>
+                    @endif
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">Annuler</button>
+                <button type="button" class="btn btn-primary rounded-pill px-4" id="paymentConfirmButton" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">
+                    <i class="bi bi-check-circle"></i> Confirmer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 @push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const montantInput = document.getElementById('montant-epargne');
+let paymentMode = null;
 
-    function syncMontant() {
-        const val = montantInput ? montantInput.value : '';
-        const pd = document.getElementById('montant-paydunya');
-        const ps = document.getElementById('montant-pispi');
-        if (pd) pd.value = val;
-        if (ps) ps.value = val;
+function initierPaiement(mode) {
+    const montant = document.getElementById('montant-epargne').value;
+    if (!montant || montant < 100) {
+        alert("Veuillez saisir un montant valide (min 100 XOF).");
+        return;
     }
 
-    if (montantInput) {
-        montantInput.addEventListener('input', syncMontant);
+    paymentMode = mode;
+    
+    if (mode === 'paydunya') {
+        document.getElementById('modalHeader').style.background = 'var(--primary-dark-blue)';
+        document.getElementById('paymentConfirmModalLabel').innerHTML = '<i class="bi bi-phone"></i> Paiement Mobile/Carte';
+        document.getElementById('pispiWalletGroup').style.display = 'none';
+        document.getElementById('paymentConfirmMessage').innerHTML = 'Effectuer un versement libre de <strong>' + new Intl.NumberFormat('fr-FR').format(montant) + ' XOF</strong> ?';
+    } else {
+        document.getElementById('modalHeader').style.background = '#198754';
+        document.getElementById('paymentConfirmModalLabel').innerHTML = '<i class="bi bi-bank"></i> Paiement Compte Bancaire (Pi-SPI)';
+        document.getElementById('pispiWalletGroup').style.display = 'block';
+        document.getElementById('paymentConfirmMessage').innerHTML = 'Effectuer un versement de <strong>' + new Intl.NumberFormat('fr-FR').format(montant) + ' XOF</strong> via Pi-SPI ?';
     }
+    
+    const modal = new bootstrap.Modal(document.getElementById('paymentConfirmModal'));
+    modal.show();
+}
 
-    // Soumission des formulaires — copier le montant
-    ['form-paydunya', 'form-pispi'].forEach(function(formId) {
-        const form = document.getElementById(formId);
-        if (form) {
-            form.addEventListener('submit', function (e) {
-                syncMontant();
-                const hiddenMontant = formId === 'form-paydunya'
-                    ? document.getElementById('montant-paydunya')
-                    : document.getElementById('montant-pispi');
-                if (!hiddenMontant || !hiddenMontant.value || parseFloat(hiddenMontant.value) < 100) {
-                    e.preventDefault();
-                    alert('Veuillez saisir un montant valide (minimum 100 XOF).');
+document.addEventListener('DOMContentLoaded', function() {
+    const confirmButton = document.getElementById('paymentConfirmButton');
+    if (confirmButton) {
+        confirmButton.addEventListener('click', function() {
+            if (!paymentMode) return;
+
+            const montant = document.getElementById('montant-epargne').value;
+            if (paymentMode === 'pispi') {
+                const walletId = document.getElementById('wallet_alias_id')?.value;
+                if (!walletId) {
+                    alert("Sélectionnez un portefeuille.");
+                    return;
                 }
-            });
-        }
-    });
+            }
+
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = (paymentMode === 'pispi' 
+                ? '{{ route("membre.epargne-libre.pispi") }}' 
+                : '{{ route("membre.epargne-libre.paydunya") }}'
+            );
+            
+            const csrfToken = document.createElement('input');
+            csrfToken.type = 'hidden'; csrfToken.name = '_token'; csrfToken.value = '{{ csrf_token() }}';
+            form.appendChild(csrfToken);
+
+            const montantInput = document.createElement('input');
+            montantInput.type = 'hidden'; montantInput.name = 'montant'; montantInput.value = montant;
+            form.appendChild(montantInput);
+
+            if (paymentMode === 'pispi') {
+                const walletInput = document.createElement('input');
+                walletInput.type = 'hidden'; walletInput.name = 'wallet_alias_id';
+                walletInput.value = document.getElementById('wallet_alias_id').value;
+                form.appendChild(walletInput);
+            }
+            
+            document.body.appendChild(form);
+            form.submit();
+        });
+    }
 });
 </script>
 @endpush
+@endsection

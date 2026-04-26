@@ -20,8 +20,10 @@ class PiSpiController extends Controller
         if (!$config) {
             $config = new PiSpiConfiguration(['mode' => 'sandbox', 'enabled' => false]);
         }
+
+        $operationAliases = \App\Models\PiSpiOperationAlias::all()->pluck('alias', 'operation_type')->toArray();
         
-        return view('pispi.index', compact('config'));
+        return view('pispi.index', compact('config', 'operationAliases'));
     }
 
     /**
@@ -35,6 +37,7 @@ class PiSpiController extends Controller
             'api_key' => 'required|string',
             'paye_alias' => 'required|string|max:255',
             'mode' => 'required|in:sandbox,live',
+            'operation_aliases' => 'nullable|array',
         ]);
 
         try {
@@ -44,9 +47,21 @@ class PiSpiController extends Controller
                 $config = new PiSpiConfiguration();
             }
 
-            $config->fill($validated);
+            $config->fill($request->only(['client_id', 'client_secret', 'api_key', 'paye_alias', 'mode']));
             $config->enabled = $request->has('enabled');
             $config->save();
+
+            // Enregistrer les alias opérationnels
+            if ($request->has('operation_aliases')) {
+                foreach ($request->operation_aliases as $type => $alias) {
+                    if (!empty($alias)) {
+                        \App\Models\PiSpiOperationAlias::updateOrCreate(
+                            ['operation_type' => $type],
+                            ['alias' => $alias, 'label' => ucfirst($type)]
+                        );
+                    }
+                }
+            }
 
             // Vider le cache du token (au cas où les credentials ont changé)
             Cache::forget($config->token_cache_key ?? 'pispi_access_token');
@@ -60,16 +75,42 @@ class PiSpiController extends Controller
                 ]);
             }
             $paymentMethod->enabled = $config->enabled;
-            $paymentMethod->config = $validated;
+            // On ne stocke pas tout dans config JSON car on a nos modèles propres maintenant
             $paymentMethod->save();
 
-            return redirect()->route('payment-methods.index')
-                ->with('success', 'Configuration Pi-SPI mise à jour avec succès.');
+            return redirect()->route('pispi.index')
+                ->with('success', 'Configuration Pi-SPI et alias opérationnels mis à jour.');
 
         } catch (\Exception $e) {
             Log::error('PiSpi Configuration Update Error: ' . $e->getMessage());
-            return back()->with('error', 'Une erreur est survenue lors de la sauvegarde.')
+            return back()->with('error', 'Une erreur est survenue lors de la sauvegarde : ' . $e->getMessage())
                          ->withInput();
+        }
+    }
+
+    /**
+     * Enregistrer le webhook auprès de Pi-SPI
+     */
+    public function registerWebhook(Request $request)
+    {
+        try {
+            $pispiService = app(\App\Services\PiSpiService::class);
+            
+            // L'URL publique de notre webhook
+            // Note: Doit être une URL HTTPS accessible depuis l'extérieur
+            $callbackUrl = route('api.pispi.webhook');
+
+            $result = $pispiService->registerWebhook($callbackUrl);
+
+            if ($result['success']) {
+                return back()->with('success', 'L\'URL du webhook a été enregistrée avec succès auprès de la plateforme Pi-SPI : ' . $callbackUrl);
+            }
+
+            return back()->with('error', 'Échec de l\'enregistrement : ' . ($result['message'] ?? 'Erreur inconnue'));
+
+        } catch (\Exception $e) {
+            Log::error('Pi-SPI Webhook Register Error: ' . $e->getMessage());
+            return back()->with('error', 'Erreur : ' . $e->getMessage());
         }
     }
 }

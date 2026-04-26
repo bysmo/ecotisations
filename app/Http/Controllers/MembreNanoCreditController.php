@@ -16,8 +16,6 @@ use App\Notifications\GarantRefusNotification;
 use App\Services\PayDunyaCallbackService;
 use App\Services\AiRiskEvaluationService;
 use App\Services\NanoCreditService;
-use App\Notifications\GarantRefusNotification;
-use App\Services\PayDunyaCallbackService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -365,10 +363,12 @@ class MembreNanoCreditController extends Controller
             }
         }
 
+        $walletAliases = $membre->walletAliases()->get();
+
         $nanoCredit->load(['palier', 'echeances', 'versements']);
         return view('membres.nano-credits.show', compact(
             'membre', 'nanoCredit', 'paymentStatus', 'paymentMessage',
-            'paydunyaEnabled', 'pispiEnabled'
+            'paydunyaEnabled', 'pispiEnabled', 'walletAliases'
         ));
     }
 
@@ -443,13 +443,16 @@ class MembreNanoCreditController extends Controller
             return back()->with('error', 'Ce crédit n\'a pas encore été décaisé.');
         }
 
+        $request->validate([
+            'wallet_alias_id' => 'required|exists:membre_wallet_aliases,id',
+        ]);
+
+        $walletAlias = \App\Models\MembreWalletAlias::findOrFail($request->wallet_alias_id);
+        if ($walletAlias->membre_id !== $membre->id) abort(403);
+
         $pispiConfig = \App\Models\PiSpiConfiguration::getActive();
         if (!$pispiConfig || !$pispiConfig->enabled) {
             return back()->with('error', 'Le paiement Pi-SPI n\'est pas activé.');
-        }
-
-        if (!$membre->telephone) {
-            return back()->with('error', 'Téléphone requis pour Pi-SPI.');
         }
 
         $echeance = $nanoCredit->echeances()
@@ -462,29 +465,44 @@ class MembreNanoCreditController extends Controller
         }
 
         try {
-            $pispiService = new \App\Services\PiSpiService();
+            $pispiService = app(\App\Services\PiSpiService::class);
+            $payeAlias = \App\Models\PiSpiOperationAlias::getForType('nano_credit');
+            
             $reference    = 'NC-PISPI-' . time() . '-' . $echeance->id;
+
+            $montant = (float) $echeance->montant_du;
+
+            // Enregistrer le paiement en attente
+            Paiement::create([
+                'reference' => $reference,
+                'membre_id' => $membre->id,
+                'wallet_alias_id' => $walletAlias->id,
+                'montant' => $montant,
+                'date_paiement' => now(),
+                'statut' => 'en_attente',
+                'mode_paiement' => 'pispi',
+                'metadata' => [
+                    'type' => 'nano_credit_remboursement',
+                    'nano_credit_id' => $nanoCredit->id,
+                    'echeance_id' => $echeance->id
+                ],
+                'commentaire' => 'Remboursement nano-crédit via Pi-SPI',
+            ]);
 
             $result = $pispiService->initiatePayment([
                 'txId'        => $reference,
-                'phone'       => $membre->telephone,
-                'amount'      => (float) $echeance->montant_du,
+                'payeurAlias' => $walletAlias->alias,
+                'payeAlias'   => $payeAlias,
+                'amount'      => $montant,
                 'description' => 'Remboursement crédit #' . $nanoCredit->id,
             ]);
 
             if ($result['success']) {
-                // Pré-enregistrement en attente (le webhook Pi-SPI confirmera)
-                NanoCreditVersement::create([
-                    'nano_credit_id'          => $nanoCredit->id,
-                    'nano_credit_echeance_id' => $echeance->id,
-                    'montant'                 => (int) round((float) $echeance->montant_du),
-                    'date_versement'          => now()->toDateString(),
-                    'mode_paiement'           => 'pispi',
-                    'reference'               => $reference,
-                ]);
-                return back()->with('success', 'Demande Pi-SPI envoyée. Validez sur votre mobile.');
+                return back()->with('success', 'Demande Pi-SPI envoyée vers "' . $walletAlias->label . '". Validez sur votre mobile.');
             }
 
+            // Nettoyage en cas d'erreur API
+            Paiement::where('reference', $reference)->delete();
             return back()->with('error', 'Erreur Pi-SPI : ' . ($result['message'] ?? 'Echec initiation.'));
 
         } catch (\Exception $e) {

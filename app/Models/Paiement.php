@@ -17,6 +17,7 @@ class Paiement extends Model
         'membre_id',
         'cotisation_id',
         'caisse_id',
+        'wallet_alias_id',
         'montant',
         'date_paiement',
         'mode_paiement',
@@ -39,6 +40,14 @@ class Paiement extends Model
     public function membre()
     {
         return $this->belongsTo(Membre::class);
+    }
+
+    /**
+     * Relation avec l'alias de portefeuille utilisé
+     */
+    public function walletAlias()
+    {
+        return $this->belongsTo(MembreWalletAlias::class, 'wallet_alias_id');
     }
 
     /**

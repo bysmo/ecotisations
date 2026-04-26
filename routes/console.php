@@ -73,4 +73,7 @@ Schedule::command('parrainage:activer-commissions')
 Schedule::command('echeances:update-statuts')
     ->dailyAt('05:00')
     ->description('Marquer en retard les échéances tontines et nano-crédits dépassées');
-
+// ─── Pi-SPI : Vérification des paiements en attente ─────────────────────────
+Schedule::command('pispi:check-pending')
+    ->everyTenMinutes()
+    ->description('Vérifier périodiquement le statut des paiements Pi-SPI en attente');

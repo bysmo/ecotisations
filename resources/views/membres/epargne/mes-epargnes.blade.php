@@ -143,22 +143,18 @@
                                     @if($prochaine && $s->statut === 'active')
                                         <div class="btn-group" role="group">
                                             @if($paydunyaOk)
-                                                <form action="{{ route('membre.epargne.echeance.paydunya', $prochaine) }}" method="POST" class="d-inline">
-                                                    @csrf
-                                                    <button type="submit" class="btn {{ $prochaine->statut === 'en_retard' ? 'btn-danger' : 'btn-primary' }}"
-                                                            title="Payer {{ number_format($prochaine->montant, 0, ',', ' ') }} XOF par Mobile/Carte">
-                                                        <i class="bi bi-phone-fill"></i>
-                                                    </button>
-                                                </form>
+                                                <button type="button" class="btn {{ $prochaine->statut === 'en_retard' ? 'btn-danger' : 'btn-primary' }}"
+                                                        onclick="initierPaiement('paydunya', {{ $prochaine->id }}, {{ $prochaine->montant }}, '{{ $s->plan->nom }}')"
+                                                        title="Payer {{ number_format($prochaine->montant, 0, ',', ' ') }} XOF par Mobile/Carte">
+                                                    <i class="bi bi-phone-fill"></i>
+                                                </button>
                                             @endif
                                             @if($pispiOk)
-                                                <form action="{{ route('membre.epargne.echeance.pispi', $prochaine) }}" method="POST" class="d-inline">
-                                                    @csrf
-                                                    <button type="submit" class="btn btn-success"
-                                                            title="Payer {{ number_format($prochaine->montant, 0, ',', ' ') }} XOF par Compte Bancaire">
-                                                        <i class="bi bi-bank"></i>
-                                                    </button>
-                                                </form>
+                                                <button type="button" class="btn btn-success"
+                                                        onclick="initierPaiement('pispi', {{ $prochaine->id }}, {{ $prochaine->montant }}, '{{ $s->plan->nom }}')"
+                                                        title="Payer {{ number_format($prochaine->montant, 0, ',', ' ') }} XOF par Compte Bancaire">
+                                                    <i class="bi bi-bank"></i>
+                                                </button>
                                             @endif
                                             @if(!$paydunyaOk && !$pispiOk)
                                                 <span class="text-muted" style="font-size:.58rem;">Aucun moyen configuré</span>
@@ -263,14 +259,12 @@
                         {{-- Bouton PayDunya --}}
                         <td class="text-end" style="width: 38px; padding-right: 2px !important;">
                             @if($paydunyaOk)
-                                <form action="{{ route('membre.epargne.echeance.paydunya', $ech) }}" method="POST">
-                                    @csrf
-                                    <button type="submit"
-                                        class="btn {{ $isRetard ? 'btn-danger' : 'btn-primary' }}"
-                                        title="Payer par Mobile/Carte">
-                                        <i class="bi bi-phone-fill"></i><span style="font-size:.58rem;" class="d-none d-md-inline ms-1">Mobile/Carte</span>
-                                    </button>
-                                </form>
+                                <button type="button"
+                                    onclick="initierPaiement('paydunya', {{ $ech->id }}, {{ $ech->montant }}, '{{ $ech->_souscription->plan->nom }}')"
+                                    class="btn {{ $isRetard ? 'btn-danger' : 'btn-primary' }}"
+                                    title="Payer par Mobile/Carte">
+                                    <i class="bi bi-phone-fill"></i><span style="font-size:.58rem;" class="d-none d-md-inline ms-1">Mobile/Carte</span>
+                                </button>
                             @else
                                 <span>—</span>
                             @endif
@@ -279,14 +273,12 @@
                         {{-- Bouton Pi-SPI --}}
                         <td class="text-start" style="width: 38px; padding-left: 2px !important;">
                             @if($pispiOk)
-                                <form action="{{ route('membre.epargne.echeance.pispi', $ech) }}" method="POST">
-                                    @csrf
-                                    <button type="submit"
-                                        class="btn btn-success"
-                                        title="Payer par Compte Bancaire">
-                                        <i class="bi bi-bank"></i><span style="font-size:.58rem;" class="d-none d-md-inline ms-1">Compte/Banque</span>
-                                    </button>
-                                </form>
+                                <button type="button"
+                                    onclick="initierPaiement('pispi', {{ $ech->id }}, {{ $ech->montant }}, '{{ $ech->_souscription->plan->nom }}')"
+                                    class="btn btn-success"
+                                    title="Payer par Compte Bancaire">
+                                    <i class="bi bi-bank"></i><span style="font-size:.58rem;" class="d-none d-md-inline ms-1">Compte/Banque</span>
+                                </button>
                             @else
                                 <span>—</span>
                             @endif
@@ -312,4 +304,109 @@
 @endif
 @endif
 
+<!-- Modal de confirmation de paiement (Épargne) -->
+<div class="modal fade" id="paymentConfirmModal" tabindex="-1" aria-labelledby="paymentConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" id="modalHeader" style="background: var(--primary-dark-blue); color: white;">
+                <h5 class="modal-title" id="paymentConfirmModalLabel" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">
+                    <i class="bi bi-credit-card"></i> Confirmation de paiement
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">
+                <p id="paymentConfirmMessage"></p>
+                
+                <div id="pispiWalletGroup" class="mb-3" style="display: none;">
+                    <label class="form-label small fw-bold">Sélectionnez votre portefeuille Pi-SPI :</label>
+                    @if($walletAliases->count() > 0)
+                        <select id="wallet_alias_id" class="form-select rounded-pill px-3">
+                            @foreach($walletAliases as $alias)
+                                <option value="{{ $alias->id }}" {{ $alias->is_default ? 'selected' : '' }}>
+                                    {{ $alias->label }} ({{ substr($alias->alias, 0, 8) }}...)
+                                </option>
+                            @endforeach
+                        </select>
+                    @else
+                        <div class="alert alert-warning small py-2 mb-0">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Aucun alias configuré. <a href="{{ route('membre.wallets.index') }}" class="fw-bold text-decoration-none">Cliquez ici pour en ajouter un</a>.
+                        </div>
+                    @endif
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">Annuler</button>
+                <button type="button" class="btn btn-primary rounded-pill px-4" id="paymentConfirmButton" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">
+                    <i class="bi bi-check-circle"></i> Confirmer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@push('scripts')
+<script>
+let paymentMode = null;
+let currentEcheanceId = null;
+
+function initierPaiement(mode, echeanceId, montant, planNom) {
+    paymentMode = mode;
+    currentEcheanceId = echeanceId;
+    
+    if (mode === 'paydunya') {
+        document.getElementById('modalHeader').style.background = 'var(--primary-dark-blue)';
+        document.getElementById('paymentConfirmModalLabel').innerHTML = '<i class="bi bi-phone"></i> Paiement Mobile/Carte';
+        document.getElementById('pispiWalletGroup').style.display = 'none';
+        document.getElementById('paymentConfirmMessage').innerHTML = 'Régler l\'échéance du plan "<strong>' + planNom + '</strong>" d\'un montant de <strong>' + new Intl.NumberFormat('fr-FR').format(montant) + ' XOF</strong> ?';
+    } else {
+        document.getElementById('modalHeader').style.background = '#198754';
+        document.getElementById('paymentConfirmModalLabel').innerHTML = '<i class="bi bi-bank"></i> Paiement Compte Bancaire (Pi-SPI)';
+        document.getElementById('pispiWalletGroup').style.display = 'block';
+        document.getElementById('paymentConfirmMessage').innerHTML = 'Régler l\'échéance du plan "<strong>' + planNom + '</strong>" via Pi-SPI ?';
+    }
+    
+    const modal = new bootstrap.Modal(document.getElementById('paymentConfirmModal'));
+    modal.show();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const confirmButton = document.getElementById('paymentConfirmButton');
+    if (confirmButton) {
+        confirmButton.addEventListener('click', function() {
+            if (!paymentMode || !currentEcheanceId) return;
+
+            if (paymentMode === 'pispi') {
+                const walletId = document.getElementById('wallet_alias_id')?.value;
+                if (!walletId) {
+                    alert("Sélectionnez un portefeuille.");
+                    return;
+                }
+            }
+
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = (paymentMode === 'pispi' 
+                ? '{{ route("membre.epargne.echeance.pispi", ":id") }}' 
+                : '{{ route("membre.epargne.echeance.paydunya", ":id") }}'
+            ).replace(':id', currentEcheanceId);
+            
+            const csrfToken = document.createElement('input');
+            csrfToken.type = 'hidden'; csrfToken.name = '_token'; csrfToken.value = '{{ csrf_token() }}';
+            form.appendChild(csrfToken);
+
+            if (paymentMode === 'pispi') {
+                const walletInput = document.createElement('input');
+                walletInput.type = 'hidden'; walletInput.name = 'wallet_alias_id';
+                walletInput.value = document.getElementById('wallet_alias_id').value;
+                form.appendChild(walletInput);
+            }
+            
+            document.body.appendChild(form);
+            form.submit();
+        });
+    }
+});
+</script>
+@endpush
 @endsection

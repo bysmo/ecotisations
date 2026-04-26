@@ -104,6 +104,39 @@
 <div class="row g-4">
     <!-- Colonne Gauche : Activités & Annonces -->
     <div class="col-md-8">
+        @if(isset($paiementsEnAttente) && $paiementsEnAttente->count() > 0)
+            <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px; background-color: #fffbeb; border: 1px solid #fde68a !important;">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="spinner-grow spinner-grow-sm text-warning me-2" role="status"></div>
+                        <h6 class="mb-0 fw-bold text-warning-emphasis">Paiements en attente de confirmation</h6>
+                    </div>
+                    <div class="list-group list-group-flush bg-transparent">
+                        @foreach($paiementsEnAttente as $p)
+                            <div class="list-group-item bg-transparent border-0 d-flex justify-content-between align-items-center px-0 py-2">
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-warning bg-opacity-25 rounded-circle p-2 me-3">
+                                        <i class="bi bi-phone-vibrate text-warning-emphasis"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold small">{{ $p->cotisation->nom ?? 'Opération Serenity' }}</div>
+                                        <div class="text-muted x-small">Inité le {{ $p->created_at->format('d/m/Y H:i') }} • Réf: {{ $p->reference }}</div>
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="fw-bold text-dark">{{ number_format($p->montant, 0, ',', ' ') }} XOF</div>
+                                    <div class="badge bg-warning text-dark x-small rounded-pill">Approuvez sur votre App Pi</div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                    <div class="mt-2 text-center">
+                        <small class="text-muted" style="font-size: 0.65rem;"><i class="bi bi-info-circle me-1"></i>Le statut sera mis à jour dès que vous aurez validé l'opération sur votre téléphone.</small>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         <!-- Activités Récentes -->
         <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
             <div class="card-header bg-white border-bottom py-3 px-4">
@@ -194,6 +227,10 @@
                     </a>
                     <a href="{{ route('membre.nano-credits') }}" class="btn btn-outline-warning d-flex align-items-center justify-content-between p-3 rounded-3 border-light-subtle shadow-sm hover-lift text-dark">
                         <span class="fw-bold"><i class="bi bi-lightning-charge me-2"></i> Demander un crédit</span>
+                        <i class="bi bi-chevron-right small text-muted"></i>
+                    </a>
+                    <a href="{{ route('membre.wallets.index') }}" class="btn btn-outline-info d-flex align-items-center justify-content-between p-3 rounded-3 border-light-subtle shadow-sm hover-lift text-dark">
+                        <span class="fw-bold"><i class="bi bi-wallet2 me-2"></i> Gérer mon Portefeuille</span>
                         <i class="bi bi-chevron-right small text-muted"></i>
                     </a>
                 </div>
