@@ -43,14 +43,14 @@ class PiSpiService
      */
     public function getAccessToken()
     {
-        $cacheKey = ($this->config->token_cache_key ?? 'pispi_access_token') . '_v7';
+        $cacheKey = ($this->config->token_cache_key ?? 'pispi_access_token') . '_v9';
 
         return Cache::remember($cacheKey, 3500, function () {
             $response = Http::asForm()->post($this->authUrl, [
                 'grant_type' => 'client_credentials',
                 'client_id' => $this->config->client_id,
                 'client_secret' => $this->config->client_secret,
-                'scope' => 'piz/compte.read piz/alias.read piz/demande_paiement.write piz/demande_paiement.read piz/demande_paiement_reponse.write piz/webhook.write piz/webhook.read',
+                'scope' => 'piz/compte.read piz/alias.read piz/demande_paiement.write piz/demande_paiement.read piz/demande_paiement_reponse.write piz/webhook.write piz/webhook.read piz/paiement.write piz/paiement.read piz/compte_transaction.write',
             ]);
 
             if ($response->successful()) {
@@ -207,6 +207,91 @@ class PiSpiService
             return [
                 'success' => false,
                 'message' => 'Échec de l\'enregistrement du webhook.',
+            ];
+
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => $this->getFriendlyErrorMessage($e),
+            ];
+        }
+    }
+
+    /**
+     * Envoyer un paiement à un membre (Disbursement / B2P)
+     * Utilisation : gains de parrainage, déblocage nano-crédits, retraits
+     */
+    public function sendPayment($txId, $recipientAlias, $amount, $operationType = 'generique')
+    {
+        try {
+            $token = $this->getAccessToken();
+            
+            // Récupérer l'alias payeur (Serenity) pour ce type d'opération
+            $payeurAlias = \App\Models\PiSpiOperationAlias::getForType($operationType);
+            
+            if (!$payeurAlias) {
+                // Fallback sur l'alias par défaut de la config globale si spécifique non trouvé
+                $payeurAlias = $this->config->paye_alias;
+            }
+
+            if (!$payeurAlias) {
+                throw new \Exception("Aucun alias émetteur configuré pour le type d'opération : {$operationType}");
+            }
+
+            $headers = [
+                'Authorization' => 'Bearer ' . $token,
+                'x-api-key' => $this->config->api_key,
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/json',
+            ];
+
+            // On s'assure que le txId est numérique
+            $numericTxId = preg_replace('/\D/', '', (string)$txId);
+            if (empty($numericTxId)) {
+                $numericTxId = (string)time();
+            }
+
+            $payload = [
+                'txId' => substr($numericTxId, 0, 16),
+                'payeurAlias' => $payeurAlias,
+                'payeAlias' => $recipientAlias, // Le membre
+                'montant' => (int)$amount,
+                'confirmation' => false, // Paiement immédiat (B2P)
+            ];
+
+            Log::info('Pi-SPI Outbound Payment Initiated', [
+                'txId' => $txId,
+                'numericTxId' => $numericTxId,
+                'payeur' => $payeurAlias,
+                'paye' => $recipientAlias,
+                'amount' => $amount
+            ]);
+
+            $response = Http::withHeaders($headers)->post($this->baseUrl . '/paiements-envoyes', $payload);
+
+            if ($response->successful()) {
+                return [
+                    'success' => true,
+                    'status' => $response->json()['statut'] ?? 'ENVOYE',
+                    'data' => $response->json(),
+                ];
+            }
+
+            Log::error('Pi-SPI Outbound Payment Failed', [
+                'url' => $this->baseUrl . '/paiements-envoyes',
+                'payload' => $payload,
+                'response' => $response->json(),
+                'status' => $response->status()
+            ]);
+
+            $errorData = $response->json();
+            $errorMessage = $errorData['detail'] ?? $errorData['message'] ?? $errorData['title'] ?? 'Échec du transfert de fonds.';
+
+            return [
+                'success' => false,
+                'message' => $errorMessage,
+                'error_code' => $response->status(),
+                'data' => $errorData
             ];
 
         } catch (\Exception $e) {

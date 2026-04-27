@@ -175,7 +175,7 @@
                                 default => ['label' => ucfirst($m->type), 'icon' => 'bi-dot', 'bg' => '#f1f5f9', 'text' => '#475569'],
                             };
                         @endphp
-                        <tr>
+                        <tr class="{{ isset($m->source_type) && $m->source_type === 'attente' ? 'table-warning opacity-75' : '' }}">
                             <td>
                                 <div class="fw-bold">{{ $m->date_operation->format('d/m/Y') }}</div>
                                 <div class="text-muted x-small">{{ $m->date_operation->format('H:i') }}</div>
@@ -186,7 +186,14 @@
                                         <i class="bi {{ $typeLabel['icon'] }}"></i>
                                     </div>
                                     <div>
-                                        <div class="fw-bold text-dark">{{ $m->libelle }}</div>
+                                        <div class="fw-bold text-dark">
+                                            {{ $m->libelle }}
+                                            @if(isset($m->source_type) && $m->source_type === 'attente')
+                                                <span class="badge bg-warning text-dark ms-1 p-1 small shadow-sm" style="font-size: 0.55rem; animation: pulse 2s infinite;">
+                                                    <i class="bi bi-hourglass-split"></i> EN ATTENTE
+                                                </span>
+                                            @endif
+                                        </div>
                                         <div class="text-muted small" style="font-size: 0.7rem;">{{ \Illuminate\Support\Str::limit($m->notes, 50) }}</div>
                                     </div>
                                 </div>
@@ -197,7 +204,7 @@
                                 </span>
                             </td>
                             <td>
-                                <div class="small fw-500 text-secondary">{{ $m->caisse->nom ?? '-' }}</div>
+                                <div class="small fw-500 text-secondary">{{ $m->caisse->nom ?? ($m->mode_paiement ?? '-') }}</div>
                             </td>
                             <td class="text-end">
                                 <span class="{{ $isEntree ? 'amount-positive' : 'amount-negative' }}">

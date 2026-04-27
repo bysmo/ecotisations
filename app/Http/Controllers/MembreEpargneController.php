@@ -201,7 +201,7 @@ class MembreEpargneController extends Controller
                 'souscription_id' => $souscription->id,
                 'date_echeance' => $e['date_echeance'],
                 'montant' => $e['montant'],
-                'statut' => Carbon::parse($e['date_echeance'])->isPast() ? 'en_retard' : 'a_venir',
+                'statut' => 'en_attente',
             ]);
         }
     }
@@ -212,14 +212,17 @@ class MembreEpargneController extends Controller
     public function mesEpargnes()
     {
         $membre = Auth::guard('membre')->user();
-        // IMPORTANT : ne pas utiliser ->limit(1) dans le eager load - cela limite sur l'ensemble
-        // des lignes jointes, pas par souscription. On charge toutes les échéances non payées
-        // et on prend la première en Blade.
+        // Plus besoin de synchronisation SQL directe, le statut temporel est calculé dynamiquement
+        // Mais on peut assurer que les anciens statuts 'a_venir'/'en_retard' passent en 'en_attente' (Etat)
+        DB::table('epargne_echeances')
+            ->whereIn('statut', ['a_venir', 'en_retard'])
+            ->update(['statut' => 'en_attente']);
+
         $souscriptions = $membre->epargneSouscriptions()
             ->with([
                 'plan',
                 'echeances' => fn ($q) => $q
-                    ->whereIn('statut', ['a_venir', 'en_retard'])
+                    ->whereIn('statut', ['en_attente', 'en_cours', 'a_venir', 'en_retard'])
                     ->orderBy('date_echeance'),
             ])
             ->orderBy('created_at', 'desc')
@@ -240,6 +243,11 @@ class MembreEpargneController extends Controller
         if ($souscription->membre_id !== $membre->id) {
             abort(404);
         }
+
+        // Synchronisation locale non nécessaire car calculé dynamiquement
+        $souscription->echeances()
+            ->whereIn('statut', ['a_venir', 'en_retard'])
+            ->update(['statut' => 'en_attente']);
 
         $paymentStatus = null;
         $paymentMessage = null;
@@ -357,8 +365,8 @@ class MembreEpargneController extends Controller
         if ($souscription->membre_id !== $membre->id) {
             abort(404);
         }
-        if (!in_array($echeance->statut, ['a_venir', 'en_retard'])) {
-            return redirect()->back()->with('error', 'Cette échéance est déjà réglée.');
+        if (!in_array($echeance->statut, ['en_attente', 'a_venir', 'en_retard'])) {
+            return redirect()->back()->with('error', 'Cette échéance est déjà réglée ou en cours de traitement.');
         }
 
         $request->validate([
@@ -408,6 +416,7 @@ class MembreEpargneController extends Controller
             ]);
 
             if ($result['success']) {
+                $echeance->update(['statut' => 'en_cours']);
                 return redirect()->back()->with('success', 'La demande Pi-SPI a été envoyée vers "' . $walletAlias->label . '". Validez sur votre mobile.');
             }
 
@@ -431,8 +440,8 @@ class MembreEpargneController extends Controller
         if ($souscription->membre_id !== $membre->id) {
             abort(404);
         }
-        if (!in_array($echeance->statut, ['a_venir', 'en_retard'])) {
-            return redirect()->back()->with('error', 'Cette échéance est déjà réglée.');
+        if (!in_array($echeance->statut, ['en_attente', 'a_venir', 'en_retard'])) {
+            return redirect()->back()->with('error', 'Cette échéance est déjà réglée ou en cours de traitement.');
         }
 
         $paydunyaConfig = \App\Models\PayDunyaConfiguration::getActive();
@@ -461,6 +470,7 @@ class MembreEpargneController extends Controller
             ]);
 
             if ($result['success']) {
+                $echeance->update(['statut' => 'en_cours']);
                 return redirect($result['invoice_url']);
             }
             return redirect()->back()->with('error', $result['message'] ?? 'Erreur lors de la création du paiement.');
@@ -469,5 +479,43 @@ class MembreEpargneController extends Controller
             $friendly = app(\App\Services\PayDunyaService::class)->getFriendlyErrorMessage($e);
             return redirect()->back()->with('error', $friendly);
         }
+    }
+
+    /**
+     * Soumettre une demande de retrait de tontine
+     */
+    public function demandeRetrait(Request $request, EpargneSouscription $souscription)
+    {
+        $membre = Auth::guard('membre')->user();
+        if ($souscription->membre_id !== $membre->id) {
+            abort(404);
+        }
+
+        if ($souscription->statut !== 'active') {
+            return redirect()->back()->with('error', 'Vous ne pouvez faire une demande de retrait que sur une tontine active.');
+        }
+
+        $request->validate([
+            'montant_demande' => 'required|numeric|min:100',
+            'mode_retrait'    => 'required|in:virement_interne,pispi',
+            'commentaire'     => 'nullable|string|max:500',
+        ]);
+
+        $solde = (float) $souscription->solde_courant;
+        if ((float) $request->montant_demande > $solde) {
+            return redirect()->back()->with('error', 'Le montant demandé (' . number_format($request->montant_demande, 0, ',', ' ') . ') dépasse votre solde disponible (' . number_format($solde, 0, ',', ' ') . ' XOF).');
+        }
+
+        \App\Models\EpargneRetraitDemande::create([
+            'souscription_id' => $souscription->id,
+            'membre_id'       => $membre->id,
+            'montant_demande' => $request->montant_demande,
+            'statut'          => 'en_attente',
+            'mode_retrait'    => $request->mode_retrait,
+            'commentaire'     => $request->commentaire,
+        ]);
+
+        return redirect()->route('membre.epargne.souscription.show', $souscription)
+            ->with('success', 'Votre demande de retrait de ' . number_format($request->montant_demande, 0, ',', ' ') . ' XOF a été soumise avec succès et est en attente de validation.');
     }
 }

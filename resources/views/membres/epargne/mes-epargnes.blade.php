@@ -87,7 +87,7 @@
                             <th>Montant à l'échéance</th>
                             <th>Prochaine échéance</th>
                             <th>Statut</th>
-                            <th class="text-center">Payer prochaine</th>
+                            <th class="text-center">Payer</th>
                             <th class="text-center">Détail</th>
                         </tr>
                     </thead>
@@ -170,7 +170,7 @@
                                     <a href="{{ route('membre.epargne.souscription.show', $s) }}"
                                        class="btn btn-outline-secondary"
                                        title="Voir le détail complet et toutes les échéances">
-                                        <i class="bi bi-calendar3"></i>
+                                        <i class="bi bi-info-circle"></i>
                                     </a>
                                 </td>
                             </tr>
@@ -224,6 +224,7 @@
                 <thead>
                     <tr>
                         <th>Statut</th>
+                        <th>État</th>
                         <th>Date échéance</th>
                         <th>Plan tontine</th>
                         <th class="text-end">Montant (XOF)</th>
@@ -232,38 +233,55 @@
                 </thead>
                 <tbody>
                     @foreach($toutesTriees as $ech)
-                    @php $isRetard = $ech->statut === 'en_retard'; $isToday = $ech->date_echeance->isToday(); @endphp
-                    <tr class="{{ $isRetard ? 'row-overdue' : ($isToday ? 'row-today' : '') }}">
+                    @php 
+                        $tempStatus = $ech->temporal_status;
+                        $etat = $ech->statut; // en_attente, en_cours, payee
+                        $rowClass = $tempStatus === 'en_retard' ? 'row-overdue' : ($tempStatus === 'aujourd_hui' ? 'row-today' : '');
+                    @endphp
+                    <tr class="{{ $rowClass }}">
                         <td>
-                            @if($isRetard)
+                            @if($tempStatus === 'en_retard')
                                 <span class="badge bg-danger" style="font-size:.58rem;"><i class="bi bi-exclamation-triangle"></i> En retard</span>
-                            @elseif($isToday)
+                            @elseif($tempStatus === 'aujourd_hui')
                                 <span class="badge bg-warning text-dark" style="font-size:.58rem;"><i class="bi bi-bell-fill"></i> Aujourd'hui</span>
                             @else
                                 <span class="badge bg-secondary" style="font-size:.58rem;">À venir</span>
                             @endif
                         </td>
                         <td>
+                            @if($etat === 'payee')
+                                <span class="badge bg-success" style="font-size:.58rem;"><i class="bi bi-check-circle"></i> Payée</span>
+                            @elseif($etat === 'en_cours')
+                                <span class="badge bg-info-subtle text-info border border-info" style="font-size:.58rem; animation: pulse 2s infinite;">
+                                    <i class="bi bi-hourglass-split"></i> En cours...
+                                </span>
+                            @else
+                                <span class="badge bg-light text-muted border" style="font-size:.58rem;">En attente</span>
+                            @endif
+                        </td>
+                        <td>
                             <strong>{{ $ech->date_echeance->format('d/m/Y') }}</strong>
-                            @if($isRetard)
+                            @if($tempStatus === 'en_retard')
                                 <span class="text-danger ms-1" style="font-size:.58rem;">{{ $ech->date_echeance->diffForHumans() }}</span>
-                            @elseif(!$isToday)
+                            @elseif($tempStatus === 'aujourd_hui')
+                                <span class="text-warning ms-1" style="font-size:.58rem;">Aujourd'hui</span>
+                            @else
                                 <span class="text-muted ms-1" style="font-size:.58rem;">{{ $ech->date_echeance->diffForHumans() }}</span>
                             @endif
                         </td>
                         <td>{{ $ech->_souscription->plan->nom }}</td>
-                        <td class="text-end fw-bold {{ $isRetard ? 'text-danger' : '' }}">
+                        <td class="text-end fw-bold {{ $tempStatus === 'en_retard' ? 'text-danger' : '' }}">
                             {{ number_format($ech->montant, 0, ',', ' ') }}
                         </td>
 
                         {{-- Bouton PayDunya --}}
-                        <td class="text-end" style="width: 38px; padding-right: 2px !important;">
+                        <td class="text-end" style="width: 45px; padding-right: 2px !important;">
                             @if($paydunyaOk)
                                 <button type="button"
                                     onclick="initierPaiement('paydunya', {{ $ech->id }}, {{ $ech->montant }}, '{{ $ech->_souscription->plan->nom }}')"
-                                    class="btn {{ $isRetard ? 'btn-danger' : 'btn-primary' }}"
+                                    class="btn {{ $isRetard ? 'btn-danger' : 'btn-primary' }} btn-sm px-2 py-1"
                                     title="Payer par Mobile/Carte">
-                                    <i class="bi bi-phone-fill"></i><span style="font-size:.58rem;" class="d-none d-md-inline ms-1">Mobile/Carte</span>
+                                    <i class="bi bi-phone-vibrate"></i> <span class="d-none d-lg-inline" style="font-size: 0.6rem;">Mobile</span>
                                 </button>
                             @else
                                 <span>—</span>
@@ -271,13 +289,13 @@
                         </td>
 
                         {{-- Bouton Pi-SPI --}}
-                        <td class="text-start" style="width: 38px; padding-left: 2px !important;">
+                        <td class="text-start" style="width: 45px; padding-left: 2px !important;">
                             @if($pispiOk)
                                 <button type="button"
                                     onclick="initierPaiement('pispi', {{ $ech->id }}, {{ $ech->montant }}, '{{ $ech->_souscription->plan->nom }}')"
-                                    class="btn btn-success"
-                                    title="Payer par Compte Bancaire">
-                                    <i class="bi bi-bank"></i><span style="font-size:.58rem;" class="d-none d-md-inline ms-1">Compte/Banque</span>
+                                    class="btn btn-success btn-sm px-2 py-1"
+                                    title="Payer par Compte Bancaire (Pi-SPI)">
+                                    <i class="bi bi-bank"></i> <span class="d-none d-lg-inline" style="font-size: 0.6rem;">Banque</span>
                                 </button>
                             @else
                                 <span>—</span>

@@ -149,6 +149,7 @@
                             <th>Montant</th>
                             <th>Libellé</th>
                             <th>Notes</th>
+                            <th class="text-center">Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -161,9 +162,9 @@
                                 <td style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">{{ $mvt->type }}</td>
                                 <td style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">
                                     @if($mvt->sens === 'entree')
-                                        Entrée
+                                        <span class="text-success"><i class="bi bi-plus-circle"></i> Débit</span>
                                     @else
-                                        Sortie
+                                        <span class="text-danger"><i class="bi bi-dash-circle"></i> Crédit</span>
                                     @endif
                                 </td>
                                 <td style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">
@@ -171,6 +172,15 @@
                                 </td>
                                 <td style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">{{ $mvt->libelle ?? '-' }}</td>
                                 <td style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">{{ $mvt->notes ?? '-' }}</td>
+                                <td class="text-center">
+                                    @if($mvt->reference_id)
+                                        <a href="{{ route('caisses.transaction-detail', $mvt) }}" class="btn btn-outline-primary btn-xs" title="Voir l'écriture balancée">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    @else
+                                        -
+                                    @endif
+                                </td>
                             </tr>
                         @endforeach
                     </tbody>

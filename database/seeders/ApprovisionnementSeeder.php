@@ -38,7 +38,7 @@ class ApprovisionnementSeeder extends Seeder
             $caisse = $caisses->firstWhere('nom', $appro['nom']);
             
             if ($caisse) {
-                // Créer l'approvisionnement
+                // Créer l'approvisionnement (justificatif)
                 $approvisionnement = Approvisionnement::create([
                     'caisse_id' => $caisse->id,
                     'montant' => $appro['montant'],
@@ -47,23 +47,18 @@ class ApprovisionnementSeeder extends Seeder
                     'updated_at' => Carbon::now()->subDays(rand(1, 30)),
                 ]);
 
-                // Mettre à jour le solde de la caisse
-                $caisse->solde_initial += $appro['montant'];
-                $caisse->save();
-
-                // Créer le mouvement de caisse
-                MouvementCaisse::create([
-                    'caisse_id' => $caisse->id,
-                    'type' => 'approvisionnement',
-                    'sens' => 'entree',
-                    'montant' => $appro['montant'],
-                    'date_operation' => $approvisionnement->created_at,
-                    'libelle' => 'Approvisionnement',
-                    'notes' => $appro['motif'],
-                    'reference_type' => Approvisionnement::class,
-                    'reference_id' => $approvisionnement->id,
-                ]);
-
+                $caisseCapital = Caisse::where('numero_core_banking', 'SYS-DOTATION')->first();
+                if ($caisseCapital) {
+                    app(\App\Services\FinanceService::class)->logGenericBalancedEntry(
+                        $caisse,
+                        $caisseCapital,
+                        (float) $appro['montant'],
+                        'approvisionnement',
+                        'Approvisionnement initial',
+                        $approvisionnement,
+                        $appro['motif']
+                    );
+                }
                 $created++;
             }
         }
@@ -95,22 +90,18 @@ class ApprovisionnementSeeder extends Seeder
                 'updated_at' => Carbon::now()->subDays($joursAgo),
             ]);
 
-            // Mettre à jour le solde de la caisse
-            $caisseAleatoire->solde_initial += $montant;
-            $caisseAleatoire->save();
-
-            // Créer le mouvement de caisse
-            MouvementCaisse::create([
-                'caisse_id' => $caisseAleatoire->id,
-                'type' => 'approvisionnement',
-                'sens' => 'entree',
-                'montant' => $montant,
-                'date_operation' => $approvisionnement->created_at,
-                'libelle' => 'Approvisionnement',
-                'notes' => $motif,
-                'reference_type' => Approvisionnement::class,
-                'reference_id' => $approvisionnement->id,
-            ]);
+            $caisseCapital = Caisse::where('numero_core_banking', 'SYS-DOTATION')->first();
+            if ($caisseCapital) {
+                app(\App\Services\FinanceService::class)->logGenericBalancedEntry(
+                    $caisseAleatoire,
+                    $caisseCapital,
+                    (float) $montant,
+                    'approvisionnement',
+                    'Approvisionnement',
+                    $approvisionnement,
+                    $motif
+                );
+            }
 
             $created++;
         }

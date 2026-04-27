@@ -1087,7 +1087,7 @@
                         <li>
                             <a href="{{ route('nano-credits.index') }}" class="nav-link {{ request()->routeIs('nano-credits.index') || request()->routeIs('nano-credits.show') ? 'active' : '' }}">
                                 <i class="bi bi-inbox"></i>
-                                <span>Gestion des demandes</span>
+                                <span>Supervision des crédits</span>
                                 @php
                                     $nbDemandesEnAttente = \App\Models\NanoCredit::where('statut', 'demande_en_attente')->count();
                                 @endphp
@@ -1202,20 +1202,53 @@
             
           
 
-            {{-- Menu Demandes de versement Masqué
+            <!-- Menu Décaissables (Sorties de fonds) -->
             @if(auth()->user()->hasRole('admin'))
-            <a href="{{ route('cotisation-versement-demandes.index') }}" class="nav-link {{ request()->routeIs('cotisation-versement-demandes.*') ? 'active' : '' }}">
-                <i class="bi bi-cash-stack"></i>
-                <span>Demandes de versement</span>
+            <div>
                 @php
+                    $decaissableActive = request()->routeIs('cotisation-versement-demandes.*') || request()->routeIs('epargne-retrait-demandes.*');
                     $nbVersementEnAttente = \App\Models\CotisationVersementDemande::where('statut', 'en_attente')->count();
+                    $nbRetraitEnAttente = \App\Models\EpargneRetraitDemande::where('statut', 'en_attente')->count();
+                    $totalAttente = $nbVersementEnAttente + $nbRetraitEnAttente;
                 @endphp
-                @if($nbVersementEnAttente > 0)
-                    <span class="badge bg-warning text-dark ms-auto" style="font-size: 0.65rem;">{{ $nbVersementEnAttente }}</span>
-                @endif
-            </a>
+                <a class="nav-link has-submenu {{ $decaissableActive ? 'active' : '' }}" 
+                   data-bs-toggle="collapse" 
+                   href="#decaissablesSubmenu" 
+                   role="button" 
+                   aria-expanded="{{ $decaissableActive ? 'true' : 'false' }}" 
+                   aria-controls="decaissablesSubmenu">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <i class="bi bi-box-arrow-up-right"></i>
+                        <span>Décaissables</span>
+                        @if($totalAttente > 0)
+                            <span class="badge bg-warning text-dark ms-auto" style="font-size: 0.65rem;">{{ $totalAttente }}</span>
+                        @endif
+                    </div>
+                </a>
+                <div class="collapse {{ $decaissableActive ? 'show' : '' }}" id="decaissablesSubmenu">
+                    <ul class="sidebar-submenu">
+                        <li>
+                            <a href="{{ route('epargne-retrait-demandes.index') }}" class="nav-link {{ request()->routeIs('epargne-retrait-demandes.*') ? 'active' : '' }}">
+                                <i class="bi bi-piggy-bank"></i>
+                                <span>Retraits Tontines</span>
+                                @if($nbRetraitEnAttente > 0)
+                                    <span class="badge bg-danger ms-auto" style="font-size: 0.65rem;">{{ $nbRetraitEnAttente }}</span>
+                                @endif
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('cotisation-versement-demandes.index') }}" class="nav-link {{ request()->routeIs('cotisation-versement-demandes.*') ? 'active' : '' }}">
+                                <i class="bi bi-cash-stack"></i>
+                                <span>Versements Cagnottes</span>
+                                @if($nbVersementEnAttente > 0)
+                                    <span class="badge bg-danger ms-auto" style="font-size: 0.65rem;">{{ $nbVersementEnAttente }}</span>
+                                @endif
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
             @endif
-            --}}
             
             <!-- Menu Annonces -->
             <!-- Menu Communication -->

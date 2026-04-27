@@ -83,7 +83,7 @@ class RemboursementSeeder extends Seeder
                 $numero = 'REM-' . strtoupper(Str::random(6));
             } while (Remboursement::where('numero', $numero)->exists());
 
-            Remboursement::create([
+            $remboursement = Remboursement::create([
                 'numero' => $numero,
                 'paiement_id' => $paiement->id,
                 'membre_id' => $paiement->membre_id,
@@ -97,6 +97,20 @@ class RemboursementSeeder extends Seeder
                 'created_at' => $createdAt,
                 'updated_at' => $createdAt,
             ]);
+
+            // Si approuvé, on génère le flux financier balancé
+            if ($statut === 'approuve') {
+                $caisseMembre = \App\Models\Caisse::find($paiement->caisse_id);
+                if ($caisseMembre) {
+                    app(\App\Services\FinanceService::class)->logFluxRemboursement(
+                        $caisseMembre,
+                        (float) $montant,
+                        'remboursement',
+                        'Remboursement: ' . $remboursement->numero,
+                        $remboursement
+                    );
+                }
+            }
 
             $created++;
         }

@@ -23,6 +23,51 @@ class NanoCreditService
             return ['success' => false, 'message' => 'Ce crédit est déjà décaissé.'];
         }
 
+        $montant = (int) $nanoCredit->montant;
+
+        // --- CAS PI-SPI ---
+        if ($withdrawMode === 'pispi') {
+            try {
+                $piSpi = app(\App\Services\PiSpiService::class);
+            } catch (\Exception $e) {
+                return ['success' => false, 'message' => 'Pi-SPI n\'est pas configuré ou activé.'];
+            }
+
+            $alias = $nanoCredit->membre->defaultWalletAlias();
+            if (!$alias) {
+                return ['success' => false, 'message' => 'Le membre n\'a aucun alias Pi-SPI configuré pour recevoir les fonds.'];
+            }
+
+            $txId = 'NANO-' . $nanoCredit->id . '-' . time();
+            $result = $piSpi->sendPayment($txId, $alias->alias, $montant, 'nano_credit');
+
+            if (!$result['success']) {
+                $nanoCredit->update(['error_message' => $result['message']]);
+                return ['success' => false, 'message' => 'Échec de l\'envoi Pi-SPI : ' . $result['message']];
+            }
+
+            // Mise à jour immédiate car Pi-SPI B2P est généralement synchrone (ou géré via webhook/polling)
+            $dateOctroi = now()->toDateString();
+            $palier = $nanoCredit->palier;
+            $dateFinRemb = $palier ? Carbon::parse($dateOctroi)->addDays((int) $palier->duree_jours)->toDateString() : null;
+
+            $nanoCredit->update([
+                'statut' => 'debourse',
+                'date_octroi' => $dateOctroi,
+                'date_fin_remboursement' => $dateFinRemb,
+                'transaction_id' => $txId,
+                'provider_ref' => $result['data']['reference'] ?? null,
+                'withdraw_mode' => 'pispi',
+                'telephone' => $alias->alias, // On stocke l'alias dans le champ téléphone pour la traçabilité
+            ]);
+
+            // Finalisation financière
+            $this->finaliserFinancesDeboursement($nanoCredit);
+
+            return ['success' => true, 'message' => 'Fonds envoyés avec succès via Pi-SPI.'];
+        }
+
+        // --- CAS PAYDUNYA ---
         try {
             $paydunya = app(PayDunyaService::class);
         } catch (\Exception $e) {
@@ -31,7 +76,6 @@ class NanoCreditService
         }
 
         $callbackUrl = url()->route('paydunya.disburse.callback');
-        $montant = (int) $nanoCredit->montant;
 
         // 1. Créer la facture de déboursement
         $result = $paydunya->createDisburseInvoice(
@@ -64,28 +108,23 @@ class NanoCreditService
                 Log::info('NanoCreditService: Facture déjà soumise pour #' . $nanoCredit->id . '. Vérification du statut...');
                 $verify = $paydunya->checkDisburseStatus($result['disburse_token']);
                 
-                // Si le statut est positif dans PayDunya, on considère que la soumission a réussi
-                // Statuts PayDunya possibles : success, pending, completed...
                 if ($verify['success'] && in_array(strtolower($verify['status']), ['success', 'pending', 'completed'])) {
                     $submit = [
                         'success' => true,
                         'status' => $verify['status'],
                         'transaction_id' => $verify['transaction_id'] ?? null,
                     ];
-                    Log::info('NanoCreditService: Statut vérifié avec succès: ' . $verify['status']);
                 } else {
                     $nanoCredit->update(['error_message' => $submit['message']]);
                     return ['success' => false, 'message' => $submit['message']];
                 }
             } else {
-                $nanoCredit->update([
-                    'error_message' => $submit['message'] ?? 'Erreur à la soumission',
-                ]);
+                $nanoCredit->update(['error_message' => $submit['message'] ?? 'Erreur à la soumission']);
                 return ['success' => false, 'message' => $submit['message'] ?? 'Soumission échouée.'];
             }
         }
 
-        // 4. Finaliser localement (statut debourse en attendant le callback de confirmation finale)
+        // 4. Finaliser localement
         $dateOctroi = now()->toDateString();
         $palier = $nanoCredit->palier;
         $dateFinRemb = $palier ? Carbon::parse($dateOctroi)->addDays((int) $palier->duree_jours)->toDateString() : null;
@@ -99,59 +138,23 @@ class NanoCreditService
             'error_message' => null,
         ]);
 
+        $this->finaliserFinancesDeboursement($nanoCredit);
+
+        return ['success' => true, 'message' => 'Déboursement PayDunya initié.'];
+    }
+
+    /**
+     * Centralise les écritures comptables du déboursement
+     */
+    private function finaliserFinancesDeboursement(NanoCredit $nanoCredit)
+    {
+        $palier = $nanoCredit->palier;
+
         // 4.5. Automatisation des comptes liés au crédit
         $this->associerComptesFinanciers($nanoCredit);
 
-        // 4.6. Écritures comptables de décaissement
-        $amortissement = $palier->calculAmortissement((float) $nanoCredit->montant);
-        $montantCapital = (float) $amortissement['montant_emprunte'];
-        $montantTotal   = (float) $amortissement['montant_total_du'];
-        
-        // 1. Débit du compte crédit du membre (Dette : Capital + Intérêts)
-        if ($nanoCredit->compte_credit_id) {
-            \App\Models\MouvementCaisse::create([
-                'caisse_id'      => $nanoCredit->compte_credit_id,
-                'type'           => 'deboursement_credit',
-                'sens'           => 'sortie', 
-                'montant'        => $montantTotal,
-                'date_operation' => now(),
-                'libelle'        => 'Décaissement Nano-crédit #' . $nanoCredit->id,
-                'notes'          => 'Initialisation de la dette (Principal + Intérêts)',
-                'reference_type' => NanoCredit::class,
-                'reference_id'   => $nanoCredit->id,
-            ]);
-        }
-
-        // 2. Débit du compte Global Nano-crédit
-        $caisseGlobal = Caisse::getCaisseNanoCredit();
-        if ($caisseGlobal) {
-            \App\Models\MouvementCaisse::create([
-                'caisse_id'      => $caisseGlobal->id,
-                'type'           => 'deboursement_credit',
-                'sens'           => 'sortie', 
-                'montant'        => $montantTotal,
-                'date_operation' => now(),
-                'libelle'        => 'RÉCONCILIATION DÉCAISSEMENT NANO: #' . $nanoCredit->id . ' (#' . $nanoCredit->membre_id . ')',
-                'notes'          => 'Global - Principal + Intérêts',
-                'reference_type' => NanoCredit::class,
-                'reference_id'   => $nanoCredit->id,
-            ]);
-        }
-
-        // 3. Crédit du compte Courant du membre (Liquidité reçue : Uniquement Principal)
-        if ($nanoCredit->compte_remboursement_id) {
-            \App\Models\MouvementCaisse::create([
-                'caisse_id'      => $nanoCredit->compte_remboursement_id,
-                'type'           => 'deboursement_credit',
-                'sens'           => 'entree', 
-                'montant'        => $montantCapital,
-                'date_operation' => now(),
-                'libelle'        => 'Réception fonds Nano-crédit #' . $nanoCredit->id,
-                'notes'          => 'Crédit automatique sur compte courant (Principal uniquement)',
-                'reference_type' => NanoCredit::class,
-                'reference_id'   => $nanoCredit->id,
-            ]);
-        }
+        // 4.6. Écritures comptables de décaissement (Double Entrée via FinanceService)
+        app(\App\Services\FinanceService::class)->logNanoCreditOctroi($nanoCredit);
 
         // 5. Générer les échéances
         if ($palier) {
@@ -194,11 +197,9 @@ class NanoCreditService
 
             NanoCreditEcheance::create([
                 'nano_credit_id' => $nanoCredit->id,
-                'numero_echeance' => $i,
                 'date_echeance' => $dateEcheance->toDateString(),
-                'montant_du' => $montantEcheance,
-                'montant_paye' => 0,
-                'statut' => 'a_venir',
+                'montant' => $montantEcheance,
+                'statut' => 'en_attente',
             ]);
         }
     }

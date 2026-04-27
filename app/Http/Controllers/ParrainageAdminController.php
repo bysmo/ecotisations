@@ -126,10 +126,11 @@ class ParrainageAdminController extends Controller
 
         $request->validate([
             'note_admin' => 'nullable|string|max:500',
+            'via_pispi'  => 'boolean',
         ]);
 
         try {
-            $this->parrainageService->payerCommission($commission, Auth::id(), $request->note_admin);
+            $this->parrainageService->payerCommission($commission, Auth::id(), $request->note_admin, $request->boolean('via_pispi'));
         } catch (\Exception $e) {
             return back()->with('error', "Erreur lors du paiement : " . $e->getMessage());
         }
@@ -166,15 +167,17 @@ class ParrainageAdminController extends Controller
     {
         $request->validate([
             'note_admin' => 'nullable|string|max:500',
+            'via_pispi'  => 'boolean',
         ]);
 
         $commissions = ParrainageCommission::where('statut', 'reclame')->get();
         $count = 0;
         $errors = 0;
+        $viaPiSpi = $request->boolean('via_pispi');
 
         foreach ($commissions as $commission) {
             try {
-                $this->parrainageService->payerCommission($commission, Auth::id(), $request->note_admin ?? 'Paiement groupé');
+                $this->parrainageService->payerCommission($commission, Auth::id(), $request->note_admin ?? 'Paiement groupé', $viaPiSpi);
                 $count++;
             } catch (\Exception $e) {
                 \Illuminate\Support\Facades\Log::error("Erreur paiement commission (mass) #{$commission->id}: " . $e->getMessage());

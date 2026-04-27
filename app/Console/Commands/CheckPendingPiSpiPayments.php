@@ -62,6 +62,14 @@ class CheckPendingPiSpiPayments extends Command
                             'statut' => 'echoue',
                             'commentaire' => $paiement->commentaire . "\n[Pi-SPI Cron: Statut " . $statut . " le " . now()->toDateTimeString() . "]"
                         ]);
+
+                        // RÉINITIALISATION DE L'ÉCHEANCE SI TONTINE
+                        if ($paiement->metadata && isset($paiement->metadata['echeance_id'])) {
+                            $echeance = \App\Models\EpargneEcheance::find($paiement->metadata['echeance_id']);
+                            if ($echeance && $echeance->statut === 'en_cours') {
+                                $echeance->update(['statut' => 'en_attente']);
+                            }
+                        }
                     }
                 }
             } catch (\Exception $e) {
@@ -105,7 +113,38 @@ class CheckPendingPiSpiPayments extends Command
         if ($paiement->metadata && isset($paiement->metadata['echeance_id'])) {
             $echeance = \App\Models\EpargneEcheance::find($paiement->metadata['echeance_id']);
             if ($echeance) {
-                $echeance->update(['statut' => 'payee']);
+                $echeance->update(['statut' => 'payee', 'paye_le' => now()]);
+            }
+        }
+
+        // Création du mouvement de caisse si nécessaire
+        if ($paiement->caisse_id) {
+            \App\Models\MouvementCaisse::create([
+                'caisse_id'      => $paiement->caisse_id,
+                'type'           => $paiement->cotisation_id ? 'cotisation' : 'epargne',
+                'sens'           => 'entree',
+                'montant'        => $paiement->montant,
+                'date_operation' => now(),
+                'libelle'        => 'Paiement via Pi-SPI (Cron Auto)',
+                'notes'          => 'Auto-réconciliation Pi-SPI - Réf: ' . $paiement->reference,
+                'reference_type' => Paiement::class,
+                'reference_id'   => $paiement->id,
+            ]);
+
+            // Réconciliation globale
+            $caisseGlobal = $paiement->cotisation_id ? \App\Models\Caisse::getCaisseCagnottePub() : \App\Models\Caisse::getCaisseTontineCli();
+            if ($caisseGlobal) {
+                \App\Models\MouvementCaisse::create([
+                    'caisse_id'      => $caisseGlobal->id,
+                    'type'           => $paiement->cotisation_id ? 'cotisation' : 'epargne',
+                    'sens'           => 'entree',
+                    'montant'        => $paiement->montant,
+                    'date_operation' => now(),
+                    'libelle'        => 'RÉCONCILIATION GLOBALE (Cron Pi-SPI)',
+                    'notes'          => 'Validation automatique - Member #' . $paiement->membre_id,
+                    'reference_type' => Paiement::class,
+                    'reference_id'   => $paiement->id,
+                ]);
             }
         }
     }

@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CotisationVersementDemande;
+use App\Models\EpargneRetraitDemande;
 use App\Services\FinanceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class CotisationVersementDemandeController extends Controller
+class EpargneRetraitDemandeController extends Controller
 {
     protected $financeService;
 
@@ -17,11 +17,11 @@ class CotisationVersementDemandeController extends Controller
     }
 
     /**
-     * Liste des demandes de versement des fonds
+     * Liste des demandes de retrait de tontines
      */
     public function index(Request $request)
     {
-        $query = CotisationVersementDemande::with(['cotisation', 'demandeParMembre'])
+        $query = EpargneRetraitDemande::with(['souscription.plan', 'membre'])
             ->orderBy('created_at', 'desc');
 
         if ($request->filled('statut')) {
@@ -30,22 +30,13 @@ class CotisationVersementDemandeController extends Controller
 
         $demandes = $query->paginate(15);
 
-        return view('cotisation-versement-demandes.index', compact('demandes'));
+        return view('epargne-retrait-demandes.index', compact('demandes'));
     }
 
     /**
-     * Détails d'une demande
+     * Approuver une demande de retrait
      */
-    public function show(CotisationVersementDemande $demande)
-    {
-        $demande->load(['cotisation.caisse', 'demandeParMembre.compteCourant', 'traiteParUser']);
-        return view('cotisation-versement-demandes.show', compact('demande'));
-    }
-
-    /**
-     * Approuver une demande de versement
-     */
-    public function approve(Request $request, CotisationVersementDemande $demande)
+    public function approve(Request $request, EpargneRetraitDemande $demande)
     {
         if ($demande->statut !== 'en_attente') {
             return redirect()->back()->with('error', 'Cette demande a déjà été traitée.');
@@ -53,21 +44,21 @@ class CotisationVersementDemandeController extends Controller
 
         try {
             $viaPiSpi = $request->boolean('via_pispi');
-            $result = $this->financeService->traiterDemandeVersementCotisation($demande, Auth::user(), $viaPiSpi);
+            $result = $this->financeService->traiterDemandeRetraitEpargne($demande, Auth::user(), $viaPiSpi);
             
-            $msg = 'La demande de versement de ' . number_format($result['montant'], 0, ',', ' ') . ' XOF a été approuvée.';
+            $msg = 'La demande de retrait de ' . number_format($result['montant'], 0, ',', ' ') . ' XOF a été approuvée.';
             if ($viaPiSpi) $msg .= ' Le virement Pi-SPI a été effectué.';
 
-            return redirect()->route('cotisation-versement-demandes.index')->with('success', $msg);
+            return redirect()->route('epargne-retrait-demandes.index')->with('success', $msg);
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Erreur lors du traitement : ' . $e->getMessage());
         }
     }
 
     /**
-     * Rejeter une demande de versement
+     * Rejeter une demande de retrait
      */
-    public function reject(Request $request, CotisationVersementDemande $demande)
+    public function reject(Request $request, EpargneRetraitDemande $demande)
     {
         if ($demande->statut !== 'en_attente') {
             return redirect()->back()->with('error', 'Cette demande a déjà été traitée.');
@@ -84,7 +75,7 @@ class CotisationVersementDemandeController extends Controller
             'commentaire' => $request->commentaire,
         ]);
 
-        return redirect()->route('cotisation-versement-demandes.index')
-            ->with('success', 'La demande de versement a été rejetée.');
+        return redirect()->route('epargne-retrait-demandes.index')
+            ->with('success', 'La demande de retrait a été rejetée.');
     }
 }

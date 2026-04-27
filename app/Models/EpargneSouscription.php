@@ -108,4 +108,35 @@ class EpargneSouscription extends Model
         $calc = $this->plan->calculRemboursement((float) $this->montant);
         return $calc['remuneration'];
     }
+
+    /**
+     * Estimation du montant retirable à l'instant T.
+     * Règle Serenity :
+     * - Si tontine finie (date_fin passée) : Solde Actuel + Rémunération complète.
+     * - Si tontine non finie : Solde Actuel seul (pénalité = perte des intérêts).
+     */
+    public function getEstimationLiquidationAttribute(): int
+    {
+        $capitalEpargne = (int) $this->solde_courant;
+        
+        // Si la date de fin est atteinte ou dépassée
+        if ($this->date_fin && $this->date_fin->isPast()) {
+            return $capitalEpargne + $this->remuneration_prevue;
+        }
+
+        // Sinon, juste le capital (Penalité)
+        return $capitalEpargne;
+    }
+
+    /**
+     * Progression de l'épargne en pourcentage par rapport au montant total à verser.
+     */
+    public function getTauxProgressionAttribute(): float
+    {
+        $totalAVerser = $this->plan->nombre_versements * (float) $this->montant;
+        if ($totalAVerser <= 0) return 0;
+        
+        $progression = ((float) $this->solde_courant / $totalAVerser) * 100;
+        return round(min(100, $progression), 1);
+    }
 }

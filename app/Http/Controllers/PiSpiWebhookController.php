@@ -45,10 +45,15 @@ class PiSpiWebhookController extends Controller
 
         Log::info("Pi-SPI Webhook Processing: TX={$txId}, Status={$statut}, Event={$evenement}");
 
-        if ($txId && (in_array(strtoupper($statut), ['SUCCES', 'VALIDE', 'COMPLETED']))) {
-            $this->processSuccessPayment($txId, $data);
-        } else {
-            Log::info("Pi-SPI Webhook: Transaction {$txId} skipped (Status: {$statut})");
+        if ($txId) {
+            $upperStatus = strtoupper($statut);
+            if (in_array($upperStatus, ['SUCCES', 'VALIDE', 'COMPLETED'])) {
+                $this->processSuccessPayment($txId, $data);
+            } elseif (in_array($upperStatus, ['EXPIRE', 'REJETE', 'ECHEC', 'CANCELLED'])) {
+                $this->processFailedPayment($txId, $data);
+            } else {
+                Log::info("Pi-SPI Webhook: Transaction {$txId} skipped (Status: {$statut})");
+            }
         }
 
         return response()->json(['message' => 'Webhook received and processed'], 200);
@@ -108,12 +113,73 @@ class PiSpiWebhookController extends Controller
             if ($paiement->metadata && isset($paiement->metadata['echeance_id'])) {
                 $echeance = EpargneEcheance::find($paiement->metadata['echeance_id']);
                 if ($echeance) {
-                    $echeance->update(['statut' => 'payee']);
+                    $echeance->update(['statut' => 'payee', 'paye_le' => now()]);
                     Log::info("Tontine Echeance #{$echeance->id} marked as PAID via Pi-SPI");
+
+                    // Création du mouvement de caisse
+                    if ($paiement->caisse_id) {
+                        \App\Models\MouvementCaisse::create([
+                            'caisse_id'      => $paiement->caisse_id,
+                            'type'           => 'epargne',
+                            'sens'           => 'entree',
+                            'montant'        => $paiement->montant,
+                            'date_operation' => now(),
+                            'libelle'        => 'Paiement tontine via Pi-SPI',
+                            'notes'          => 'Validation Webhook - Réf: ' . $txId,
+                            'reference_type' => Paiement::class,
+                            'reference_id'   => $paiement->id,
+                        ]);
+
+                        // Réconciliation globale
+                        $caisseGlobal = \App\Models\Caisse::getCaisseTontineCli();
+                        if ($caisseGlobal) {
+                             \App\Models\MouvementCaisse::create([
+                                'caisse_id'      => $caisseGlobal->id,
+                                'type'           => 'epargne',
+                                'sens'           => 'entree',
+                                'montant'        => $paiement->montant,
+                                'date_operation' => now(),
+                                'libelle'        => 'RÉCONCILIATION TONTINE (Pi-SPI): Member #' . $paiement->membre_id,
+                                'notes'          => 'Pi-SPI Webhook - Global - Réf: ' . $txId,
+                                'reference_type' => Paiement::class,
+                                'reference_id'   => $paiement->id,
+                            ]);
+                        }
+                    }
                 }
             }
         } else {
             Log::warning("Pi-SPI Webhook: No record found for txId {$txId}");
+        }
+    }
+
+    /**
+     * Traiter un paiement échoué
+     */
+    private function processFailedPayment($txId, $data)
+    {
+        $paiement = Paiement::where(function($query) use ($txId) {
+                $query->where('reference', $txId)
+                      ->orWhere('reference', 'LIKE', $txId . '%');
+            })
+            ->where('mode_paiement', 'pispi')
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        if ($paiement && $paiement->statut === 'en_attente') {
+            $paiement->update([
+                'statut' => 'echoue',
+                'commentaire' => $paiement->commentaire . "\n[Pi-SPI Webhook FAILED: " . ($data['statut'] ?? 'ERR') . " le " . now()->toDateTimeString() . "]"
+            ]);
+
+            // Remise à zéro de l'échéance si tontine
+            if ($paiement->metadata && isset($paiement->metadata['echeance_id'])) {
+                $echeance = EpargneEcheance::find($paiement->metadata['echeance_id']);
+                if ($echeance && $echeance->statut === 'en_cours') {
+                    $echeance->update(['statut' => 'en_attente']);
+                    Log::info("Tontine Echeance #{$echeance->id} reset to UNPAID due to Pi-SPI failure");
+                }
+            }
         }
     }
 }

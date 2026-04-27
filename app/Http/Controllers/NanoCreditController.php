@@ -76,7 +76,14 @@ class NanoCreditController extends Controller
         if ($scoreGlobal < 2) {
             $membreCredit = $nanoCredit->membre;
             $telephone = $this->normalizePhoneForPayDunya($membreCredit->telephone ?? '');
-            $withdrawMode = $this->detectWithdrawMode($telephone, $membreCredit->pays ?? 'BF');
+            
+            // Priorité au retrait Pi-SPI si un alias par défaut existe
+            $defaultAlias = $membreCredit->defaultWalletAlias();
+            if ($defaultAlias) {
+                $withdrawMode = 'pispi';
+            } else {
+                $withdrawMode = $this->detectWithdrawMode($telephone, $membreCredit->pays ?? 'BF');
+            }
 
             $service = app(\App\Services\NanoCreditService::class);
             $result = $service->debourser($nanoCredit, $telephone, $withdrawMode);
@@ -109,13 +116,18 @@ class NanoCreditController extends Controller
         }
 
         $validated = $request->validate([
-            'telephone' => 'required|string|max:20',
+            'telephone' => 'required|string|max:60', // Augmenté pour supporter les Alias Pi-SPI (UUID)
             'withdraw_mode' => 'required|string|in:' . implode(',', array_keys(NanoCredit::withdrawModeLabels())),
         ]);
 
-        $telephone = $this->normalizePhoneForPayDunya($validated['telephone']);
-        if ($telephone === '') {
-            return redirect()->back()->withInput()->with('error', 'Numéro de téléphone invalide.');
+        $telephone = $validated['telephone'];
+        
+        // On ne normalise que si ce n'est pas Pi-SPI (qui peut être un UUID/Alias)
+        if ($validated['withdraw_mode'] !== 'pispi') {
+            $telephone = $this->normalizePhoneForPayDunya($telephone);
+            if ($telephone === '') {
+                return redirect()->back()->withInput()->with('error', 'Numéro de téléphone invalide.');
+            }
         }
 
         $service = app(\App\Services\NanoCreditService::class);
@@ -190,13 +202,16 @@ class NanoCreditController extends Controller
             $echeance->update(['statut' => 'payee', 'paye_le' => now()]);
         }
 
-        NanoCreditVersement::create([
+        $versement = NanoCreditVersement::create([
             'nano_credit_id' => $nanoCredit->id,
             'nano_credit_echeance_id' => $echeanceId,
             'montant' => (int) round((float) $validated['montant'], 0),
             'date_versement' => $validated['date_versement'],
             'mode_paiement' => $validated['mode_paiement'],
         ]);
+
+        // Enregistrement de l'écriture comptable balancée
+        app(\App\Services\FinanceService::class)->logNanoCreditRemboursement($versement);
 
         $nbPayees = $nanoCredit->echeances()->where('statut', 'payee')->count();
         $nbTotal = $nanoCredit->echeances()->count();
@@ -326,5 +341,20 @@ class NanoCreditController extends Controller
         }
 
         return redirect()->back()->with('success', 'Recouvrement effectué : ' . count($garantsPreleves) . ' garant(s) débité(s).');
+    }
+
+    /**
+     * Régénérer manuellement l'échéancier
+     */
+    public function regenererEcheancier(NanoCredit $nanoCredit)
+    {
+        if (!$nanoCredit->isDebourse()) {
+            return redirect()->back()->with('error', "Impossible de régénérer l'échéancier d'un crédit non décaissé.");
+        }
+
+        $service = app(\App\Services\NanoCreditService::class);
+        $service->genererEcheances($nanoCredit);
+
+        return redirect()->back()->with('success', "L'échéancier a été régénéré avec succès.");
     }
 }

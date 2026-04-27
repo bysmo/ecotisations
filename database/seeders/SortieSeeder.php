@@ -88,22 +88,18 @@ class SortieSeeder extends Seeder
                 'updated_at' => $dateSortie,
             ]);
 
-            // Mettre à jour le solde de la caisse
-            $caisse->solde_initial -= $montant;
-            $caisse->save();
-
-            // Créer le mouvement de caisse
-            MouvementCaisse::create([
-                'caisse_id' => $caisse->id,
-                'type' => 'sortie',
-                'sens' => 'sortie',
-                'montant' => $montant,
-                'date_operation' => $dateSortie,
-                'libelle' => 'Sortie de compte' . ($motif ? ' - ' . $motif : ''),
-                'notes' => $note,
-                'reference_type' => SortieCaisse::class,
-                'reference_id' => $sortie->id,
-            ]);
+            $caisseCharge = Caisse::where('numero_core_banking', 'SYS-CHG')->first();
+            if ($caisseCharge) {
+                app(\App\Services\FinanceService::class)->logGenericBalancedEntry(
+                    $caisseCharge, // DEBIT CHARGE (Increases charge)
+                    $caisse,       // CREDIT CAISSE (Decreases cash)
+                    (float) $montant,
+                    'sortie',
+                    'Sortie de compte' . ($motif ? ' - ' . $motif : ''),
+                    $sortie,
+                    $note
+                );
+            }
 
             $created++;
         }

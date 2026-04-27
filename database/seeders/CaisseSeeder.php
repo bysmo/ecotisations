@@ -113,6 +113,16 @@ class CaisseSeeder extends Seeder
                 'numero_core_banking' => 'SYS-CHG',
                 'membre_id' => $systemMembre->id,
             ],
+
+            // Compte de dotation / Capital pour équilibrer les apports initiaux
+            [
+                'nom' => 'Compte Dotation / Capital',
+                'description' => 'Source des fonds propres et dotations initiales',
+                'statut' => 'active',
+                'type' => 'equity',
+                'numero_core_banking' => 'SYS-DOTATION',
+                'membre_id' => $systemMembre->id,
+            ],
         ];
 
         foreach ($caisses as $caisseData) {

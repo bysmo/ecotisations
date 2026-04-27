@@ -215,48 +215,37 @@ class ParrainageService
     /**
      * Traiter le paiement d'une commission (Mouvement financier)
      */
-    public function payerCommission(ParrainageCommission $commission, int $adminId, ?string $noteAdmin = null): void
+    public function payerCommission(ParrainageCommission $commission, int $adminId, ?string $noteAdmin = null, bool $viaPiSpi = false): void
     {
         if (!in_array($commission->statut, ['reclame', 'disponible'])) {
             throw new \Exception("Cette commission ne peut pas être payée dans son état actuel.");
         }
 
+        $parrain = $commission->parrain;
+        $montant = (float) $commission->montant;
+
+        // --- ENVOI VIA PI-SPI SI DEMANDÉ ---
+        if ($viaPiSpi) {
+            $piSpi = app(\App\Services\PiSpiService::class);
+            $alias = $parrain->defaultWalletAlias();
+
+            if (!$alias) {
+                throw new \Exception("Le parrain n'a aucun alias Pi-SPI configuré.");
+            }
+
+            $txId = 'PAR-' . $commission->id . '-' . time();
+            $res = $piSpi->sendPayment($txId, $alias->alias, $montant, 'parrainage');
+
+            if (!$res['success']) {
+                throw new \Exception("Échec du virement Pi-SPI : " . $res['message']);
+            }
+        }
+
         DB::transaction(function () use ($commission, $adminId, $noteAdmin) {
-            $parrain = $commission->parrain;
-            $montant = (float) $commission->montant;
-            
-            $compteCourant = $parrain->compteCourant;
-            $caisseParrainage = \App\Models\Caisse::getCaisseParrainage();
+            // 1. Enregistrer l'écriture comptable balancée (Charge / Système / Client)
+            app(\App\Services\FinanceService::class)->logParrainagePaiement($commission);
 
-            if (!$compteCourant) throw new \Exception("Le compte courant du parrain est introuvable.");
-            if (!$caisseParrainage) throw new \Exception("Le compte système des parrainages (SYS-PAR) est introuvable.");
-
-            // 1. Débit du compte système PARRAINAGE
-            \App\Models\MouvementCaisse::create([
-                'caisse_id'      => $caisseParrainage->id,
-                'type'           => 'commission_parrainage',
-                'sens'           => 'sortie',
-                'montant'        => $montant,
-                'date_operation' => now(),
-                'libelle'        => 'Paiement Commission Parrainage #' . $commission->id . ' - Parrain: ' . $parrain->numero,
-                'reference_type' => ParrainageCommission::class,
-                'reference_id'   => $commission->id,
-            ]);
-
-            // 2. Crédit du compte courant du parrain
-            \App\Models\MouvementCaisse::create([
-                'caisse_id'      => $compteCourant->id,
-                'type'           => 'commission_parrainage',
-                'sens'           => 'entree',
-                'montant'        => $montant,
-                'date_operation' => now(),
-                'libelle'        => 'Paiement Commission de Parrainage',
-                'notes'          => 'Filleul: ' . ($commission->filleul ? $commission->filleul->nom_complet : 'N/A'),
-                'reference_type' => ParrainageCommission::class,
-                'reference_id'   => $commission->id,
-            ]);
-
-            // 3. Mise à jour de la commission
+            // 2. Mise à jour de la commission
             $commission->update([
                 'statut'      => 'paye',
                 'paye_le'     => now(),

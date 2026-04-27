@@ -65,22 +65,16 @@ class PaiementSeeder extends Seeder
                 'updated_at' => $datePaiement,
             ]);
 
-            // Mettre à jour le solde de la caisse
-            $caisse->solde_initial += $montant;
-            $caisse->save();
+            $paiement->save(); // ensure timestamps match if needed, but create already saved it
 
-            // Créer le mouvement de caisse
-            MouvementCaisse::create([
-                'caisse_id' => $caisse->id,
-                'type' => 'paiement',
-                'sens' => 'entree',
-                'montant' => $montant,
-                'date_operation' => $datePaiement,
-                'libelle' => 'Paiement cotisation: ' . $cotisation->nom,
-                'notes' => 'Paiement de ' . $membre->nom_complet,
-                'reference_type' => Paiement::class,
-                'reference_id' => $paiement->id,
-            ]);
+            // Enregistrement de l'écriture balancée via FinanceService
+            app(\App\Services\FinanceService::class)->logFluxTontineCagnotte(
+                $caisse,
+                (float) $montant,
+                'paiement',
+                'Paiement cotisation: ' . $cotisation->nom . ' (Seed)',
+                $paiement
+            );
 
             $created++;
         }

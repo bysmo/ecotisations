@@ -95,8 +95,33 @@
                     <p class="small text-muted mb-4">
                         En approuvant cette demande, un transfert de fonds sera immédiatement effectué du compte de la cagnotte vers le compte courant du membre. Cette action est irréversible.
                     </p>
+                    @php
+                        $defaultAlias = $demande->demandeParMembre->defaultWalletAlias();
+                    @endphp
+                    
                     <form action="{{ route('cotisation-versement-demandes.approve', $demande) }}" method="POST">
                         @csrf
+                        
+                        <div class="p-3 mb-4 rounded-3 border {{ $defaultAlias ? 'bg-primary-subtle border-primary' : 'bg-light' }}">
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" name="via_pispi" id="viaPispi" value="1" {{ !$defaultAlias ? 'disabled' : '' }}>
+                                <label class="form-check-label fw-bold" for="viaPispi">
+                                    <i class="bi bi-lightning-charge-fill text-warning me-1"></i> Payer via BCEAO Pi-SPI
+                                </label>
+                            </div>
+                            @if($defaultAlias)
+                                <div class="small">
+                                    <span class="text-muted">Alias cible :</span> 
+                                    <code class="fw-bold">{{ $defaultAlias->alias }}</code> 
+                                    <span class="badge bg-primary ms-1">{{ $defaultAlias->label }}</span>
+                                </div>
+                            @else
+                                <div class="small text-danger">
+                                    <i class="bi bi-exclamation-circle me-1"></i> Ce membre n'a aucun alias Pi-SPI configuré.
+                                </div>
+                            @endif
+                        </div>
+
                         <button type="submit" class="btn btn-success w-100 py-3 fw-bold rounded-pill" onclick="return confirm('Êtes-vous sûr de vouloir approuver ce versement ?');">
                             <i class="bi bi-check-lg me-1"></i> CONFIRMER L'APPROBATION
                         </button>

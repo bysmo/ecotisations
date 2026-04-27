@@ -105,38 +105,15 @@ class PayDunyaCallbackService
             'metadata'     => ['invoice_token' => $invoiceToken],
         ]);
 
-        // Mouvement caisse (entrée)
+        // Enregistrement de l'écriture comptable via FinanceService (Balanced)
         if ($cotisation->caisse_id) {
-            MouvementCaisse::create([
-                'caisse_id'      => $cotisation->caisse_id,
-                'type'           => 'cotisation',
-                'sens'           => 'entree',
-                'montant'        => $amount,
-                'date_operation' => now(),
-                'libelle'        => 'Paiement cotisation: ' . $cotisation->nom,
-                'notes'          => 'PayDunya IPN - Réf: ' . $reference,
-                'reference_type' => Paiement::class,
-                'reference_id'   => $paiement->id,
-            ]);
-
-            // Mouvement parallèle sur le compte global (Cagnotte Publique ou Privée)
-            $caisseGlobal = ($cotisation->visibilite === 'publique') 
-                ? Caisse::getCaisseCagnottePub() 
-                : Caisse::getCaisseCagnottePrv();
-
-            if ($caisseGlobal) {
-                MouvementCaisse::create([
-                    'caisse_id'      => $caisseGlobal->id,
-                    'type'           => 'cotisation',
-                    'sens'           => 'entree',
-                    'montant'        => $amount,
-                    'date_operation' => now(),
-                    'libelle'        => 'RÉCONCILIATION: ' . $cotisation->nom . ' (#' . $membreId . ')',
-                    'notes'          => 'PayDunya IPN - Global - Réf: ' . $reference,
-                    'reference_type' => Paiement::class,
-                    'reference_id'   => $paiement->id,
-                ]);
-            }
+            app(\App\Services\FinanceService::class)->logFluxTontineCagnotte(
+                $cotisation->caisse,
+                $amount,
+                'cotisation',
+                'Paiement cotisation: ' . $cotisation->nom . ' (PayDunya)',
+                $paiement
+            );
         }
 
         Log::info('PayDunyaCallbackService::handleCotisation: paiement enregistré', [
@@ -198,33 +175,14 @@ class PayDunyaCallbackService
         $echeance->update(['statut' => 'payee', 'paye_le' => now()]);
 
         if ($caisseId) {
-            MouvementCaisse::create([
-                'caisse_id'      => $caisseId,
-                'type'           => 'epargne',
-                'sens'           => 'entree',
-                'montant'        => $amount,
-                'date_operation' => now(),
-                'libelle'        => 'Épargne: ' . ($souscription->plan->nom ?? ''),
-                'notes'          => 'PayDunya IPN - Réf: ' . $reference,
-                'reference_type' => EpargneVersement::class,
-                'reference_id'   => $versement->id,
-            ]);
-
-            // Mouvement parallèle sur le compte global Tontine (Membres)
-            $caisseGlobal = Caisse::getCaisseTontineCli();
-            if ($caisseGlobal) {
-                MouvementCaisse::create([
-                    'caisse_id'      => $caisseGlobal->id,
-                    'type'           => 'epargne',
-                    'sens'           => 'entree',
-                    'montant'        => $amount,
-                    'date_operation' => now(),
-                    'libelle'        => 'RÉCONCILIATION TONTINE: Plan ' . ($souscription->plan->nom ?? '') . ' (#' . $membreId . ')',
-                    'notes'          => 'PayDunya IPN - Global - Réf: ' . $reference,
-                    'reference_type' => EpargneVersement::class,
-                    'reference_id'   => $versement->id,
-                ]);
-            }
+            // Enregistrement de l'écriture comptable via FinanceService (Balanced)
+            app(\App\Services\FinanceService::class)->logFluxTontineCagnotte(
+                $souscription->compte,
+                $amount,
+                'epargne',
+                'Épargne: ' . ($souscription->plan->nom ?? '') . ' (PayDunya)',
+                $versement
+            );
         }
 
         Log::info('PayDunyaCallbackService::handleEpargne: versement enregistré', [
@@ -274,34 +232,14 @@ class PayDunyaCallbackService
             'metadata'     => ['type' => 'epargne_libre', 'invoice_token' => $invoiceToken],
         ]);
 
-        // Mouvement caisse (entrée sur le compte épargne du membre)
-        MouvementCaisse::create([
-            'caisse_id'      => $caisseId,
-            'type'           => 'epargne_libre',
-            'sens'           => 'entree',
-            'montant'        => $amount,
-            'date_operation' => now(),
-            'libelle'        => 'Versement libre épargne',
-            'notes'          => 'PayDunya IPN - Réf: ' . $reference,
-            'reference_type' => Paiement::class,
-            'reference_id'   => $paiement->id,
-        ]);
-
-        // Mouvement parallèle sur le compte global Epargne Libre (Membres)
-        $caisseGlobal = Caisse::getCaisseEpargneLibre();
-        if ($caisseGlobal) {
-            MouvementCaisse::create([
-                'caisse_id'      => $caisseGlobal->id,
-                'type'           => 'epargne_libre',
-                'sens'           => 'entree',
-                'montant'        => $amount,
-                'date_operation' => now(),
-                'libelle'        => 'RÉCONCILIATION ÉPARGNE LIBRE (#' . $membreId . ')',
-                'notes'          => 'PayDunya IPN - Global - Réf: ' . $reference,
-                'reference_type' => Paiement::class,
-                'reference_id'   => $paiement->id,
-            ]);
-        }
+        // Enregistrement de l'écriture comptable via FinanceService (Balanced)
+        app(\App\Services\FinanceService::class)->logFluxTontineCagnotte(
+            $caisse,
+            $amount,
+            'epargne_libre',
+            'Versement libre épargne (PayDunya)',
+            $paiement
+        );
 
         Log::info('PayDunyaCallbackService::handleEpargneLibre: versement enregistré', [
             'paiement_id' => $paiement->id,
@@ -362,95 +300,8 @@ class PayDunyaCallbackService
             'reference'               => $reference,
         ]);
 
-        // Mouvement sur le compte de crédit (entrée = réduction de la dette du membre)
-        if ($nanoCredit->compte_credit_id) {
-            MouvementCaisse::create([
-                'caisse_id'      => $nanoCredit->compte_credit_id,
-                'type'           => 'remboursement_credit',
-                'sens'           => 'entree', 
-                'montant'        => $amount,
-                'date_operation' => now(),
-                'libelle'        => 'Remboursement nano-crédit #' . $nanoCreditId,
-                'notes'          => 'PayDunya IPN - Réf: ' . $reference,
-                'reference_type' => NanoCreditVersement::class,
-                'reference_id'   => $versement->id,
-            ]);
-
-            // Mouvement parallèle sur le compte global Nano-crédit
-            $caisseGlobalNano = Caisse::getCaisseNanoCredit();
-            if ($caisseGlobalNano) {
-                MouvementCaisse::create([
-                    'caisse_id'      => $caisseGlobalNano->id,
-                    'type'           => 'remboursement_credit',
-                    'sens'           => 'entree', 
-                    'montant'        => $amount,
-                    'date_operation' => now(),
-                    'libelle'        => 'RÉCONCILIATION REMBOURSEMENT NANO: #' . $nanoCreditId . ' (#' . $membreId . ')',
-                    'notes'          => 'PayDunya IPN - Global - Réf: ' . $reference,
-                    'reference_type' => NanoCreditVersement::class,
-                    'reference_id'   => $versement->id,
-                ]);
-            }
-
-            // --- VENTILATION INTÉRÊTS / PRODUITS / GARANTS ---
-            $palier = $nanoCredit->palier;
-            if ($palier) {
-                $decomposition = $palier->decomposeEcheance((float) $nanoCredit->montant);
-                $interetRecu = (float) $decomposition['interet_unitaire'];
-                
-                // Si l'échéance reçue est partielle ou supérieure, on proratise l'intérêt
-                // (Ici on simplifie : on considère que l'intérêt est prioritaire ou proportionnel)
-                $ratio = $amount / ($decomposition['capital_unitaire'] + $decomposition['interet_unitaire']);
-                $interetReel = $interetRecu * $ratio;
-
-                $percentGarant = (float) ($palier->pourcentage_partage_garant ?? 0);
-                $partGarants   = $interetReel * ($percentGarant / 100);
-                $partAdmin     = $interetReel - $partGarants;
-
-                // 1. Part Admin -> Compte Global des Produits
-                $caisseProd = Caisse::getCaisseProduit();
-                if ($caisseProd && $partAdmin > 0) {
-                    MouvementCaisse::create([
-                        'caisse_id'      => $caisseProd->id,
-                        'type'           => 'produit_interet',
-                        'sens'           => 'entree',
-                        'montant'        => $partAdmin,
-                        'date_operation' => now(),
-                        'libelle'        => 'PRODUIT NANO: #' . $nanoCreditId,
-                        'notes'          => 'Part Admin sur intérêts - Réf: ' . $reference,
-                        'reference_type' => NanoCreditVersement::class,
-                        'reference_id'   => $versement->id,
-                    ]);
-                }
-
-                // 2. Part Garants -> Distribution sur leurs comptes courants
-                $garants = $nanoCredit->garants()->whereIn('statut', ['accepte', 'preleve'])->get();
-                if ($garants->count() > 0 && $partGarants > 0) {
-                    $partParGarant = $partGarants / $garants->count();
-                    foreach ($garants as $garantRel) {
-                        $membreGarant = $garantRel->membre;
-                        $compteGarant = $membreGarant->compteCourant; // On utilise le compte courant par défaut
-                        
-                        if ($compteGarant) {
-                            MouvementCaisse::create([
-                                'caisse_id'      => $compteGarant->id,
-                                'type'           => 'commission_garantie',
-                                'sens'           => 'entree',
-                                'montant'        => $partParGarant,
-                                'date_operation' => now(),
-                                'libelle'        => 'COMMISSION NANO: #' . $nanoCreditId,
-                                'notes'          => 'Part Garant sur intérêts - Réf: ' . $reference,
-                                'reference_type' => NanoCreditVersement::class,
-                                'reference_id'   => $versement->id,
-                            ]);
-                            
-                            // Mettre à jour gain_partage dans la table pivot pour stats
-                            $garantRel->increment('gain_partage', $partParGarant);
-                        }
-                    }
-                }
-            }
-        }
+        // Enregistrement de l'écriture comptable via FinanceService (Balanced)
+        app(\App\Services\FinanceService::class)->logNanoCreditRemboursement($versement);
 
         // Vérifier si toutes les échéances sont payées → passer en 'rembourse'
         $nbTotal  = $nanoCredit->echeances()->count();

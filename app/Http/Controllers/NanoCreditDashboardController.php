@@ -11,15 +11,13 @@ class NanoCreditDashboardController extends Controller
 {
     public function index()
     {
-        // 1. Volumes Globaux
-        $totalAccorde = NanoCredit::whereIn('statut', ['debourse', 'en_remboursement', 'rembourse'])->sum('montant');
+        // 1. Volumes Globaux (Calculés via PHP car les colonnes sont chiffrées en base)
+        $totalAccorde = NanoCredit::whereIn('statut', ['debourse', 'en_remboursement', 'rembourse'])
+            ->get()->sum('montant');
         
-        $versements = NanoCreditVersement::all();
-        $totalRembourse = $versements->sum(function($v) {
-            return (float) $v->montant;
-        });
+        $totalRembourse = NanoCreditVersement::all()->sum('montant');
 
-        $totalPenalites = NanoCredit::sum('montant_penalite');
+        $totalPenalites = NanoCredit::all()->sum('montant_penalite');
 
         // Total impayé brut (somme des montants des crédits "en_remboursement" avec retard)
         // Mais plus précisément, c'est le capital restant dû, or on peut faire simple: Total emprunté - Total Remboursé sur les crédits en retard.

@@ -62,6 +62,7 @@ Route::post('/caisses/sortie', [CaisseController::class, 'storeSortie'])->name('
 Route::get('/caisses/historique', [CaisseController::class, 'historique'])->name('caisses.historique');
 // Journal / Balance
 Route::get('/caisses/journal', [CaisseController::class, 'journal'])->name('caisses.journal');
+Route::get('/caisses/transaction/{mouvement}', [CaisseController::class, 'transactionDetail'])->name('caisses.transaction-detail');
 Route::get('/caisses/{caisse}/mouvements', [CaisseController::class, 'mouvements'])->name('caisses.mouvements');
 // Journal / balance par caisse
 Route::get('/caisses/{caisse}/mouvements', [CaisseController::class, 'mouvements'])->name('caisses.mouvements');
@@ -175,6 +176,7 @@ Route::get('/caisses/{caisse}/mouvements', [CaisseController::class, 'mouvements
     Route::post('/nano-credits/{nanoCredit}/octroyer', [\App\Http\Controllers\NanoCreditController::class, 'octroyer'])->name('nano-credits.octroyer');
     Route::post('/nano-credits/{nanoCredit}/versement', [\App\Http\Controllers\NanoCreditController::class, 'storeVersement'])->name('nano-credits.versement.store');
     Route::post('/nano-credits/{nanoCredit}/refuser', [\App\Http\Controllers\NanoCreditController::class, 'refuser'])->name('nano-credits.refuser');
+    Route::post('/nano-credits/{nanoCredit}/regenerer-echeancier', [\App\Http\Controllers\NanoCreditController::class, 'regenererEcheancier'])->name('nano-credits.regenerer-echeancier');
 
     // Routes pour PayDunya
     Route::get('/paydunya', [\App\Http\Controllers\PayDunyaController::class, 'index'])->name('paydunya.index');
@@ -244,6 +246,11 @@ Route::get('/caisses/{caisse}/mouvements', [CaisseController::class, 'mouvements
     Route::post('/notifications/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.read');
     Route::post('/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
     Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
+
+    // Routes pour les demandes de retrait de tontines
+    Route::get('/epargne-retrait-demandes', [\App\Http\Controllers\EpargneRetraitDemandeController::class, 'index'])->name('epargne-retrait-demandes.index');
+    Route::post('/epargne-retrait-demandes/{demande}/approve', [\App\Http\Controllers\EpargneRetraitDemandeController::class, 'approve'])->name('epargne-retrait-demandes.approve');
+    Route::post('/epargne-retrait-demandes/{demande}/reject', [\App\Http\Controllers\EpargneRetraitDemandeController::class, 'reject'])->name('epargne-retrait-demandes.reject');
 
     // Routes pour le traitement de fin de mois
     Route::get('/fin-mois', [\App\Http\Controllers\FinMoisController::class, 'index'])->name('fin-mois.index');
@@ -363,6 +370,7 @@ Route::prefix('membre')->name('membre.')->group(function () {
         Route::get('/epargne/souscription/{souscription}', [\App\Http\Controllers\MembreEpargneController::class, 'showSouscription'])->name('epargne.souscription.show');
         Route::post('/epargne/echeance/{echeance}/paydunya', [\App\Http\Controllers\MembreEpargneController::class, 'initierPaiementEpargnePayDunya'])->name('epargne.echeance.paydunya');
         Route::post('/epargne/echeance/{echeance}/pispi', [\App\Http\Controllers\MembreEpargneController::class, 'initierPaiementEpargnePiSpi'])->name('epargne.echeance.pispi');
+        Route::post('/epargne/souscription/{souscription}/demande-retrait', [\App\Http\Controllers\MembreEpargneController::class, 'demandeRetrait'])->name('epargne.demande-retrait')->middleware(\App\Http\Middleware\VerifyMembrePinWeb::class);
 
         // ─── Épargne libre (versement direct sur compte Épargne personnel) ──────
         Route::get('/epargne-libre', [\App\Http\Controllers\MembreEpargneLibreController::class, 'index'])->name('epargne-libre.index');

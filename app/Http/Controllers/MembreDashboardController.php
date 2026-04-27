@@ -329,9 +329,44 @@ class MembreDashboardController extends Controller
         }
         
         // Pagination des mouvements (Flux financiers)
-        $mouvements = $query->orderBy('date_operation', 'desc')
+        // Pagination des mouvements (Flux financiers)
+        $fluxOperations = $query->orderBy('date_operation', 'desc')
             ->orderBy('created_at', 'desc')
-            ->paginate(15);
+            ->get()
+            ->map(function($m) {
+                $m->source_type = 'mouvement';
+                return $m;
+            });
+
+        // Ajouter les paiements en attente (Pi-SPI ou PayDunya non confirmés)
+        $attentes = \App\Models\Paiement::where('membre_id', $membre->id)
+            ->where('statut', 'en_attente')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function($p) {
+                // Créer un objet compatible mouvement pour la vue
+                $p->source_type = 'attente';
+                $p->date_operation = $p->created_at;
+                $p->sens = 'entree';
+                $p->notes = $p->commentaire;
+                $p->libelle = 'Demande en cours: ' . ($p->cotisation->nom ?? 'Opération');
+                $p->type = $p->cotisation_id ? 'cotisation' : 'epargne';
+                $p->montant = (float) $p->montant;
+                return $p;
+            });
+
+        // Fusionner et repaginer manuellement
+        $merged = $attentes->concat($fluxOperations)->sortByDesc('date_operation');
+        
+        $perPage = 15;
+        $page = $request->input('page', 1);
+        $mouvements = new \Illuminate\Pagination\LengthAwarePaginator(
+            $merged->forPage($page, $perPage),
+            $merged->count(),
+            $perPage,
+            $page,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
             
         // Calcul des statistiques globales pour le dashboard
         // On récupère tous les mouvements (sans pagination) pour les calculs de stats

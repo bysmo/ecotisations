@@ -39,14 +39,22 @@
                     @endif
                 </p>
                 <p class="mb-1"><strong>Téléphone :</strong> {{ $nanoCredit->telephone ?: ($nanoCredit->membre->telephone ?? '—') }}</p>
-                <p class="mb-1"><strong>Montant demandé :</strong> {{ number_format($nanoCredit->montant, 0, ',', ' ') }} XOF</p>
+                <div class="bg-light p-2 rounded mb-2 border-start border-primary border-4">
+                    <p class="mb-1"><strong>Capital emprunté :</strong> <span class="text-primary fw-bold">{{ number_format($nanoCredit->montant, 0, ',', ' ') }} XOF</span></p>
+                    @if($nanoCredit->palier)
+                        @php $amort = $nanoCredit->palier->calculAmortissement((float)$nanoCredit->getRawOriginal('montant')); @endphp
+                        <p class="mb-1 small"><strong>Taux d'intérêt :</strong> {{ $nanoCredit->palier->taux_interet }}% (Simple)</p>
+                        <p class="mb-1 small"><strong>Intérêts attendus :</strong> <span class="text-success">+{{ number_format($amort['interet_total'], 0, ',', ' ') }} XOF</span></p>
+                        <p class="mb-0 fw-bold border-top mt-1 pt-1"><strong>Total à rembourser :</strong> {{ number_format($amort['montant_total_du'], 0, ',', ' ') }} XOF</p>
+                    @endif
+                </div>
                 
                 @if($nanoCredit->montant_penalite > 0)
                     <p class="mb-1 text-danger"><strong>Pénalités de retard :</strong> {{ number_format($nanoCredit->montant_penalite, 0, ',', ' ') }} XOF</p>
                     <p class="mb-1 text-danger"><strong>Jours de retard :</strong> {{ $nanoCredit->jours_retard }} jours</p>
                 @endif
                 
-                <p class="mb-1"><strong>Statut :</strong> {{ $nanoCredit->statut_label }}</p>
+                <p class="mb-1"><strong>Statut :</strong> <span class="badge {{ $nanoCredit->statut === 'debourse' ? 'bg-success' : 'bg-secondary' }}">{{ $nanoCredit->statut_label }}</span></p>
                 <p class="mb-0"><strong>Date demande :</strong> {{ $nanoCredit->created_at->format('d/m/Y H:i') }}</p>
 
                 <hr>
@@ -130,39 +138,77 @@
             <div class="card border-primary">
                 <div class="card-header bg-primary text-white"><i class="bi bi-send"></i> Octroyer le crédit</div>
                 <div class="card-body">
-                    <p class="small text-muted">Le montant sera envoyé au mobile money du membre via PayDunya. Vérifiez le KYC avant d'octroyer.</p>
+                    @php
+                        $defaultAlias = $nanoCredit->membre->defaultWalletAlias();
+                    @endphp
+                    @if($defaultAlias)
+                        <div class="alert alert-info py-2 mb-3" style="font-size: 0.75rem;">
+                            <i class="bi bi-lightning-charge-fill text-warning me-1"></i>
+                            <strong>Alias Pi-SPI détecté :</strong> <code>{{ $defaultAlias->alias }}</code> ({{ $defaultAlias->label }})
+                        </div>
+                    @endif
+                    <p class="small text-muted">Le montant sera envoyé au membre via le canal choisi. Priorité à l'alias Pi-SPI si disponible.</p>
                     <form action="{{ route('nano-credits.octroyer', $nanoCredit) }}" method="POST">
                         @csrf
                         <div class="mb-2">
-                            <label for="telephone" class="form-label small">Numéro bénéficiaire (sans indicatif) <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control form-control-sm @error('telephone') is-invalid @enderror" id="telephone" name="telephone" value="{{ old('telephone', $nanoCredit->telephone ?: preg_replace('/\D/', '', $nanoCredit->membre->telephone ?? '')) }}" required placeholder="771234567">
-                            @error('telephone')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                        <div class="mb-2">
-                            <label for="withdraw_mode" class="form-label small">Canal de retrait <span class="text-danger">*</span></label>
-                            <select class="form-select form-select-sm @error('withdraw_mode') is-invalid @enderror" id="withdraw_mode" name="withdraw_mode" required>
+                            <label for="withdraw_mode" class="form-label small">Canal de déboursement <span class="text-danger">*</span></label>
+                            <select class="form-select form-select-sm @error('withdraw_mode') is-invalid @enderror" id="withdraw_mode_display" disabled>
                                 @foreach($withdrawModes as $value => $label)
-                                    <option value="{{ $value }}" {{ old('withdraw_mode', $nanoCredit->withdraw_mode ?? 'orange-money-senegal') === $value ? 'selected' : '' }}>{{ $label }}</option>
+                                    <option value="{{ $value }}" {{ $value === 'pispi' ? 'selected' : '' }}>{{ $label }}</option>
                                 @endforeach
                             </select>
+                            <input type="hidden" name="withdraw_mode" value="pispi">
                             @error('withdraw_mode')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
-                        <button type="submit" class="btn btn-primary btn-sm" onclick="return confirm('Confirmer l\'octroi de ce nano-crédit ? Le montant sera transféré vers le compte mobile money du membre.');">
-                            <i class="bi bi-send"></i> Octroyer le crédit (PayDunya)
+
+                        <div class="mb-2" id="div_telephone">
+                            <label for="telephone" class="form-label small" id="label_beneficiary">Alias Pi-SPI du bénéficiaire <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-sm @error('telephone') is-invalid @enderror" id="telephone" name="telephone" 
+                                   value="{{ $defaultAlias ? $defaultAlias->alias : '' }}" 
+                                   readonly placeholder="26b54952...">
+                            @if($defaultAlias)
+                                <div class="form-text x-small text-success"><i class="bi bi-info-circle"></i> Alias par défaut détecté : <strong>{{ $defaultAlias->alias }}</strong></div>
+                            @endif
+                            @error('telephone')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-sm w-100 py-2 fw-bold" onclick="return confirm('Confirmer l\'octroi (DÉBOURSEMENT) de ce nano-crédit via Pi-SPI ?');">
+                            <i class="bi bi-send-check"></i> CONFIRMER L'OCTROI (DÉBOURSEMENT)
                         </button>
                     </form>
+
+                    <script>
+                        // Canal fixe vers Pi-SPI comme demandé
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const input = document.getElementById('telephone');
+                            if (!input.value && "{{ $defaultAlias->alias ?? '' }}") {
+                                input.value = "{{ $defaultAlias->alias ?? '' }}";
+                            }
+                        });
+                    </script>
                 </div>
             </div>
         @else
-            <div class="card">
-                <div class="card-header"><i class="bi bi-info-circle"></i> Détails octroi</div>
-                <div class="card-body">
+            <div class="card shadow-sm border-0 bg-light-soft">
+                <div class="card-header bg-white py-3">
+                    <h5 class="card-title mb-0 text-success"><i class="bi bi-info-circle-fill me-2"></i>Détails du décaissement</h5>
+                </div>
+                <div class="card-body p-4">
                     @if($nanoCredit->date_octroi)
-                        <p class="mb-1"><strong>Date d'octroi :</strong> {{ $nanoCredit->date_octroi->format('d/m/Y') }}</p>
-                        <p class="mb-1"><strong>Fin remboursement :</strong> {{ $nanoCredit->date_fin_remboursement ? $nanoCredit->date_fin_remboursement->format('d/m/Y') : '—' }}</p>
+                        <div class="mb-3 d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Date d'activation :</span>
+                            <span class="fw-bold"><i class="bi bi-calendar-check me-1"></i>{{ $nanoCredit->date_octroi->format('d/m/Y') }}</span>
+                        </div>
+                        <div class="mb-3 d-flex justify-content-between align-items-center text-danger">
+                            <span class="text-muted text-danger">Échéance finale :</span>
+                            <span class="fw-bold"><i class="bi bi-calendar-x me-1"></i>{{ $nanoCredit->date_fin_remboursement ? $nanoCredit->date_fin_remboursement->format('d/m/Y') : '—' }}</span>
+                        </div>
                     @endif
                     @if($nanoCredit->transaction_id)
-                        <p class="mb-0"><strong>Transaction PayDunya :</strong> <small>{{ $nanoCredit->transaction_id }}</small></p>
+                        <div class="bg-white p-3 rounded border">
+                            <label class="x-small text-muted text-uppercase fw-bold d-block mb-1">Réf. Transaction (Pi-SPI / PayDunya)</label>
+                            <code class="text-dark small">{{ $nanoCredit->transaction_id }}</code>
+                        </div>
                     @endif
                 </div>
             </div>
@@ -170,9 +216,18 @@
     </div>
 </div>
 
-@if($nanoCredit->isDebourse() && $nanoCredit->echeances->count() > 0)
-    <div class="card mb-3">
-        <div class="card-header"><i class="bi bi-calendar-check"></i> Tableau d'amortissement</div>
+@if($nanoCredit->isDebourse())
+    <div class="card mb-3 shadow-sm border-0">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0 text-primary"><i class="bi bi-calendar-week-fill me-2"></i>Tableau d'amortissement</h5>
+            
+            <form action="{{ route('nano-credits.regenerer-echeancier', $nanoCredit) }}" method="POST" onsubmit="return confirm('Attention : cela supprimera les échéances actuelles pour les recalculer selon le palier. Continuer ?');">
+                @csrf
+                <button type="submit" class="btn btn-sm btn-outline-warning">
+                    <i class="bi bi-arrow-repeat me-1"></i> Régénérer l'échéancier
+                </button>
+            </form>
+        </div>
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-sm table-striped mb-0">
@@ -181,21 +236,33 @@
                             <th>Date échéance</th>
                             <th class="text-end">Montant</th>
                             <th>Statut</th>
+                            <th>État</th>
                             <th>Date paiement</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach($nanoCredit->echeances as $e)
+                            @php 
+                                $tempStatus = $e->temporal_status;
+                                $etat = $e->statut;
+                            @endphp
                             <tr>
                                 <td>{{ $e->date_echeance->format('d/m/Y') }}</td>
-                                <td class="text-end">{{ number_format($e->montant, 0, ',', ' ') }} XOF</td>
+                                <td class="text-end fw-bold">{{ number_format($e->montant, 0, ',', ' ') }} XOF</td>
                                 <td>
-                                    @if($e->statut === 'payee')
-                                        <span class="badge bg-success">Payée</span>
-                                    @elseif($e->statut === 'en_retard')
+                                    @if($tempStatus === 'en_retard')
                                         <span class="badge bg-danger">En retard</span>
+                                    @elseif($tempStatus === 'aujourd_hui')
+                                        <span class="badge bg-warning text-dark">Aujourd'hui</span>
                                     @else
                                         <span class="badge bg-secondary">À venir</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($etat === 'payee')
+                                        <span class="badge bg-success">Payée</span>
+                                    @else
+                                        <span class="badge bg-light text-muted border">En attente</span>
                                     @endif
                                 </td>
                                 <td>{{ $e->paye_le ? $e->paye_le->format('d/m/Y H:i') : '—' }}</td>

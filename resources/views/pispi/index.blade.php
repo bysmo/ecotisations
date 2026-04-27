@@ -98,20 +98,25 @@
                             <p class="small text-muted mb-3">Configurez les alias UUID Serenity qui recevront les fonds selon le type d'opération.</p>
                             
                             <div class="row g-3">
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <label class="form-label small fw-bold">Cagnottes</label>
                                     <input type="text" name="operation_aliases[cagnotte]" class="form-control form-control-sm font-monospace" 
                                            value="{{ $operationAliases['cagnotte'] ?? '' }}" placeholder="UUID-CAGNOTTE">
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <label class="form-label small fw-bold">Tontines</label>
                                     <input type="text" name="operation_aliases[tontine]" class="form-control form-control-sm font-monospace" 
                                            value="{{ $operationAliases['tontine'] ?? '' }}" placeholder="UUID-TONTINE">
                                 </div>
-                                <div class="col-md-4">
-                                    <label class="form-label small fw-bold">Nano-Crédits (Remb.)</label>
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-bold">Nano-Crédits</label>
                                     <input type="text" name="operation_aliases[nano_credit]" class="form-control form-control-sm font-monospace" 
                                            value="{{ $operationAliases['nano_credit'] ?? '' }}" placeholder="UUID-CREDIT">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-bold">Parrainage</label>
+                                    <input type="text" name="operation_aliases[parrainage]" class="form-control form-control-sm font-monospace" 
+                                           value="{{ $operationAliases['parrainage'] ?? '' }}" placeholder="UUID-PARRAIN">
                                 </div>
                             </div>
                         </div>

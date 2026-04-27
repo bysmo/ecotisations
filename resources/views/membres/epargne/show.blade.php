@@ -93,7 +93,116 @@
     </div>
 </div>
 
-<div class="card card-epargne mb-3">
+<div class="row">
+    <div class="col-md-5 mb-3">
+        <div class="card card-epargne border-primary shadow-sm h-100" style="border-width: 1px;">
+            <div class="card-header bg-primary text-white" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">
+                <i class="bi bi-box-arrow-right"></i> Demander un retrait de fonds
+            </div>
+            <div class="card-body p-3">
+                @php
+                    $retraits = \App\Models\EpargneRetraitDemande::where('souscription_id', $souscription->id)->orderBy('created_at', 'desc')->get();
+                    $hasPending = $retraits->where('statut', 'en_attente')->count() > 0;
+                    $soldeActual = (float) $souscription->solde_courant;
+                    $estimationLiquidation = (float) $souscription->estimation_liquidation;
+                    $isFinished = $souscription->date_fin && $souscription->date_fin->isPast();
+                @endphp
+
+                <div class="mb-3 p-2 rounded {{ $isFinished ? 'bg-success bg-opacity-10' : 'bg-info bg-opacity-10' }}">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="small fw-bold">Valeur de liquidation estimée :</span>
+                        <span class="fs-5 fw-bold {{ $isFinished ? 'text-success' : 'text-primary' }}">{{ number_format($estimationLiquidation, 0, ',', ' ') }} XOF</span>
+                    </div>
+                    <p class="mb-0 x-small text-muted mt-1" style="font-size: 0.65rem;">
+                        @if($isFinished)
+                            <i class="bi bi-check-circle-fill text-success"></i> Tontine terminée : inclut l'épargne + les rémunérations prévues.
+                        @else
+                            <i class="bi bi-exclamation-circle-fill text-info"></i> Tontine en cours : retrait limité au capital épargné (pénalité de sortie anticipée).
+                        @endif
+                    </p>
+                </div>
+
+                @if($hasPending)
+                    <div class="alert alert-warning py-2 border-0 shadow-sm" style="font-size: 0.72rem;">
+                        <i class="bi bi-hourglass-split me-1"></i> Vous avez déjà une demande de retrait en attente.
+                    </div>
+                @elseif($soldeActual <= 0)
+                    <p class="text-muted small text-center mb-0 py-3" style="font-size: 0.68rem;">
+                        <i class="bi bi-info-circle me-1"></i> Votre solde est nul. Epargnez davantage pour pouvoir retirer.
+                    </p>
+                @else
+                    <form action="{{ route('membre.epargne.demande-retrait', $souscription) }}" method="POST">
+                        @csrf
+                        <div class="mb-2">
+                            <label class="form-label small mb-1" style="font-size: 0.65rem;">Montant à retirer (Max: {{ number_format($soldeActual, 0, ',', ' ') }} XOF)</label>
+                            <input type="number" name="montant_demande" class="form-control form-control-sm bg-light" value="{{ $soldeActual }}" max="{{ $soldeActual }}" min="100" required style="font-size: 0.8rem; font-weight: 500;">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small mb-1" style="font-size: 0.65rem;">Moyen de réception</label>
+                            <select name="mode_retrait" class="form-select form-select-sm" style="font-size: 0.75rem;">
+                                <option value="virement_interne">Virement Interne (Compte Serenity)</option>
+                                <option value="pispi">Transfert Instantané Pi-SPI</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm w-100 py-2 fw-bold shadow-sm" onclick="return confirm('Soumettre cette demande de retrait ?');">
+                            <i class="bi bi-send-check"></i> SOUMETTRE LA DEMANDE
+                        </button>
+                    </form>
+                @endif
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-7 mb-3">
+        <div class="card card-epargne h-100 shadow-sm">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center py-2">
+                <span class="fw-bold"><i class="bi bi-clock-history"></i> Suivi des retraits</span>
+                <span class="badge bg-secondary" style="font-size: 0.6rem;">{{ $retraits->count() }} demande(s)</span>
+            </div>
+            <div class="card-body p-0">
+                @if($retraits->count() > 0)
+                    <div class="table-responsive">
+                        <table class="table table-epargne-compact table-sm table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Montant</th>
+                                    <th>Mode</th>
+                                    <th class="text-center">Statut</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($retraits as $retrait)
+                                    <tr>
+                                        <td>{{ $retrait->created_at->format('d/m/Y') }}</td>
+                                        <td class="fw-bold">{{ number_format($retrait->montant_demande, 0, ',', ' ') }}</td>
+                                        <td class="small">{{ $retrait->mode_retrait === 'pispi' ? 'Pi-SPI' : 'Interne' }}</td>
+                                        <td class="text-center">
+                                            @if($retrait->statut === 'en_attente')
+                                                <span class="badge bg-warning text-dark px-2">En attente</span>
+                                            @elseif($retrait->statut === 'traite')
+                                                <span class="badge bg-success px-2">Validé</span>
+                                            @else
+                                                <span class="badge bg-danger px-2">Rejeté</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @else
+                    <div class="p-4 text-center text-muted small">
+                        <i class="bi bi-info-circle d-block mb-1 fs-4 opacity-25"></i>
+                        Aucune demande de retrait effectuée.
+                    </div>
+                @endif
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card card-epargne mb-3 shadow-sm">
     <div class="card-header" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">
         <i class="bi bi-calendar-check"></i> Échéances
     </div>
@@ -106,6 +215,7 @@
                             <th>Date échéance</th>
                             <th class="text-end">Montant</th>
                             <th>Statut</th>
+                            <th>État</th>
                             <th>Date de paiement</th>
                             <th class="text-center">Payer</th>
                         </tr>
@@ -113,26 +223,38 @@
                     <tbody>
                         @foreach($souscription->echeances as $echeance)
                             @php
+                                $tempStatus = $echeance->temporal_status;
+                                $etat = $echeance->statut;
                                 $rowClass = '';
-                                if ($echeance->statut === 'payee') $rowClass = 'row-paid';
-                                elseif ($echeance->statut === 'en_retard') $rowClass = 'row-overdue';
-                                else $rowClass = 'row-unpaid';
+                                if ($etat === 'payee') $rowClass = 'row-paid';
+                                elseif ($tempStatus === 'en_retard') $rowClass = 'row-overdue';
                             @endphp
                             <tr class="{{ $rowClass }}">
                                 <td>{{ $echeance->date_echeance->format('d/m/Y') }}</td>
                                 <td class="text-end">{{ number_format($echeance->montant, 0, ',', ' ') }} XOF</td>
                                 <td>
-                                    @if($echeance->statut === 'payee')
-                                        <span class="badge bg-success">Payée</span>
-                                    @elseif($echeance->statut === 'en_retard')
+                                    @if($tempStatus === 'en_retard')
                                         <span class="badge bg-danger">En retard</span>
+                                    @elseif($tempStatus === 'aujourd_hui')
+                                        <span class="badge bg-warning text-dark">Aujourd'hui</span>
+                                    @elseif($tempStatus === 'termine')
+                                        <span class="badge bg-light text-muted">Terminé</span>
                                     @else
                                         <span class="badge bg-secondary">À venir</span>
                                     @endif
                                 </td>
+                                <td>
+                                    @if($etat === 'payee')
+                                        <span class="badge bg-success">Payée</span>
+                                    @elseif($etat === 'en_cours')
+                                        <span class="badge bg-info-subtle text-info border border-info" style="animation: pulse 2s infinite;">En cours...</span>
+                                    @else
+                                        <span class="badge bg-light text-muted border">En attente</span>
+                                    @endif
+                                </td>
                                 <td>{{ $echeance->paye_le ? $echeance->paye_le->format('d/m/Y H:i') : '—' }}</td>
                                 <td class="text-center">
-                                    @if(in_array($echeance->statut, ['a_venir', 'en_retard']))
+                                    @if(in_array($echeance->statut, ['en_attente', 'a_venir', 'en_retard']))
                                         <div class="btn-group" role="group">
                                             {{-- Option PayDunya --}}
                                             @if(\App\Models\PayDunyaConfiguration::getActive()?->enabled)
@@ -169,37 +291,8 @@
     </div>
 </div>
 
-<div class="card card-epargne">
-    <div class="card-header" style="font-weight: 300; font-family: 'Ubuntu', sans-serif;">
-        <i class="bi bi-clock-history"></i> Historique des versements
-    </div>
-    <div class="card-body p-0">
-        @if($souscription->versements->count() > 0)
-            <div class="table-responsive">
-                <table class="table table-epargne-compact table-striped table-hover mb-0">
-                    <thead>
-                        <tr>
-                            <th>Date de paiement</th>
-                            <th class="text-end">Montant</th>
-                            <th>Mode</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($souscription->versements->sortByDesc('created_at') as $v)
-                            <tr>
-                                <td>{{ $v->created_at ? $v->created_at->format('d/m/Y H:i') : $v->date_versement->format('d/m/Y') }}</td>
-                                <td class="text-end">{{ number_format($v->montant, 0, ',', ' ') }} XOF</td>
-                                <td>{{ $v->mode_paiement }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        @else
-            <div class="p-3 text-center text-muted" style="font-size: 0.75rem; font-weight: 300; font-family: 'Ubuntu', sans-serif;">Aucun versement enregistré.</div>
-        @endif
-    </div>
 </div>
+
 
 @if(isset($paymentStatus))
     @push('scripts')

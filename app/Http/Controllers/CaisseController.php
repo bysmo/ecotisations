@@ -610,4 +610,24 @@ class CaisseController extends Controller
         
         return view('caisses.historique', compact('mouvementsPaginated', 'transferts', 'approvisionnements'));
     }
+    
+    /**
+     * Afficher le détail d'une transaction (tous les mouvements liés)
+     */
+    public function transactionDetail(MouvementCaisse $mouvement)
+    {
+        if (!$mouvement->reference_type || !$mouvement->reference_id) {
+            return redirect()->back()->with('error', 'Cette opération n\'a pas de référence de transaction groupée.');
+        }
+
+        $mouvements = MouvementCaisse::with('caisse.membre')
+            ->where('reference_type', $mouvement->reference_type)
+            ->where('reference_id', $mouvement->reference_id)
+            ->orderBy('sens', 'asc') // Débit (entrée) souvent en premier
+            ->get();
+
+        $reference = $mouvement->reference;
+
+        return view('caisses.transaction-detail', compact('mouvements', 'mouvement', 'reference'));
+    }
 }

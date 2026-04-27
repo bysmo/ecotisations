@@ -128,6 +128,7 @@ class NanoCredit extends Model
             'orange-money-burkina' => 'Orange Money Burkina',
             'moov-burkina-faso'    => 'Moov Burkina',
             'paydunya'             => 'Compte PayDunya',
+            'pispi'                => 'BCEAO Pi-SPI',
         ];
     }
 
