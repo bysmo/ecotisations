@@ -232,6 +232,13 @@ Route::get('/caisses/{caisse}/mouvements', [CaisseController::class, 'mouvements
     Route::post('/settings', [\App\Http\Controllers\SettingController::class, 'store'])->name('settings.store');
     Route::put('/settings', [\App\Http\Controllers\SettingController::class, 'update'])->name('settings.update');
 
+    // Routes pour les numérotations automatiques
+    Route::get('/settings/auto-numbering', [\App\Http\Controllers\AutoNumberingConfigController::class, 'index'])->name('admin.auto-numbering.index');
+    Route::post('/settings/auto-numbering', [\App\Http\Controllers\AutoNumberingConfigController::class, 'store'])->name('admin.auto-numbering.store');
+    Route::put('/settings/auto-numbering/{config}', [\App\Http\Controllers\AutoNumberingConfigController::class, 'update'])->name('admin.auto-numbering.update');
+    Route::delete('/settings/auto-numbering/{config}', [\App\Http\Controllers\AutoNumberingConfigController::class, 'destroy'])->name('admin.auto-numbering.destroy');
+    Route::get('/settings/auto-numbering/preview/{objectType}', [\App\Http\Controllers\AutoNumberingConfigController::class, 'preview'])->name('admin.auto-numbering.preview');
+
     // Routes pour les backups
     Route::resource('backups', \App\Http\Controllers\BackupController::class)->only(['index', 'destroy']);
     Route::post('/backups/create', [\App\Http\Controllers\BackupController::class, 'create'])->name('backups.create');

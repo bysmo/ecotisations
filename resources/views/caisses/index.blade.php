@@ -147,15 +147,14 @@
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm" role="group">
-                                        <a href="{{ route('caisses.journal', $caisse) }}"
-                                           class="btn btn-outline-secondary"
-                                           title="Journal / Balance">
-                                            <i class="bi bi-journal-text"></i>
-                                        </a>
+                                        
                                         <a href="{{ route('caisses.edit', $caisse) }}" 
                                            class="btn btn-outline-warning" 
                                            title="Modifier">
                                             <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a href="{{ route('caisses.mouvements', $caisse) }}" class="btn btn-outline-primary" title="Voir le journal">
+                                            <i class="bi bi-journal-text"></i>
                                         </a>
                                     </div>
                                 </td>
@@ -181,13 +180,13 @@
                 </div>
             @endif
         @else
-            <div class="text-center py-3">
+            <!--div class="text-center py-3">
                 <i class="bi bi-inbox" style="font-size: 1.5rem; color: #ccc;"></i>
                 <p class="text-muted mt-2 mb-2" style="font-size: 0.75rem;">Aucun compte enregistré</p>
                 <a href="{{ route('caisses.create') }}" class="btn btn-primary btn-sm">
                     <i class="bi bi-plus-circle"></i> Créer le premier compte
                 </a>
-            </div>
+            </div-->
         @endif
     </div>
 </div>

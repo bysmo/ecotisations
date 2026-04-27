@@ -406,12 +406,21 @@ class MembreAuthController extends Controller
             ->with('success', 'Un nouveau lien de vérification a été envoyé à votre adresse email.');
     }
 
+    /**
+     * Générer un numéro de client unique via le service de numérotation automatique
+     */
     private function generateNumeroMembre(): string
     {
-        do {
-            $numero = 'MEM-' . strtoupper(\Illuminate\Support\Str::random(6));
-        } while (Membre::where('numero', $numero)->exists());
-        return $numero;
+        try {
+            return app(\App\Services\AutoNumberingService::class)->generate('client');
+        } catch (\Exception $e) {
+            // Fallback historique
+            do {
+                $numero = 'MEM-' . strtoupper(\Illuminate\Support\Str::random(6));
+            } while (Membre::where('numero', $numero)->exists());
+
+            return $numero;
+        }
     }
 
     /**

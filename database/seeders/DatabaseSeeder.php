@@ -60,6 +60,7 @@ class DatabaseSeeder extends Seeder
         SMTPConfiguration::truncate();
         PaymentMethod::truncate();
         User::truncate();
+        \App\Models\AutoNumberingConfig::truncate();
         
         // Truncate des tables de sessions et tokens si elles existent
         DB::table('sessions')->truncate();
@@ -77,6 +78,7 @@ class DatabaseSeeder extends Seeder
             AppSettingSeeder::class,        // Paramètres généraux
             SmtpTestSeeder::class,          // Config SMTP de test (mail.aladints.com)
             UserSeeder::class,              // Utilisateurs admin & trésorier
+            AutoNumberingConfigSeeder::class, // Numérotations automatiques
             PaymentMethodSeeder::class,     // PayDunya, PayPal, Stripe (config vide)
             PayDunyaConfigSeeder::class,    // Config TEST PayDunya (clés de test)
             CaisseSeeder::class,

@@ -67,9 +67,9 @@
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <span><i class="bi bi-wallet2"></i> Comptes Bancaires</span>
-                <a href="{{ route('caisses.create', ['membre_id' => $membre->id]) }}" class="btn btn-xs btn-light text-primary">
+                <!-- <a href="{{ route('caisses.create', ['membre_id' => $membre->id]) }}" class="btn btn-xs btn-light text-primary">
                     <i class="bi bi-plus-circle"></i> Ajouter un compte
-                </a>
+                </a> -->
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">

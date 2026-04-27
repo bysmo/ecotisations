@@ -22,14 +22,16 @@
                         <label for="membre_id" class="form-label">
                             Propriétaire (Client) <span class="text-danger">*</span>
                         </label>
-                        <select class="form-select @error('membre_id') is-invalid @enderror" 
+                        <select readonly class="form-select @error('membre_id') is-invalid @enderror" 
                                 id="membre_id" 
                                 name="membre_id" 
                                 required>
                             @foreach($membres as $membre)
+                            @if($membre->id == $caisse->membre_id)
                                 <option value="{{ $membre->id }}" {{ old('membre_id', $caisse->membre_id) == $membre->id ? 'selected' : '' }}>
                                     {{ $membre->numero }} - {{ $membre->nom_complet }}
                                 </option>
+                            @endif
                             @endforeach
                         </select>
                         @error('membre_id')
@@ -42,15 +44,25 @@
                             <label for="type" class="form-label">
                                 Type de compte <span class="text-danger">*</span>
                             </label>
-                            <select class="form-select @error('type') is-invalid @enderror" 
+                            <select readonly class="form-select @error('type') is-invalid @enderror" 
                                     id="type" 
                                     name="type" 
                                     required>
+                                @if($caisse->type == 'courant')
                                 <option value="courant" {{ old('type', $caisse->type) === 'courant' ? 'selected' : '' }}>Courant</option>
+                                @endif
+                                @if($caisse->type == 'epargne')
                                 <option value="epargne" {{ old('type', $caisse->type) === 'epargne' ? 'selected' : '' }}>Épargne</option>
+                                @endif
+                                @if($caisse->type == 'tontine')
                                 <option value="tontine" {{ old('type', $caisse->type) === 'tontine' ? 'selected' : '' }}>Tontine</option>
+                                @endif
+                                @if($caisse->type == 'credit')
                                 <option value="credit" {{ old('type', $caisse->type) === 'credit' ? 'selected' : '' }}>Crédit</option>
+                                @endif
+                                @if($caisse->type == 'impayes')
                                 <option value="impayes" {{ old('type', $caisse->type) === 'impayes' ? 'selected' : '' }}>Impayés</option>
+                                @endif
                             </select>
                             @error('type')
                                 <div class="invalid-feedback">{{ $message }}</div>

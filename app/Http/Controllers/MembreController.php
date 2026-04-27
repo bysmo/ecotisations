@@ -80,15 +80,20 @@ class MembreController extends Controller
     }
 
     /**
-     * Générer un numéro de client unique
+     * Générer un numéro de client unique via le service de numérotation automatique
      */
     private function generateNumeroMembre(): string
     {
-        do {
-            $numero = 'MEM-' . strtoupper(Str::random(6));
-        } while (Membre::where('numero', $numero)->exists());
+        try {
+            return app(\App\Services\AutoNumberingService::class)->generate('client');
+        } catch (\Exception $e) {
+            // Fallback historique
+            do {
+                $numero = 'MEM-' . strtoupper(\Illuminate\Support\Str::random(6));
+            } while (Membre::where('numero', $numero)->exists());
 
-        return $numero;
+            return $numero;
+        }
     }
 
     /**

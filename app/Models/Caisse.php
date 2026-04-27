@@ -132,16 +132,22 @@ class Caisse extends Model
     public static function getCaisseParrainage(): ?self { return self::getSystemCaisse('SYS-PAR'); }
 
     /**
-     * Génère un numéro de compte unique au format XXXX-XXXX
+     * Génère un numéro de compte unique.
+     * Utilise le service de numérotation automatique avec un fallback aléatoire.
      */
     public static function generateNumeroCompte(): string
     {
-        do {
-            $part1 = strtoupper(\Illuminate\Support\Str::random(4));
-            $part2 = strtoupper(\Illuminate\Support\Str::random(4));
-            $numero = $part1 . '-' . $part2;
-        } while (static::where('numero', $numero)->exists());
+        try {
+            return app(\App\Services\AutoNumberingService::class)->generate('compte');
+        } catch (\Exception $e) {
+            // Fallback historique : format XXXX-XXXX
+            do {
+                $part1 = strtoupper(\Illuminate\Support\Str::random(4));
+                $part2 = strtoupper(\Illuminate\Support\Str::random(4));
+                $numero = $part1 . '-' . $part2;
+            } while (static::where('numero', $numero)->exists());
 
-        return $numero;
+            return $numero;
+        }
     }
 }

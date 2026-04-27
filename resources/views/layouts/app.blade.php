@@ -1512,7 +1512,7 @@
             @if(auth()->user()->hasRole('admin') || auth()->user()->hasPermission('settings.smtp') || auth()->user()->hasPermission('settings.templates') || auth()->user()->hasPermission('settings.paydunya'))
             <div>
                 @php
-                    $paramsActive = request()->routeIs('smtp.*') || request()->routeIs('email-templates.*') || request()->routeIs('payment-methods.*') || request()->routeIs('sms-gateways.*') || request()->routeIs('settings.*');
+                    $paramsActive = request()->routeIs('smtp.*') || request()->routeIs('email-templates.*') || request()->routeIs('payment-methods.*') || request()->routeIs('sms-gateways.*') || request()->routeIs('settings.*') || request()->routeIs('admin.auto-numbering.*');
                 @endphp
                 <a class="nav-link has-submenu {{ $paramsActive ? 'active' : '' }}" 
                    data-bs-toggle="collapse" 
@@ -1565,7 +1565,12 @@
                                 <span>Configuration SMS</span>
                             </a>
                         </li>
-                        
+                        <li>
+                            <a href="{{ route('admin.auto-numbering.index') }}" class="nav-link {{ request()->routeIs('admin.auto-numbering.*') ? 'active' : '' }}">
+                                <i class="bi bi-hash"></i>
+                                <span>Numérotations Automatiques</span>
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </div>

@@ -12,6 +12,7 @@ class MouvementCaisse extends Model
     protected $table = 'mouvements_caisse';
 
     protected $fillable = [
+        'numero_piece',
         'caisse_id',
         'type',
         'sens',

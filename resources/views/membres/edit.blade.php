@@ -70,7 +70,7 @@
                     <label for="email" class="form-label">
                         Email <span class="text-danger">*</span>
                     </label>
-                    <input type="email" 
+                    <input readonly type="email" 
                            class="form-control @error('email') is-invalid @enderror" 
                            id="email" 
                            name="email" 
@@ -84,16 +84,18 @@
                 <div class="col-md-6 mb-3">
                     <label for="telephone" class="form-label">Téléphone</label>
                     <div class="input-group">
-                        <select class="form-select" name="country_code" id="country_code" style="max-width: 140px;" required>
+                        <select readonly class="form-select" name="country_code" id="country_code" style="max-width: 140px;" required>
                             @foreach($countries as $code => $country)
+                            @if($code == $membreCountry)
                                 <option value="{{ $code }}" 
                                     data-dial="{{ $country['dial'] }}"
                                     {{ (old('country_code', $membreCountry) == $code) ? 'selected' : '' }}>
                                     {{ $country['name'] }} (+{{ $country['dial'] }})
                                 </option>
+                            @endif
                             @endforeach
                         </select>
-                        <input type="text" 
+                        <input type="text" readonly 
                                class="form-control @error('telephone') is-invalid @enderror" 
                                id="telephone" 
                                name="telephone" 

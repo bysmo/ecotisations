@@ -22,10 +22,20 @@ class FinanceService
             $totalIn = 0;
             $totalOut = 0;
 
+            // Générer un numéro de pièce unique pour cette écriture
+            $numeroPiece = null;
+            try {
+                $numeroPiece = app(\App\Services\AutoNumberingService::class)->generate('piece_comptable');
+            } catch (\Exception $e) {
+                // Pas de config, on laisse null ou on génère un temporaire ?
+                // On peut le laisser null car la colonne est nullable.
+            }
+
             foreach ($entries as $entry) {
                 if ($entry['sens'] === 'entree') $totalIn += (float) $entry['montant'];
                 else $totalOut += (float) $entry['montant'];
 
+                $entry['numero_piece'] = $numeroPiece;
                 MouvementCaisse::create($entry);
             }
 

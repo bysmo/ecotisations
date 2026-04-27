@@ -37,16 +37,21 @@ class MembreObserver
     }
 
     /**
-     * Générer un numéro de compte unique (format XXXX-XXXX)
+     * Générer un numéro de compte via le service de numérotation automatique
      */
     private function generateNumeroCaisse(): string
     {
-        do {
-            $part1 = strtoupper(Str::random(4));
-            $part2 = strtoupper(Str::random(4));
-            $numero = $part1 . '-' . $part2;
-        } while (Caisse::where('numero', $numero)->exists());
+        try {
+            return app(\App\Services\AutoNumberingService::class)->generate('compte');
+        } catch (\Exception $e) {
+            // Fallback : Générer un numéro aléatoire si aucune configuration n'existe
+            do {
+                $part1 = strtoupper(\Illuminate\Support\Str::random(4));
+                $part2 = strtoupper(\Illuminate\Support\Str::random(4));
+                $numero = $part1 . '-' . $part2;
+            } while (Caisse::where('numero', $numero)->exists());
 
-        return $numero;
+            return $numero;
+        }
     }
 }
